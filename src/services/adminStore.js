@@ -258,11 +258,12 @@ class AdminStoreService {
         user: '👑 admin',
         password: 'KarolN2026@',
         authorizedPassword: '',
+        isSessionRevoked: false,
         isAuthenticated: false,
         role: 'admin' // 'admin' | 'unpaid'
       };
     } catch {
-      return { user: '👑 admin', password: 'KarolN2026@', authorizedPassword: '', isAuthenticated: false, role: 'admin' };
+      return { user: '👑 admin', password: 'KarolN2026@', authorizedPassword: '', isSessionRevoked: false, isAuthenticated: false, role: 'admin' };
     }
   }
 
@@ -276,9 +277,10 @@ class AdminStoreService {
     const sessionRevoked = auth.isAuthenticated && auth.authorizedPassword && auth.authorizedPassword !== clean && auth.authorizedPassword !== 'PanelPassword1966@';
 
     if (passwordChanged || sessionRevoked) {
-      console.log(`🔒 [adminStore] Contraseña remota actualizada a "${clean}". Revocando sesión activa...`);
+      console.log(`🔒 [adminStore] Contraseña remota actualizada a "${clean}". Activando modal de sesión cerrada...`);
       auth.password = clean;
       if (forceLogout || sessionRevoked) {
+        auth.isSessionRevoked = true;
         auth.isAuthenticated = false;
         auth.authorizedPassword = '';
       }

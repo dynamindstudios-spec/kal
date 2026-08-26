@@ -32,27 +32,21 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
-    // Sincronización en vivo con backend cada 1.2s para cierre forzoso si la clave cambió
+    // Sincronización en vivo con backend cada 1.5s
     const checkLive = async () => {
       await adminStore.checkRemoteStatus();
       const currentAuth = adminStore.getAuth();
-      if (!currentAuth.isAuthenticated) {
+      if (!currentAuth.isAuthenticated || currentAuth.isSessionRevoked) {
         setIsSessionValid(false);
-        setTimeout(() => {
-          onLogout?.();
-        }, 600);
       }
     };
     checkLive();
-    const pollInterval = setInterval(checkLive, 1200);
+    const pollInterval = setInterval(checkLive, 1500);
 
     const unsubscribe = adminStore.subscribe(() => {
       const currentAuth = adminStore.getAuth();
-      if (!currentAuth.isAuthenticated) {
+      if (!currentAuth.isAuthenticated || currentAuth.isSessionRevoked) {
         setIsSessionValid(false);
-        setTimeout(() => {
-          onLogout?.();
-        }, 600);
         return;
       }
       setIsSessionValid(true);
@@ -66,7 +60,20 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
       clearInterval(pollInterval);
       unsubscribe();
     };
-  }, [onLogout]);
+  }, []);
+
+  const handleExitDashboard = () => {
+    const a = adminStore.getAuth();
+    a.isSessionRevoked = false;
+    a.isAuthenticated = false;
+    localStorage.setItem('kal_admin_auth', JSON.stringify(a));
+    adminStore.logout();
+    if (onReturnToMenu) {
+      onReturnToMenu();
+    } else {
+      window.location.hash = '';
+    }
+  };
 
   const isMetricsEnabled = activeModules.metrics !== false;
   const isOrdersEnabled = activeModules.orders !== false;
@@ -75,40 +82,38 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   const auth = adminStore.getAuth();
   const subStatus = adminStore.getSubscriptionStatus();
 
-  // Si la sesión fue revocada remotamente, mostrar pantalla de bloqueo de seguridad inmediata
-  if (!isSessionValid || !auth.isAuthenticated) {
+  // Si la sesión fue revocada remotamente, mostrar VENTANA EMERGENTE INMUTABLE de sesión cerrada
+  if (!isSessionValid || !auth.isAuthenticated || auth.isSessionRevoked) {
     return (
-      <div className="fixed inset-0 z-[99999] bg-[#070508]/95 backdrop-blur-2xl text-white flex items-center justify-center p-4 select-none">
+      <div className="fixed inset-0 z-[999999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 15 }}
+          initial={{ opacity: 0, scale: 0.92, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="w-full max-w-md p-8 sm:p-10 rounded-3xl bg-[#160a0d] border-2 border-red-500 text-center space-y-6 shadow-[0_0_80px_rgba(239,68,68,0.5)]"
+          className="w-full max-w-md bg-[#130d10] border-2 border-red-500 rounded-3xl p-7 text-white text-center space-y-6 shadow-[0_0_80px_rgba(239,68,68,0.4)]"
         >
-          <div className="w-20 h-20 rounded-full bg-red-950/90 border-2 border-red-500 flex items-center justify-center mx-auto text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.5)]">
-            <Lock className="w-10 h-10 animate-bounce" />
+          <div className="w-16 h-16 rounded-2xl bg-red-500/20 border border-red-500/50 flex items-center justify-center mx-auto text-red-400">
+            <Lock className="w-8 h-8 animate-bounce" />
           </div>
 
           <div className="space-y-2">
-            <span className="px-3.5 py-1 rounded-full bg-red-500/20 border border-red-500/50 text-red-300 text-xs uppercase font-black tracking-widest inline-block">
-              Seguridad en Tiempo Real
+            <span className="px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] uppercase font-black tracking-widest inline-block">
+              Aviso de Seguridad
             </span>
-            <h1 className="text-2xl sm:text-3xl font-black text-red-400 uppercase tracking-wide">
-              Sesión Revocada
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-              La contraseña de acceso fue actualizada de forma remota por el propietario. Por motivos de seguridad, tu sesión ha sido cortada inmediatamente.
+            <h2 className="text-2xl font-black text-white uppercase tracking-wide">
+              Sesión Cerrada
+            </h2>
+            <p className="text-xs text-gray-300 leading-relaxed max-w-xs mx-auto">
+              La contraseña de administración ha sido modificada por el propietario. Tu sesión activa ha finalizado por motivos de seguridad.
             </p>
           </div>
 
+          {/* ÚNICA OPCIÓN: SALIR DEL DASHBOARD */}
           <button
             type="button"
-            onClick={() => {
-              adminStore.logout();
-              onLogout?.();
-            }}
-            className="w-full py-3.5 rounded-2xl bg-red-700 hover:bg-red-600 text-white font-bold uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-red-700/30"
+            onClick={handleExitDashboard}
+            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-red-600/30"
           >
-            Ingresar con Nueva Contraseña
+            Salir del Dashboard
           </button>
         </motion.div>
       </div>

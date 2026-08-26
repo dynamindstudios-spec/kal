@@ -238,15 +238,23 @@ export default function App() {
 
   if (isAdminRoute) {
     const auth = adminStore.getAuth();
-    if (auth.isAuthenticated) {
+    if (auth.isAuthenticated || auth.isSessionRevoked) {
       return (
         <AdminDashboard
-          key={`admin-dashboard-${authVersion}-${auth.password}`}
+          key={`admin-dashboard-${authVersion}`}
           onLogout={() => {
+            const a = adminStore.getAuth();
+            a.isSessionRevoked = false;
+            a.isAuthenticated = false;
+            localStorage.setItem('kal_admin_auth', JSON.stringify(a));
             adminStore.logout();
             setAuthVersion((v) => v + 1);
           }}
           onReturnToMenu={() => {
+            const a = adminStore.getAuth();
+            a.isSessionRevoked = false;
+            a.isAuthenticated = false;
+            localStorage.setItem('kal_admin_auth', JSON.stringify(a));
             adminStore.logout();
             window.location.hash = '';
             setAuthVersion((v) => v + 1);
@@ -257,7 +265,7 @@ export default function App() {
 
     return (
       <AdminLogin
-        key={`admin-login-${authVersion}-${auth.password}`}
+        key={`admin-login-${authVersion}`}
         onLoginSuccess={() => {
           setAuthVersion((v) => v + 1);
         }}
