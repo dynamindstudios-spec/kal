@@ -1231,6 +1231,53 @@ class AdminStoreService {
     localStorage.setItem(STORAGE_KEYS.ADMIN_THEME, themeId);
     this.notify();
   }
+
+  // ----------------------------------------------------
+  // MASTER FACTORY RESET (RESETS DATA TO 0 WITHOUT CHANGING PASSWORD)
+  // ----------------------------------------------------
+  resetAllToDefaults(password) {
+    const cleanPass = String(password || '').trim();
+    const auth = this.getAuth();
+
+    // Validar contraseña (Acepta contraseña activa, o clave maestra de respaldo)
+    const isValid = cleanPass === auth.password || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
+    if (!isValid) {
+      return { success: false, message: 'Clave de autorización incorrecta.' };
+    }
+
+    // PRESERVAR LA CONTRASEÑA ACTUAL Y CREDENCIALES
+    const preservedPassword = auth.password || 'KarolN2026@';
+
+    // 1. Resetear Datos del Menú y Catálogo a valores iniciales
+    localStorage.removeItem(STORAGE_KEYS.DISHES);
+    localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
+    localStorage.removeItem(STORAGE_KEYS.TABLE_CODES);
+    localStorage.removeItem(STORAGE_KEYS.HERO_VIDEOS);
+    localStorage.removeItem(STORAGE_KEYS.SOCIAL_LINKS);
+    localStorage.removeItem(STORAGE_KEYS.INTENSITY_FILTERS);
+    localStorage.removeItem(STORAGE_KEYS.TASTE_FILTERS);
+    localStorage.removeItem(STORAGE_KEYS.VIEW_MODES);
+    localStorage.removeItem(STORAGE_KEYS.SCENES);
+
+    // 2. Resetear Operaciones, Pedidos, Mesas, Arqueos y Reservas a 0
+    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    localStorage.removeItem(STORAGE_KEYS.TABLE_SESSIONS);
+    localStorage.removeItem(STORAGE_KEYS.CASH_REGISTER);
+    localStorage.removeItem(STORAGE_KEYS.CASH_HISTORY);
+    localStorage.removeItem(STORAGE_KEYS.RESERVATIONS);
+
+    // 3. Restaurar sesión autenticada con la MISMA CONTRASEÑA GUARDADA
+    const newAuth = {
+      user: auth.user || '👑 admin',
+      password: preservedPassword,
+      isAuthenticated: true,
+      role: 'admin'
+    };
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(newAuth));
+
+    this.notify();
+    return { success: true, message: 'Dashboard y métricas restablecidos a 0 manteniendo tu contraseña.' };
+  }
 }
 
 export const adminStore = new AdminStoreService();
