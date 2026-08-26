@@ -4,7 +4,7 @@ import { Lock, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 export default function PublicLockoutScreen({ onGoToAdmin }) {
   return (
-    <div className="fixed inset-0 z-[100] min-h-screen bg-gradient-to-b from-[#150404] via-[#200707] to-[#0d0202] text-white flex items-center justify-center p-4 select-none backdrop-blur-2xl">
+    <div className="fixed inset-0 z-[99999] min-h-screen bg-gradient-to-b from-[#150404] via-[#200707] to-[#0d0202] text-white flex items-center justify-center p-4 select-none backdrop-blur-2xl">
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
