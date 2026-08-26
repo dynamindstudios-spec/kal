@@ -36,12 +36,12 @@ export default function App() {
   const [liveCategories, setLiveCategories] = useState(() => adminStore.getCategories());
 
   const isInitiallyAdmin = (window.location.hash || '').toLowerCase().includes('dsb') || (window.location.hash || '').toLowerCase().includes('admin');
-  const [isSiteLocked, setIsSiteLocked] = useState(() => {
-    const subStatus = adminStore.getSubscriptionStatus();
-    const activeModules = adminStore.getModules();
-    return subStatus === 'unpaid' || activeModules.menu === false || activeModules.catalog === false;
-  });
-  const [isLoading, setIsLoading] = useState(() => !isInitiallyAdmin && adminStore.getLoadingScreenEnabled());
+  const initialSubStatus = adminStore.getSubscriptionStatus();
+  const initialModules = adminStore.getModules();
+  const initialLocked = initialSubStatus === 'unpaid' || initialModules.menu === false || initialModules.catalog === false;
+
+  const [isSiteLocked, setIsSiteLocked] = useState(initialLocked);
+  const [isLoading, setIsLoading] = useState(() => !isInitiallyAdmin && !initialLocked && adminStore.getLoadingScreenEnabled());
   const [theme, setTheme] = useState('kall-dark'); // 'kall-dark' | 'kall-neon' | ...
   const [currency, setCurrency] = useState('COP');
   const [lang, setLang] = useState('es');
@@ -87,13 +87,19 @@ export default function App() {
       const activeModules = adminStore.getModules();
       const locked = subStatus === 'unpaid' || activeModules.menu === false || activeModules.catalog === false;
       setIsSiteLocked(locked);
+      if (locked) {
+        setIsLoading(false);
+      }
     };
 
-    // Initial check and fast polling every 3s
+    // Initial check and fast polling every 2s
     adminStore.checkRemoteStatus().then((data) => {
       if (data) {
         const locked = data.status === 'unpaid' || data.modules?.menu === false || data.modules?.catalog === false;
         setIsSiteLocked(locked);
+        if (locked) {
+          setIsLoading(false);
+        }
       }
     });
 
@@ -102,9 +108,12 @@ export default function App() {
         if (data) {
           const locked = data.status === 'unpaid' || data.modules?.menu === false || data.modules?.catalog === false;
           setIsSiteLocked(locked);
+          if (locked) {
+            setIsLoading(false);
+          }
         }
       });
-    }, 3000);
+    }, 2000);
 
     const unsubscribe = adminStore.subscribe(() => {
       handleSyncState();
