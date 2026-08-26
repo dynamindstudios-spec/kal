@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
   LOADING_SCREEN: 'kal_admin_loading_screen',
   ADMIN_THEME: 'kal_admin_theme_color',
   SUBSCRIPTION_STATUS: 'kal_subscription_status',
+  MODULES: 'kal_admin_modules',
 };
 
 export const ADMIN_COLOR_THEMES = [
@@ -311,7 +312,7 @@ class AdminStoreService {
   }
 
   // ----------------------------------------------------
-  // REMOTE SUBSCRIPTION / PAYMENT LOCKOUT STATUS
+  // REMOTE SUBSCRIPTION / PAYMENT LOCKOUT STATUS & MODULES
   // ----------------------------------------------------
   getSubscriptionStatus() {
     try {
@@ -322,7 +323,7 @@ class AdminStoreService {
   }
 
   setSubscriptionStatus(status) {
-    const normalized = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado') ? 'unpaid' : 'active';
+    const normalized = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado' || status === 'locked') ? 'unpaid' : 'active';
     localStorage.setItem(STORAGE_KEYS.SUBSCRIPTION_STATUS, normalized);
     
     const auth = this.getAuth();
@@ -335,22 +336,71 @@ class AdminStoreService {
     return normalized;
   }
 
+  getModules() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.MODULES)) || {
+        reservations: true,
+        booking: true,
+        payments: true,
+        checkout: true,
+        whatsapp_agent: true,
+        whatsapp: true,
+        dashboard: true,
+        admin: true,
+        menu: true,
+        catalog: true
+      };
+    } catch {
+      return {
+        reservations: true,
+        booking: true,
+        payments: true,
+        checkout: true,
+        whatsapp_agent: true,
+        whatsapp: true,
+        dashboard: true,
+        admin: true,
+        menu: true,
+        catalog: true
+      };
+    }
+  }
+
+  setModules(newModules) {
+    const current = this.getModules();
+    const updated = { ...current, ...newModules };
+    localStorage.setItem(STORAGE_KEYS.MODULES, JSON.stringify(updated));
+    this.notify();
+    return updated;
+  }
+
   async checkRemoteStatus(apiBaseUrl = '') {
     try {
-      const url = apiBaseUrl || import.meta.env.VITE_API_URL || '';
-      if (!url) return this.getSubscriptionStatus();
-      const res = await fetch(`${url.replace(/\/$/, '')}/api/admin/subscription-status`);
+      const defaultUrl = 'https://kal-discobar-backend.onrender.com';
+      const url = apiBaseUrl || import.meta.env.VITE_API_URL || defaultUrl;
+      const cleanUrl = url.replace(/\/+$/, '');
+
+      const res = await fetch(`${cleanUrl}/api/bookings/admin/subscription-status`, {
+        cache: 'no-store',
+        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+      });
+
       if (res.ok) {
         const data = await res.json();
-        if (data && data.status) {
-          this.setSubscriptionStatus(data.status);
-          return data.status;
+        if (data) {
+          if (data.status) {
+            this.setSubscriptionStatus(data.status);
+          }
+          if (data.modules) {
+            this.setModules(data.modules);
+          }
+          return data;
         }
       }
-    } catch {
-      // Offline fallback
+    } catch (err) {
+      console.warn('Fallback a almacenamiento local:', err);
     }
-    return this.getSubscriptionStatus();
+    return { status: this.getSubscriptionStatus(), modules: this.getModules() };
   }
 
   changePassword(oldPassword, newPassword) {

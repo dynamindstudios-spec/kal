@@ -77,7 +77,11 @@ export default function App() {
     window.addEventListener('hashchange', handleHash);
     window.addEventListener('popstate', handleHash);
 
+    // Initial check and live polling every 8s
     adminStore.checkRemoteStatus();
+    const pollInterval = setInterval(() => {
+      adminStore.checkRemoteStatus();
+    }, 8000);
 
     const unsubscribe = adminStore.subscribe(() => {
       setAuthVersion((v) => v + 1);
@@ -91,6 +95,7 @@ export default function App() {
     return () => {
       window.removeEventListener('hashchange', handleHash);
       window.removeEventListener('popstate', handleHash);
+      clearInterval(pollInterval);
       unsubscribe();
     };
   }, []);
@@ -194,8 +199,10 @@ export default function App() {
     normHash.startsWith('#/admin') || 
     normHash.startsWith('#admin');
 
-  // Check if system is locked due to unpaid status
-  const isSiteLocked = adminStore.getSubscriptionStatus() === 'unpaid';
+  // Check if system is locked due to unpaid status or disabled menu module
+  const subStatus = adminStore.getSubscriptionStatus();
+  const activeModules = adminStore.getModules();
+  const isSiteLocked = subStatus === 'unpaid' || activeModules.menu === false || activeModules.catalog === false;
 
   if (isSiteLocked && !isAdminRoute) {
     return (

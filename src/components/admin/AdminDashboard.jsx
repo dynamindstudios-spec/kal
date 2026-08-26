@@ -34,7 +34,8 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
 
   const auth = adminStore.getAuth();
   const subStatus = adminStore.getSubscriptionStatus();
-  const isUnpaid = auth.role === 'unpaid' || subStatus === 'unpaid';
+  const activeModules = adminStore.getModules();
+  const isUnpaid = auth.role === 'unpaid' || subStatus === 'unpaid' || activeModules.dashboard === false || activeModules.admin === false;
 
   // ----------------------------------------------------
   // LOCKED PANEL VIEW IF UNPAID
