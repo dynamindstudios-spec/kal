@@ -241,6 +241,7 @@ export default function App() {
     if (auth.isAuthenticated) {
       return (
         <AdminDashboard
+          key={`admin-dashboard-${authVersion}-${auth.password}`}
           onLogout={() => {
             adminStore.logout();
             setAuthVersion((v) => v + 1);
@@ -256,6 +257,7 @@ export default function App() {
 
     return (
       <AdminLogin
+        key={`admin-login-${authVersion}-${auth.password}`}
         onLoginSuccess={() => {
           setAuthVersion((v) => v + 1);
         }}

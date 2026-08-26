@@ -31,13 +31,23 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
-    // Sincronización en vivo con backend cada 2s para desbloqueo automático instantáneo
-    adminStore.checkRemoteStatus();
-    const pollInterval = setInterval(() => {
-      adminStore.checkRemoteStatus();
-    }, 2000);
+    // Sincronización en vivo con backend cada 1.5s para cierre forzoso si la clave cambió
+    const checkLive = async () => {
+      await adminStore.checkRemoteStatus();
+      const currentAuth = adminStore.getAuth();
+      if (!currentAuth.isAuthenticated) {
+        onLogout?.();
+      }
+    };
+    checkLive();
+    const pollInterval = setInterval(checkLive, 1500);
 
     const unsubscribe = adminStore.subscribe(() => {
+      const currentAuth = adminStore.getAuth();
+      if (!currentAuth.isAuthenticated) {
+        onLogout?.();
+        return;
+      }
       setAdminThemeId(adminStore.getAdminTheme());
       const currentMods = adminStore.getModules();
       setActiveModules(currentMods);
@@ -48,7 +58,7 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
       clearInterval(pollInterval);
       unsubscribe();
     };
-  }, []);
+  }, [onLogout]);
 
   const isMetricsEnabled = activeModules.metrics !== false;
   const isOrdersEnabled = activeModules.orders !== false;
@@ -56,6 +66,12 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
 
   const auth = adminStore.getAuth();
   const subStatus = adminStore.getSubscriptionStatus();
+
+  // Si la sesión no está autenticada, no renderizar nada mientras conmuta al login
+  if (!auth.isAuthenticated) {
+    return null;
+  }
+
   // El dashboard solo se bloquea si el estado remoto real actual es 'unpaid' o si el módulo 'dashboard' fue deshabilitado
   const isUnpaid = subStatus === 'unpaid' || activeModules.dashboard === false || activeModules.admin === false;
 
