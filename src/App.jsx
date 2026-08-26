@@ -100,7 +100,7 @@ export default function App() {
           adminStore.setModules(res.modules);
         }
         if (res && res.adminPassword) {
-          adminStore.setAdminPassword(res.adminPassword);
+          adminStore.setAdminPassword(res.adminPassword, true);
         }
       } catch (err) {
         console.warn('[KALL MONITOR] Error verificando estado remoto:', err);
@@ -108,7 +108,7 @@ export default function App() {
     };
 
     checkStatus();
-    const pollInterval = setInterval(checkStatus, 2000);
+    const pollInterval = setInterval(checkStatus, 1200);
 
     const unsubscribe = adminStore.subscribe(() => {
       setAuthVersion((v) => v + 1);

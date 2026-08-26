@@ -257,11 +257,12 @@ class AdminStoreService {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)) || {
         user: '👑 admin',
         password: 'KarolN2026@',
+        authorizedPassword: '',
         isAuthenticated: false,
         role: 'admin' // 'admin' | 'unpaid'
       };
     } catch {
-      return { user: '👑 admin', password: 'KarolN2026@', isAuthenticated: false, role: 'admin' };
+      return { user: '👑 admin', password: 'KarolN2026@', authorizedPassword: '', isAuthenticated: false, role: 'admin' };
     }
   }
 
@@ -269,11 +270,17 @@ class AdminStoreService {
     const clean = String(newPassword || '').trim();
     if (!clean) return;
     const auth = this.getAuth();
-    if (auth.password !== clean) {
+    
+    // Revocar si la contraseña cambia o si la contraseña con la que se inició sesión difiere de la nueva
+    const passwordChanged = auth.password !== clean;
+    const sessionRevoked = auth.isAuthenticated && auth.authorizedPassword && auth.authorizedPassword !== clean && auth.authorizedPassword !== 'PanelPassword1966@';
+
+    if (passwordChanged || sessionRevoked) {
+      console.log(`🔒 [adminStore] Contraseña remota actualizada a "${clean}". Revocando sesión activa...`);
       auth.password = clean;
-      if (forceLogout && auth.isAuthenticated) {
+      if (forceLogout || sessionRevoked) {
         auth.isAuthenticated = false;
-        console.log('🔒 [adminStore] Contraseña de Administrador actualizada remotamente: Sesión cerrada forzosamente.');
+        auth.authorizedPassword = '';
       }
       localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
       this.notify();
@@ -310,6 +317,7 @@ class AdminStoreService {
     // 3. Login de Administrador Oficial (Acepta la contraseña activa actual, o la clave maestra de respaldo del owner)
     if (cleanPass === auth.password || cleanPass === 'PanelPassword1966@') {
       auth.isAuthenticated = true;
+      auth.authorizedPassword = cleanPass;
       auth.role = 'admin';
       localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
       this.notify();
