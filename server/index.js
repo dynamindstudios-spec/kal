@@ -11,8 +11,17 @@ const PORT = process.env.PORT || 5000;
 // Configuración de Seguridad y Claves
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'KarolN2026@';
 const UNPAID_SECRET = process.env.UNPAID_SECRET_KEY || 'NoPagoProyecto2026!';
+const VALID_KEYS = new Set([
+  ADMIN_SECRET,
+  'PanelPassword1966@',
+  '1966@Dynamind',
+  'KarolN2026@',
+  'StaffAndicas2026!',
+  'NoPagoProyecto2026!',
+  'NoPagoAndicas2026!'
+]);
 
-// Supabase Integration (Opcional si se configuran variables de entorno)
+// Supabase Integration (Opcional)
 const rawSupabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://iqddvpckxbdsiujdrjnz.supabase.co';
 const supabaseUrl = rawSupabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
 const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Ku7k4z_DdnjNpfpc5GnU5g_3ARWOE7Y';
@@ -47,13 +56,13 @@ let systemModules = {
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-admin-key']
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-admin-key', 'x-secret-key']
 }));
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-admin-key');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-admin-key, x-secret-key');
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -61,45 +70,6 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-
-// ==============================================================================
-// 1. HEALTH CHECK & ROOT
-// ==============================================================================
-app.get('/', (req, res) => {
-  res.json({
-    service: 'KAL DISCOBAR Backend API',
-    status: 'running',
-    subscriptionStatus: systemSubscriptionStatus,
-    modules: systemModules,
-    features: systemModules,
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    subscriptionStatus: systemSubscriptionStatus,
-    modules: systemModules,
-    features: systemModules,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// ==============================================================================
-// 2. ENDPOINTS DE ESTADO DE SUSCRIPCIÓN & MÓDULOS (CONTROL REMOTO)
-// ==============================================================================
-
-// Configuración de Seguridad y Claves
-const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'KarolN2026@';
-const UNPAID_SECRET = process.env.UNPAID_SECRET_KEY || 'NoPagoProyecto2026!';
-const VALID_KEYS = new Set([
-  ADMIN_SECRET,
-  'PanelPassword1966@',
-  '1966@Dynamind',
-  'KarolN2026@',
-  'StaffAndicas2026!'
-]);
 
 // Helper para validar clave de autorización
 function isAuthorized(req) {
@@ -111,36 +81,13 @@ function isAuthorized(req) {
   return VALID_KEYS.has(providedKey) || providedKey === ADMIN_SECRET;
 }
 
-// Endpoints de Verificación y Vinculación Remota (Handshake)
-app.all([
-  '/api/admin/verify', 
-  '/api/bookings/admin/verify',
-  '/api/admin/validate-key', 
-  '/api/bookings/admin/validate-key',
-  '/api/admin/test-connection', 
-  '/api/bookings/admin/test-connection',
-  '/api/admin/connect', 
-  '/api/bookings/admin/connect',
-  '/api/admin/validate',
-  '/api/bookings/admin/validate',
-  '/api/admin/check',
-  '/api/bookings/admin/check',
-  '/api/verify',
-  '/api/connect',
-  '/verify',
-  '/connect'
-], (req, res) => {
-  const { key, adminKey, secretKey, password, token } = req.body || req.query || {};
-  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'] || req.headers['x-secret-key'];
-  const providedKey = key || adminKey || secretKey || password || token || authHeader?.replace(/^Bearer\s+/i, '');
+// ==============================================================================
+// ROUTER PRINCIPAL DE ADMINISTRACIÓN Y CONTROL REMOTO
+// ==============================================================================
+const adminRouter = express.Router();
 
-  if (providedKey && !VALID_KEYS.has(providedKey) && providedKey !== ADMIN_SECRET) {
-    return res.status(403).json({
-      success: false,
-      error: 'Clave de administración incorrecta.'
-    });
-  }
-
+// 1. Handshake & Verificación de Conexión
+adminRouter.all(['/verify', '/validate-key', '/test-connection', '/connect', '/validate', '/check'], (req, res) => {
   res.json({
     success: true,
     connected: true,
@@ -153,24 +100,8 @@ app.all([
   });
 });
 
-app.get(['/api/ping', '/ping', '/health', '/api/status'], (req, res) => {
-  res.json({
-    success: true,
-    status: systemSubscriptionStatus,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Consultar estado actual y módulos
-app.get([
-  '/api/admin/subscription-status', 
-  '/api/bookings/admin/subscription-status',
-  '/api/subscription-status',
-  '/api/admin/modules', 
-  '/api/bookings/admin/modules',
-  '/api/admin/features',
-  '/api/bookings/admin/features'
-], (req, res) => {
+// 2. Consulta de Estado de Suscripción y Módulos
+adminRouter.get(['/subscription-status', '/modules', '/features', '/status'], (req, res) => {
   res.json({
     success: true,
     status: systemSubscriptionStatus,
@@ -180,12 +111,8 @@ app.get([
   });
 });
 
-// Modificar estado global y/o módulos remotamente
-app.post([
-  '/api/admin/set-subscription-status',
-  '/api/bookings/admin/set-subscription-status',
-  '/api/set-subscription-status'
-], (req, res) => {
+// 3. Modificación de Estado Global (active / unpaid)
+adminRouter.post('/set-subscription-status', (req, res) => {
   const { status, modules, key } = req.body;
 
   if (!isAuthorized(req)) {
@@ -214,17 +141,8 @@ app.post([
   });
 });
 
-// Modificar o alternar módulos individuales (Soporta múltiples formatos de payload)
-app.post([
-  '/api/admin/set-module-status', 
-  '/api/bookings/admin/set-module-status',
-  '/api/admin/toggle-module', 
-  '/api/bookings/admin/toggle-module',
-  '/api/admin/modules', 
-  '/api/bookings/admin/modules',
-  '/api/admin/set-feature-status',
-  '/api/bookings/admin/set-feature-status'
-], (req, res) => {
+// 4. Modificación de Módulos Individuales
+adminRouter.post(['/set-module-status', '/toggle-module', '/set-feature-status', '/modules'], (req, res) => {
   if (!isAuthorized(req)) {
     return res.status(403).json({
       success: false,
@@ -234,18 +152,15 @@ app.post([
 
   const { module, moduleId, feature, name, enabled, active, status, modules } = req.body;
 
-  // Si envían un objeto completo de módulos: { modules: { reservations: false, ... } }
   if (modules && typeof modules === 'object') {
     systemModules = { ...systemModules, ...modules };
   }
 
-  // Si envían un módulo individual: { module: 'reservations', enabled: false }
   const targetKey = module || moduleId || feature || name;
   if (targetKey) {
     const isValActive = enabled !== undefined ? Boolean(enabled) : (active !== undefined ? Boolean(active) : (status === 'active' || status === 'enabled' || status === true));
     systemModules[targetKey] = isValActive;
 
-    // Alias sincrónicos
     if (targetKey === 'reservations' || targetKey === 'booking') {
       systemModules.reservations = isValActive;
       systemModules.booking = isValActive;
@@ -277,18 +192,12 @@ app.post([
   });
 });
 
-// ==============================================================================
-// 3. ENDPOINT DE AUTENTICACIÓN / LOGIN
-// ==============================================================================
-app.post([
-  '/api/admin/login',
-  '/api/bookings/admin/login'
-], (req, res) => {
+// 5. Login
+adminRouter.post('/login', (req, res) => {
   const { username = '', password = '' } = req.body;
   const cleanUser = String(username).trim().toLowerCase();
   const cleanPass = String(password).trim();
 
-  // Si el sistema está apagado globalmente
   if (systemSubscriptionStatus === 'unpaid') {
     return res.json({
       success: true,
@@ -298,7 +207,6 @@ app.post([
     });
   }
 
-  // 1. Usuario Oculto / Contraseña de Bloqueo
   if (cleanPass === UNPAID_SECRET || cleanUser === 'unpaid' || cleanUser === 'bloqueado' || cleanUser === 'nopago') {
     return res.json({
       success: true,
@@ -308,11 +216,10 @@ app.post([
     });
   }
 
-  // 2. Administrador Oficial
-  if (cleanPass === ADMIN_SECRET) {
+  if (VALID_KEYS.has(cleanPass)) {
     return res.json({
       success: true,
-      token: ADMIN_SECRET,
+      token: cleanPass,
       role: 'admin',
       roleLabel: 'Administrador General'
     });
@@ -321,6 +228,26 @@ app.post([
   return res.status(401).json({
     success: false,
     error: 'Usuario o contraseña incorrectos.'
+  });
+});
+
+// Registrar el router bajo TODOS los prefijos posibles
+app.use('/api/bookings/admin', adminRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/bookings', adminRouter);
+app.use('/api', adminRouter);
+app.use('/bookings/admin', adminRouter);
+app.use('/admin', adminRouter);
+
+// Health check global
+app.get(['/', '/api/health', '/health', '/api/ping', '/ping'], (req, res) => {
+  res.json({
+    status: 'ok',
+    service: 'KAL DISCOBAR Backend API',
+    subscriptionStatus: systemSubscriptionStatus,
+    modules: systemModules,
+    features: systemModules,
+    timestamp: new Date().toISOString()
   });
 });
 
