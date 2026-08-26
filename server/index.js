@@ -29,6 +29,20 @@ if (supabaseUrl && supabaseKey) {
 // Estado Global de la Suscripción ('active' o 'unpaid')
 let systemSubscriptionStatus = process.env.INITIAL_SUBSCRIPTION_STATUS || 'active';
 
+// Estado de Módulos Remotos
+let systemModules = {
+  reservations: true,   // Motor de Reservas & Calendario
+  booking: true,
+  payments: true,       // Pasarela de Pagos & Depósitos
+  checkout: true,
+  whatsapp_agent: true, // Agente IA de WhatsApp
+  whatsapp: true,
+  dashboard: true,      // Dashboard del Cliente (/dsb)
+  admin: true,
+  menu: true,           // Catálogo & Menú Digital
+  catalog: true
+};
+
 // Middleware CORS Ultra-Permisivo
 app.use(cors({
   origin: '*',
@@ -56,6 +70,8 @@ app.get('/', (req, res) => {
     service: 'KAL DISCOBAR Backend API',
     status: 'running',
     subscriptionStatus: systemSubscriptionStatus,
+    modules: systemModules,
+    features: systemModules,
     timestamp: new Date().toISOString()
   });
 });
@@ -64,45 +80,116 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     subscriptionStatus: systemSubscriptionStatus,
+    modules: systemModules,
+    features: systemModules,
     timestamp: new Date().toISOString()
   });
 });
 
 // ==============================================================================
-// 2. ENDPOINTS DE ESTADO DE SUSCRIPCIÓN (CONTROL REMOTO)
+// 2. ENDPOINTS DE ESTADO DE SUSCRIPCIÓN & MÓDULOS (CONTROL REMOTO)
 // ==============================================================================
 
-// Consultar estado actual (Público para el Frontend y el Menú)
-app.get('/api/admin/subscription-status', (req, res) => {
+// Helper para validar clave de autorización
+function isAuthorized(req) {
+  const { key } = req.body || {};
+  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'];
+  const providedKey = key || authHeader?.replace(/^Bearer\s+/i, '');
+  return providedKey === ADMIN_SECRET;
+}
+
+// Consultar estado actual y módulos
+app.get(['/api/admin/subscription-status', '/api/admin/modules', '/api/admin/features'], (req, res) => {
   res.json({
     success: true,
     status: systemSubscriptionStatus,
+    modules: systemModules,
+    features: systemModules,
     message: systemSubscriptionStatus === 'unpaid' ? 'No se registró pago.' : 'Servicio activo.'
   });
 });
 
-// Modificar estado remotamente (Requiere clave maestra ADMIN_SECRET)
+// Modificar estado global y/o módulos remotamente
 app.post('/api/admin/set-subscription-status', (req, res) => {
-  const { status, key } = req.body;
-  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'];
+  const { status, modules, key } = req.body;
 
-  const providedKey = key || authHeader?.replace(/^Bearer\s+/i, '');
-
-  if (providedKey !== ADMIN_SECRET) {
+  if (!isAuthorized(req)) {
     return res.status(403).json({
       success: false,
       error: 'No autorizado. Clave de administración incorrecta.'
     });
   }
 
-  systemSubscriptionStatus = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado') ? 'unpaid' : 'active';
+  if (status) {
+    systemSubscriptionStatus = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado') ? 'unpaid' : 'active';
+  }
+
+  if (modules && typeof modules === 'object') {
+    systemModules = { ...systemModules, ...modules };
+  }
 
   res.json({
     success: true,
     status: systemSubscriptionStatus,
+    modules: systemModules,
+    features: systemModules,
     message: systemSubscriptionStatus === 'unpaid'
       ? 'Sistema bloqueado remotamente por falta de pago.'
       : 'Servicio reactivado exitosamente.'
+  });
+});
+
+// Modificar o alternar módulos individuales (Soporta múltiples formatos de payload)
+app.post(['/api/admin/set-module-status', '/api/admin/toggle-module', '/api/admin/modules', '/api/admin/set-feature-status'], (req, res) => {
+  if (!isAuthorized(req)) {
+    return res.status(403).json({
+      success: false,
+      error: 'No autorizado. Clave de administración incorrecta.'
+    });
+  }
+
+  const { module, moduleId, feature, name, enabled, active, status, modules } = req.body;
+
+  // Si envían un objeto completo de módulos: { modules: { reservations: false, ... } }
+  if (modules && typeof modules === 'object') {
+    systemModules = { ...systemModules, ...modules };
+  }
+
+  // Si envían un módulo individual: { module: 'reservations', enabled: false }
+  const targetKey = module || moduleId || feature || name;
+  if (targetKey) {
+    const isValActive = enabled !== undefined ? Boolean(enabled) : (active !== undefined ? Boolean(active) : (status === 'active' || status === 'enabled' || status === true));
+    systemModules[targetKey] = isValActive;
+
+    // Alias sincrónicos
+    if (targetKey === 'reservations' || targetKey === 'booking') {
+      systemModules.reservations = isValActive;
+      systemModules.booking = isValActive;
+    }
+    if (targetKey === 'payments' || targetKey === 'checkout') {
+      systemModules.payments = isValActive;
+      systemModules.checkout = isValActive;
+    }
+    if (targetKey === 'whatsapp_agent' || targetKey === 'whatsapp') {
+      systemModules.whatsapp_agent = isValActive;
+      systemModules.whatsapp = isValActive;
+    }
+    if (targetKey === 'dashboard' || targetKey === 'admin') {
+      systemModules.dashboard = isValActive;
+      systemModules.admin = isValActive;
+    }
+    if (targetKey === 'menu' || targetKey === 'catalog') {
+      systemModules.menu = isValActive;
+      systemModules.catalog = isValActive;
+    }
+  }
+
+  res.json({
+    success: true,
+    status: systemSubscriptionStatus,
+    modules: systemModules,
+    features: systemModules,
+    message: 'Módulos actualizados con éxito.'
   });
 });
 
