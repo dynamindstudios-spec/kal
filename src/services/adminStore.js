@@ -330,8 +330,12 @@ class AdminStoreService {
     const auth = this.getAuth();
     if (normalized === 'unpaid') {
       auth.role = 'unpaid';
-      localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
+    } else {
+      if (auth.role === 'unpaid') {
+        auth.role = 'admin';
+      }
     }
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
     
     this.notify();
     return normalized;

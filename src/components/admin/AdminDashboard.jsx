@@ -27,16 +27,25 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   const [adminThemeId, setAdminThemeId] = useState(() => adminStore.getAdminTheme());
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Live Clock & Theme / Modules Sync
+  // Live Clock & Theme / Modules / Remote Status Sync
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    
+    // Sincronización en vivo con backend cada 2s para desbloqueo automático instantáneo
+    adminStore.checkRemoteStatus();
+    const pollInterval = setInterval(() => {
+      adminStore.checkRemoteStatus();
+    }, 2000);
+
     const unsubscribe = adminStore.subscribe(() => {
       setAdminThemeId(adminStore.getAdminTheme());
       const currentMods = adminStore.getModules();
       setActiveModules(currentMods);
     });
+
     return () => {
       clearInterval(timer);
+      clearInterval(pollInterval);
       unsubscribe();
     };
   }, []);
@@ -61,7 +70,8 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
 
   const auth = adminStore.getAuth();
   const subStatus = adminStore.getSubscriptionStatus();
-  const isUnpaid = auth.role === 'unpaid' || subStatus === 'unpaid' || activeModules.dashboard === false || activeModules.admin === false;
+  // El dashboard solo se bloquea si el estado remoto real actual es 'unpaid' o si el módulo 'dashboard' fue deshabilitado
+  const isUnpaid = subStatus === 'unpaid' || activeModules.dashboard === false || activeModules.admin === false;
 
   // ----------------------------------------------------
   // LOCKED PANEL VIEW IF UNPAID
