@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
@@ -10,6 +11,20 @@ const PORT = process.env.PORT || 5000;
 // Configuración de Seguridad y Claves
 const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'KarolN2026@';
 const UNPAID_SECRET = process.env.UNPAID_SECRET_KEY || 'NoPagoProyecto2026!';
+
+// Supabase Integration (Opcional si se configuran variables de entorno)
+const rawSupabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://iqddvpckxbdsiujdrjnz.supabase.co';
+const supabaseUrl = rawSupabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Ku7k4z_DdnjNpfpc5GnU5g_3ARWOE7Y';
+
+let supabase = null;
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } catch (err) {
+    console.error('Error initializing Supabase client on backend:', err.message);
+  }
+}
 
 // Estado Global de la Suscripción ('active' o 'unpaid')
 let systemSubscriptionStatus = process.env.INITIAL_SUBSCRIPTION_STATUS || 'active';
