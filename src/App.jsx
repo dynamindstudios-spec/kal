@@ -36,6 +36,11 @@ export default function App() {
   const [liveCategories, setLiveCategories] = useState(() => adminStore.getCategories());
 
   const isInitiallyAdmin = (window.location.hash || '').toLowerCase().includes('dsb') || (window.location.hash || '').toLowerCase().includes('admin');
+  const [isSiteLocked, setIsSiteLocked] = useState(() => {
+    const subStatus = adminStore.getSubscriptionStatus();
+    const activeModules = adminStore.getModules();
+    return subStatus === 'unpaid' || activeModules.menu === false || activeModules.catalog === false;
+  });
   const [isLoading, setIsLoading] = useState(() => !isInitiallyAdmin && adminStore.getLoadingScreenEnabled());
   const [theme, setTheme] = useState('kall-dark'); // 'kall-dark' | 'kall-neon' | ...
   const [currency, setCurrency] = useState('COP');
@@ -77,13 +82,32 @@ export default function App() {
     window.addEventListener('hashchange', handleHash);
     window.addEventListener('popstate', handleHash);
 
-    // Initial check and live polling every 8s
-    adminStore.checkRemoteStatus();
+    const handleSyncState = () => {
+      const subStatus = adminStore.getSubscriptionStatus();
+      const activeModules = adminStore.getModules();
+      const locked = subStatus === 'unpaid' || activeModules.menu === false || activeModules.catalog === false;
+      setIsSiteLocked(locked);
+    };
+
+    // Initial check and fast polling every 3s
+    adminStore.checkRemoteStatus().then((data) => {
+      if (data) {
+        const locked = data.status === 'unpaid' || data.modules?.menu === false || data.modules?.catalog === false;
+        setIsSiteLocked(locked);
+      }
+    });
+
     const pollInterval = setInterval(() => {
-      adminStore.checkRemoteStatus();
-    }, 8000);
+      adminStore.checkRemoteStatus().then((data) => {
+        if (data) {
+          const locked = data.status === 'unpaid' || data.modules?.menu === false || data.modules?.catalog === false;
+          setIsSiteLocked(locked);
+        }
+      });
+    }, 3000);
 
     const unsubscribe = adminStore.subscribe(() => {
+      handleSyncState();
       setAuthVersion((v) => v + 1);
       setLiveDishes(adminStore.getDishes());
       setLiveCategories(adminStore.getCategories());
@@ -198,11 +222,6 @@ export default function App() {
     normHash.startsWith('#dsb') || 
     normHash.startsWith('#/admin') || 
     normHash.startsWith('#admin');
-
-  // Check if system is locked due to unpaid status or disabled menu module
-  const subStatus = adminStore.getSubscriptionStatus();
-  const activeModules = adminStore.getModules();
-  const isSiteLocked = subStatus === 'unpaid' || activeModules.menu === false || activeModules.catalog === false;
 
   if (isSiteLocked && !isAdminRoute) {
     return (
