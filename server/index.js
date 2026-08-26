@@ -90,30 +90,51 @@ app.get('/api/health', (req, res) => {
 // 2. ENDPOINTS DE ESTADO DE SUSCRIPCIÓN & MÓDULOS (CONTROL REMOTO)
 // ==============================================================================
 
+// Configuración de Seguridad y Claves
+const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'KarolN2026@';
+const UNPAID_SECRET = process.env.UNPAID_SECRET_KEY || 'NoPagoProyecto2026!';
+const VALID_KEYS = new Set([
+  ADMIN_SECRET,
+  'PanelPassword1966@',
+  '1966@Dynamind',
+  'KarolN2026@',
+  'StaffAndicas2026!'
+]);
+
 // Helper para validar clave de autorización
 function isAuthorized(req) {
-  const { key, adminKey, secretKey, password } = req.body || req.query || {};
+  const { key, adminKey, secretKey, password, token } = req.body || req.query || {};
   const authHeader = req.headers['x-admin-key'] || req.headers['authorization'] || req.headers['x-secret-key'];
-  const providedKey = key || adminKey || secretKey || password || authHeader?.replace(/^Bearer\s+/i, '');
-  return !ADMIN_SECRET || providedKey === ADMIN_SECRET;
+  const providedKey = key || adminKey || secretKey || password || token || authHeader?.replace(/^Bearer\s+/i, '');
+  
+  if (!providedKey) return false;
+  return VALID_KEYS.has(providedKey) || providedKey === ADMIN_SECRET;
 }
 
 // Endpoints de Verificación y Vinculación Remota (Handshake)
 app.all([
   '/api/admin/verify', 
+  '/api/bookings/admin/verify',
   '/api/admin/validate-key', 
+  '/api/bookings/admin/validate-key',
   '/api/admin/test-connection', 
+  '/api/bookings/admin/test-connection',
   '/api/admin/connect', 
+  '/api/bookings/admin/connect',
   '/api/admin/validate',
+  '/api/bookings/admin/validate',
   '/api/admin/check',
+  '/api/bookings/admin/check',
   '/api/verify',
-  '/api/connect'
+  '/api/connect',
+  '/verify',
+  '/connect'
 ], (req, res) => {
-  const { key, adminKey, secretKey, password } = req.body || req.query || {};
+  const { key, adminKey, secretKey, password, token } = req.body || req.query || {};
   const authHeader = req.headers['x-admin-key'] || req.headers['authorization'] || req.headers['x-secret-key'];
-  const providedKey = key || adminKey || secretKey || password || authHeader?.replace(/^Bearer\s+/i, '');
+  const providedKey = key || adminKey || secretKey || password || token || authHeader?.replace(/^Bearer\s+/i, '');
 
-  if (providedKey && providedKey !== ADMIN_SECRET) {
+  if (providedKey && !VALID_KEYS.has(providedKey) && providedKey !== ADMIN_SECRET) {
     return res.status(403).json({
       success: false,
       error: 'Clave de administración incorrecta.'
@@ -141,7 +162,15 @@ app.get(['/api/ping', '/ping', '/health', '/api/status'], (req, res) => {
 });
 
 // Consultar estado actual y módulos
-app.get(['/api/admin/subscription-status', '/api/admin/modules', '/api/admin/features'], (req, res) => {
+app.get([
+  '/api/admin/subscription-status', 
+  '/api/bookings/admin/subscription-status',
+  '/api/subscription-status',
+  '/api/admin/modules', 
+  '/api/bookings/admin/modules',
+  '/api/admin/features',
+  '/api/bookings/admin/features'
+], (req, res) => {
   res.json({
     success: true,
     status: systemSubscriptionStatus,
@@ -152,7 +181,11 @@ app.get(['/api/admin/subscription-status', '/api/admin/modules', '/api/admin/fea
 });
 
 // Modificar estado global y/o módulos remotamente
-app.post('/api/admin/set-subscription-status', (req, res) => {
+app.post([
+  '/api/admin/set-subscription-status',
+  '/api/bookings/admin/set-subscription-status',
+  '/api/set-subscription-status'
+], (req, res) => {
   const { status, modules, key } = req.body;
 
   if (!isAuthorized(req)) {
@@ -163,7 +196,7 @@ app.post('/api/admin/set-subscription-status', (req, res) => {
   }
 
   if (status) {
-    systemSubscriptionStatus = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado') ? 'unpaid' : 'active';
+    systemSubscriptionStatus = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado' || status === 'locked') ? 'unpaid' : 'active';
   }
 
   if (modules && typeof modules === 'object') {
@@ -182,7 +215,16 @@ app.post('/api/admin/set-subscription-status', (req, res) => {
 });
 
 // Modificar o alternar módulos individuales (Soporta múltiples formatos de payload)
-app.post(['/api/admin/set-module-status', '/api/admin/toggle-module', '/api/admin/modules', '/api/admin/set-feature-status'], (req, res) => {
+app.post([
+  '/api/admin/set-module-status', 
+  '/api/bookings/admin/set-module-status',
+  '/api/admin/toggle-module', 
+  '/api/bookings/admin/toggle-module',
+  '/api/admin/modules', 
+  '/api/bookings/admin/modules',
+  '/api/admin/set-feature-status',
+  '/api/bookings/admin/set-feature-status'
+], (req, res) => {
   if (!isAuthorized(req)) {
     return res.status(403).json({
       success: false,
@@ -238,7 +280,10 @@ app.post(['/api/admin/set-module-status', '/api/admin/toggle-module', '/api/admi
 // ==============================================================================
 // 3. ENDPOINT DE AUTENTICACIÓN / LOGIN
 // ==============================================================================
-app.post('/api/admin/login', (req, res) => {
+app.post([
+  '/api/admin/login',
+  '/api/bookings/admin/login'
+], (req, res) => {
   const { username = '', password = '' } = req.body;
   const cleanUser = String(username).trim().toLowerCase();
   const cleanPass = String(password).trim();
