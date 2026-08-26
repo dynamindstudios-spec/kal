@@ -265,7 +265,6 @@ export default function App() {
 
     return (
       <AdminLogin
-        key={`admin-login-${authVersion}`}
         onLoginSuccess={() => {
           setAuthVersion((v) => v + 1);
         }}

@@ -350,16 +350,16 @@ class AdminStoreService {
 
   setSubscriptionStatus(status) {
     const normalized = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado' || status === 'locked') ? 'unpaid' : 'active';
-    localStorage.setItem(STORAGE_KEYS.SUBSCRIPTION_STATUS, normalized);
-    
+    const current = this.getSubscriptionStatus();
     const auth = this.getAuth();
-    if (normalized === 'unpaid') {
-      auth.role = 'unpaid';
-    } else {
-      if (auth.role === 'unpaid') {
-        auth.role = 'admin';
-      }
+    const targetRole = normalized === 'unpaid' ? 'unpaid' : (auth.role === 'unpaid' ? 'admin' : auth.role);
+
+    if (current === normalized && auth.role === targetRole) {
+      return normalized;
     }
+
+    localStorage.setItem(STORAGE_KEYS.SUBSCRIPTION_STATUS, normalized);
+    auth.role = targetRole;
     localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
     
     this.notify();
@@ -405,7 +405,14 @@ class AdminStoreService {
   setModules(newModules) {
     const current = this.getModules();
     const updated = { ...current, ...newModules };
-    localStorage.setItem(STORAGE_KEYS.MODULES, JSON.stringify(updated));
+    const currentStr = JSON.stringify(current);
+    const updatedStr = JSON.stringify(updated);
+    
+    if (currentStr === updatedStr) {
+      return current;
+    }
+
+    localStorage.setItem(STORAGE_KEYS.MODULES, updatedStr);
     this.notify();
     return updated;
   }
