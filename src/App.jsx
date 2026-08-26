@@ -91,7 +91,10 @@ export default function App() {
         console.log(`🔒 [KALL MONITOR] Estado remoto: ${res?.status || 'desconocido'} | Bloqueado: ${locked}`);
         setIsSiteLocked(Boolean(locked));
         if (locked) {
+          adminStore.setSubscriptionStatus('unpaid');
           setIsLoading(false);
+        } else if (res?.status === 'active') {
+          adminStore.setSubscriptionStatus('active');
         }
       } catch (err) {
         console.warn('[KALL MONITOR] Error verificando estado remoto:', err);
