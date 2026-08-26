@@ -386,12 +386,48 @@ class AdminStoreService {
   }
 
   async checkRemoteStatus(apiBaseUrl = '') {
+    // Tier 1: Consultar a Supabase PostgreSQL Cloud directamente (< 150ms)
+    try {
+      if (supabase) {
+        const [globalRes, modulesRes] = await Promise.allSettled([
+          supabase.from('system_settings').select('subscription_status').eq('id', 'global').single(),
+          supabase.from('system_settings').select('subscription_status').eq('id', 'modules').maybeSingle()
+        ]);
+
+        let dbStatus = 'active';
+        if (globalRes.status === 'fulfilled' && globalRes.value.data) {
+          dbStatus = globalRes.value.data.subscription_status || 'active';
+          this.setSubscriptionStatus(dbStatus);
+        }
+
+        let parsedMods = null;
+        if (modulesRes.status === 'fulfilled' && modulesRes.value.data?.subscription_status) {
+          try {
+            parsedMods = JSON.parse(modulesRes.value.data.subscription_status);
+            if (parsedMods && typeof parsedMods === 'object') {
+              this.setModules(parsedMods);
+            }
+          } catch {}
+        }
+
+        if (dbStatus === 'unpaid') {
+          this.setModules({ menu: false, catalog: false, dashboard: false, admin: false });
+        }
+
+        if (globalRes.status === 'fulfilled' || modulesRes.status === 'fulfilled') {
+          return { status: dbStatus, modules: this.getModules() };
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Fallback a Backend en Render:', dbErr);
+    }
+
+    // Tier 2: Consultar a Backend en Render
     try {
       const defaultUrl = 'https://kal-discobar-backend.onrender.com';
       const url = apiBaseUrl || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || defaultUrl;
       const cleanUrl = url.replace(/\/+$/, '');
 
-      // Tier 1: Consultar a Backend en Render
       const res = await fetch(`${cleanUrl}/api/bookings/admin/subscription-status`, {
         cache: 'no-store',
         headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
@@ -410,30 +446,7 @@ class AdminStoreService {
         }
       }
     } catch (err) {
-      console.warn('Fallback a Supabase Cloud:', err);
-    }
-
-    // Tier 2: Consultar a Supabase PostgreSQL Cloud directamente
-    try {
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('system_settings')
-          .select('subscription_status')
-          .eq('id', 'global')
-          .single();
-
-        if (!error && data) {
-          if (data.subscription_status) {
-            this.setSubscriptionStatus(data.subscription_status);
-            if (data.subscription_status === 'unpaid') {
-              this.setModules({ menu: false, catalog: false, dashboard: false, admin: false });
-            }
-          }
-          return { status: data.subscription_status, modules: this.getModules() };
-        }
-      }
-    } catch (dbErr) {
-      console.warn('Fallback a almacenamiento local:', dbErr);
+      console.warn('Fallback a almacenamiento local:', err);
     }
 
     return { status: this.getSubscriptionStatus(), modules: this.getModules() };

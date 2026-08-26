@@ -263,6 +263,19 @@ adminRouter.all(['/set-module-status', '/toggle-module', '/set-feature-status', 
     }
   }
 
+  // Persistir en Supabase Cloud si está disponible
+  if (supabase) {
+    try {
+      await supabase.from('system_settings').upsert({
+        id: 'modules',
+        subscription_status: JSON.stringify(systemModules),
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn('Nota Supabase system_settings modules:', e.message);
+    }
+  }
+
   return res.json({
     success: true,
     status: systemSubscriptionStatus,
