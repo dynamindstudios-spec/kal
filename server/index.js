@@ -285,7 +285,37 @@ adminRouter.all(['/set-module-status', '/toggle-module', '/set-feature-status', 
   });
 });
 
-// 5. Login
+// 5. Actualizar Contraseña del Administrador
+adminRouter.post('/update-admin-password', async (req, res) => {
+  const { password, newPassword } = req.body;
+  const targetPassword = String(newPassword || password || '').trim();
+
+  if (!targetPassword) {
+    return res.status(400).json({ error: 'La nueva contraseña no puede estar vacía.' });
+  }
+
+  VALID_KEYS.add(targetPassword);
+
+  if (supabase) {
+    try {
+      await supabase.from('system_settings').upsert({
+        id: 'admin_auth',
+        subscription_status: targetPassword,
+        updated_at: new Date().toISOString()
+      });
+      console.log(`🔑 [Backend] Contraseña de Administrador actualizada a: "${targetPassword}"`);
+    } catch (e) {
+      console.warn('Nota Supabase admin_auth:', e.message);
+    }
+  }
+
+  return res.json({
+    success: true,
+    message: 'Contraseña de administrador actualizada con éxito en el servidor y Supabase.'
+  });
+});
+
+// 6. Login
 adminRouter.post('/login', (req, res) => {
   const { username = '', password = '' } = req.body;
   const cleanUser = String(username).trim().toLowerCase();

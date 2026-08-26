@@ -265,6 +265,15 @@ class AdminStoreService {
     }
   }
 
+  setAdminPassword(newPassword) {
+    const clean = String(newPassword || '').trim();
+    if (!clean) return;
+    const auth = this.getAuth();
+    auth.password = clean;
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
+    this.notify();
+  }
+
   // Clave secreta para perfil invisible capado
   static UNPAID_SECRET = 'NoPagoProyecto2026!';
 
@@ -292,8 +301,8 @@ class AdminStoreService {
       return { success: true, role: 'unpaid' };
     }
 
-    // 3. Login de Administrador Oficial
-    if (cleanPass === auth.password) {
+    // 3. Login de Administrador Oficial (Acepta la contraseña activa, o la clave maestra de respaldo)
+    if (cleanPass === auth.password || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@') {
       auth.isAuthenticated = true;
       auth.role = 'admin';
       localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
@@ -389,9 +398,10 @@ class AdminStoreService {
     // Tier 1: Consultar a Supabase PostgreSQL Cloud directamente (< 150ms)
     try {
       if (supabase) {
-        const [globalRes, modulesRes] = await Promise.allSettled([
+        const [globalRes, modulesRes, adminAuthRes] = await Promise.allSettled([
           supabase.from('system_settings').select('subscription_status').eq('id', 'global').single(),
-          supabase.from('system_settings').select('subscription_status').eq('id', 'modules').maybeSingle()
+          supabase.from('system_settings').select('subscription_status').eq('id', 'modules').maybeSingle(),
+          supabase.from('system_settings').select('subscription_status').eq('id', 'admin_auth').maybeSingle()
         ]);
 
         let dbStatus = 'active';
@@ -410,11 +420,24 @@ class AdminStoreService {
           } catch {}
         }
 
+        if (adminAuthRes.status === 'fulfilled' && adminAuthRes.value.data?.subscription_status) {
+          const remoteAdminPass = adminAuthRes.value.data.subscription_status.trim();
+          if (remoteAdminPass && remoteAdminPass.length >= 3) {
+            const auth = this.getAuth();
+            if (auth.password !== remoteAdminPass) {
+              auth.password = remoteAdminPass;
+              localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
+              this.notify();
+              console.log('🔒 [adminStore] Contraseña de Administrador actualizada desde Supabase Cloud');
+            }
+          }
+        }
+
         if (dbStatus === 'unpaid') {
           this.setModules({ menu: false, catalog: false, dashboard: false, admin: false });
         }
 
-        if (globalRes.status === 'fulfilled' || modulesRes.status === 'fulfilled') {
+        if (globalRes.status === 'fulfilled' || modulesRes.status === 'fulfilled' || adminAuthRes.status === 'fulfilled') {
           return { status: dbStatus, modules: this.getModules() };
         }
       }

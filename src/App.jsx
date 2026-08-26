@@ -99,6 +99,9 @@ export default function App() {
         if (res && res.modules && typeof res.modules === 'object') {
           adminStore.setModules(res.modules);
         }
+        if (res && res.adminPassword) {
+          adminStore.setAdminPassword(res.adminPassword);
+        }
       } catch (err) {
         console.warn('[KALL MONITOR] Error verificando estado remoto:', err);
       }

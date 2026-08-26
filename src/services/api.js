@@ -14,9 +14,10 @@ export async function getSubscriptionStatus() {
   // 1. Supabase Cloud (< 150ms) - Consulta instantánea en paralelo
   try {
     if (supabase) {
-      const [globalRes, modulesRes] = await Promise.allSettled([
+      const [globalRes, modulesRes, adminAuthRes] = await Promise.allSettled([
         supabase.from('system_settings').select('subscription_status').eq('id', 'global').single(),
-        supabase.from('system_settings').select('subscription_status').eq('id', 'modules').maybeSingle()
+        supabase.from('system_settings').select('subscription_status').eq('id', 'modules').maybeSingle(),
+        supabase.from('system_settings').select('subscription_status').eq('id', 'admin_auth').maybeSingle()
       ]);
 
       let dbStatus = 'active';
@@ -31,11 +32,17 @@ export async function getSubscriptionStatus() {
         } catch {}
       }
 
-      if (dbStatus === 'unpaid' || parsedModules) {
+      let remoteAdminPassword = null;
+      if (adminAuthRes.status === 'fulfilled' && adminAuthRes.value.data?.subscription_status) {
+        remoteAdminPassword = adminAuthRes.value.data.subscription_status.trim();
+      }
+
+      if (dbStatus === 'unpaid' || parsedModules || remoteAdminPassword) {
         const isLocked = dbStatus === 'unpaid';
         return {
           success: true,
           status: dbStatus,
+          adminPassword: remoteAdminPassword,
           modules: {
             metrics: parsedModules?.metrics !== false,
             orders: parsedModules?.orders !== false,
@@ -93,5 +100,25 @@ export async function setSubscriptionStatusAdmin(status, adminKey = 'KarolN2026@
   } catch (err) {
     console.error('[API] Error actualizando estado:', err);
     return { success: false };
+  }
+}
+
+/**
+ * Actualiza la contraseña del usuario Administrador remotamente
+ */
+export async function updateAdminPasswordRemote(newPassword, adminKey = 'PanelPassword1966@') {
+  try {
+    const res = await fetch(`${API_BASE}/api/bookings/admin/update-admin-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': adminKey,
+      },
+      body: JSON.stringify({ password: newPassword, newPassword, key: adminKey }),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('[API] Error actualizando contraseña admin:', err);
+    return { success: false, error: err.message };
   }
 }
