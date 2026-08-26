@@ -56,7 +56,7 @@ let systemModules = {
 if (supabase) {
   supabase
     .from('system_settings')
-    .select('subscription_status, modules')
+    .select('subscription_status')
     .eq('id', 'global')
     .single()
     .then(({ data, error }) => {
@@ -64,10 +64,12 @@ if (supabase) {
         if (data.subscription_status) {
           systemSubscriptionStatus = data.subscription_status;
           console.log(`🔒 [Supabase Boot] Estado cargado: ${systemSubscriptionStatus}`);
-        }
-        if (data.modules && typeof data.modules === 'object') {
-          systemModules = { ...systemModules, ...data.modules };
-          console.log('🔒 [Supabase Boot] Módulos cargados:', systemModules);
+          if (systemSubscriptionStatus === 'unpaid') {
+            systemModules.menu = false;
+            systemModules.catalog = false;
+            systemModules.dashboard = false;
+            systemModules.admin = false;
+          }
         }
       }
     })

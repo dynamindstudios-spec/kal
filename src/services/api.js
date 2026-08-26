@@ -31,24 +31,27 @@ export async function getSubscriptionStatus() {
     // Fallback silencioso a Supabase
   }
 
-  // 2. Fallback ultrarrápido directo a Supabase Cloud
+  // 2. Fallback ultrarrápido directo a Supabase Cloud (< 150ms)
   try {
     if (supabase) {
       const { data, error } = await supabase
         .from('system_settings')
-        .select('subscription_status, modules')
+        .select('subscription_status')
         .eq('id', 'global')
         .single();
 
       if (!error && data) {
+        const isLocked = data.subscription_status === 'unpaid';
         return {
           success: true,
           status: data.subscription_status || 'active',
-          modules: data.modules || { menu: data.subscription_status !== 'unpaid', dashboard: data.subscription_status !== 'unpaid' }
+          modules: { menu: !isLocked, catalog: !isLocked, dashboard: !isLocked, admin: !isLocked }
         };
       }
     }
-  } catch (dbErr) {}
+  } catch (dbErr) {
+    console.warn('[API] Error consultando Supabase:', dbErr);
+  }
 
   return { success: false, status: 'active' };
 }
