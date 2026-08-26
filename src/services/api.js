@@ -1,9 +1,9 @@
 // ==============================================================================
 // CLIENT API SERVICE: KAL DISCOBAR & REMOTE CONTROL ENGINE
 // ==============================================================================
-import { supabase } from './supabaseClient';
+import { supabase } from './supabaseClient.js';
 
-const rawApiUrl = import.meta.env.VITE_API_URL || 'https://kal-discobar-backend.onrender.com';
+const rawApiUrl = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || 'https://kal-discobar-backend.onrender.com';
 export const API_BASE = rawApiUrl.replace(/\/+$/, '');
 
 /**
