@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart3, UtensilsCrossed, Settings, Key, LogOut, 
-  ExternalLink, Crown, Clock, Calendar, RotateCcw, Ban
+  ExternalLink, Crown, Clock, Calendar, RotateCcw, Ban, Lock, ShieldAlert
 } from 'lucide-react';
 import { adminStore, ADMIN_COLOR_THEMES } from '../../services/adminStore';
 import { RESTAURANT_DATA } from '../../data/menuData';
@@ -219,70 +219,115 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
         <aside className="w-full md:w-64 bg-[#0c0e14] border-r border-[#1e2230] p-4 flex flex-row md:flex-col gap-2 shrink-0 overflow-x-auto md:overflow-visible">
           
           {/* Navigation Item 1: Metrics & Cash Register */}
-          {isMetricsEnabled && (
-            <button
-              onClick={() => setActiveSection('metrics')}
-              className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
-                activeSection === 'metrics'
+          <button
+            onClick={() => setActiveSection('metrics')}
+            className={`w-full p-3.5 rounded-2xl text-left flex items-center justify-between transition-all cursor-pointer shrink-0 ${
+              activeSection === 'metrics'
+                ? isMetricsEnabled
                   ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
-                  : 'text-gray-400 hover:text-white hover:bg-[#141722]'
-              }`}
-            >
+                  : 'bg-red-950/80 border border-red-500/50 text-red-300 font-bold shadow-lg shadow-red-950/40'
+                : isMetricsEnabled
+                  ? 'text-gray-400 hover:text-white hover:bg-[#141722]'
+                  : 'text-zinc-500 hover:text-red-400 hover:bg-red-950/20'
+            }`}
+          >
+            <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                activeSection === 'metrics' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
+                activeSection === 'metrics'
+                  ? isMetricsEnabled ? 'bg-black/20 text-black' : 'bg-red-500/20 text-red-400'
+                  : isMetricsEnabled ? 'bg-white/5 text-amber-400' : 'bg-red-950/40 text-red-400'
               }`}>
                 <BarChart3 size={18} />
               </div>
               <div>
                 <span className="text-xs font-extrabold block leading-tight">Métricas y Caja</span>
-                <span className="text-[10px] opacity-75 hidden md:block">Ingresos & Arqueo Diario</span>
+                <span className="text-[10px] opacity-75 hidden md:block">
+                  {isMetricsEnabled ? 'Ingresos & Arqueo Diario' : 'Función Suspendida'}
+                </span>
               </div>
-            </button>
-          )}
+            </div>
+
+            {!isMetricsEnabled && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-mono font-bold">
+                <Lock size={10} />
+                <span className="hidden sm:inline">Bloqueado</span>
+              </div>
+            )}
+          </button>
 
           {/* Navigation Item 2: Live Orders, Tables & Reservations */}
-          {isOrdersEnabled && (
-            <button
-              onClick={() => setActiveSection('orders')}
-              className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
-                activeSection === 'orders'
+          <button
+            onClick={() => setActiveSection('orders')}
+            className={`w-full p-3.5 rounded-2xl text-left flex items-center justify-between transition-all cursor-pointer shrink-0 ${
+              activeSection === 'orders'
+                ? isOrdersEnabled
                   ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
-                  : 'text-gray-400 hover:text-white hover:bg-[#141722]'
-              }`}
-            >
+                  : 'bg-red-950/80 border border-red-500/50 text-red-300 font-bold shadow-lg shadow-red-950/40'
+                : isOrdersEnabled
+                  ? 'text-gray-400 hover:text-white hover:bg-[#141722]'
+                  : 'text-zinc-500 hover:text-red-400 hover:bg-red-950/20'
+            }`}
+          >
+            <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                activeSection === 'orders' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
+                activeSection === 'orders'
+                  ? isOrdersEnabled ? 'bg-black/20 text-black' : 'bg-red-500/20 text-red-400'
+                  : isOrdersEnabled ? 'bg-white/5 text-amber-400' : 'bg-red-950/40 text-red-400'
               }`}>
                 <UtensilsCrossed size={18} />
               </div>
               <div>
                 <span className="text-xs font-extrabold block leading-tight">Pedidos & Mesas</span>
-                <span className="text-[10px] opacity-75 hidden md:block">Mesas 1-15 & Reservas</span>
+                <span className="text-[10px] opacity-75 hidden md:block">
+                  {isOrdersEnabled ? 'Mesas 1-15 & Reservas' : 'Función Suspendida'}
+                </span>
               </div>
-            </button>
-          )}
+            </div>
+
+            {!isOrdersEnabled && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-mono font-bold">
+                <Lock size={10} />
+                <span className="hidden sm:inline">Bloqueado</span>
+              </div>
+            )}
+          </button>
 
           {/* Navigation Item 3: Menu Customization & Security */}
-          {isMenuEditorEnabled && (
-            <button
-              onClick={() => setActiveSection('settings')}
-              className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
-                activeSection === 'settings'
+          <button
+            onClick={() => setActiveSection('settings')}
+            className={`w-full p-3.5 rounded-2xl text-left flex items-center justify-between transition-all cursor-pointer shrink-0 ${
+              activeSection === 'settings'
+                ? isMenuEditorEnabled
                   ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
-                  : 'text-gray-400 hover:text-white hover:bg-[#141722]'
-              }`}
-            >
+                  : 'bg-red-950/80 border border-red-500/50 text-red-300 font-bold shadow-lg shadow-red-950/40'
+                : isMenuEditorEnabled
+                  ? 'text-gray-400 hover:text-white hover:bg-[#141722]'
+                  : 'text-zinc-500 hover:text-red-400 hover:bg-red-950/20'
+            }`}
+          >
+            <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                activeSection === 'settings' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
+                activeSection === 'settings'
+                  ? isMenuEditorEnabled ? 'bg-black/20 text-black' : 'bg-red-500/20 text-red-400'
+                  : isMenuEditorEnabled ? 'bg-white/5 text-amber-400' : 'bg-red-950/40 text-red-400'
               }`}>
                 <Settings size={18} />
               </div>
               <div>
                 <span className="text-xs font-extrabold block leading-tight">Configuración Menú</span>
-                <span className="text-[10px] opacity-75 hidden md:block">Precios, Platos & Claves</span>
+                <span className="text-[10px] opacity-75 hidden md:block">
+                  {isMenuEditorEnabled ? 'Precios, Platos & Claves' : 'Función Suspendida'}
+                </span>
               </div>
-            </button>
-          )}
+            </div>
+
+            {!isMenuEditorEnabled && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-mono font-bold">
+                <Lock size={10} />
+                <span className="hidden sm:inline">Bloqueado</span>
+              </div>
+            )}
+          </button>
 
           {/* Dedicated Change Password Button at Bottom of Sidebar */}
           <div className="mt-auto pt-4 border-t border-[#1e2230] space-y-2">
@@ -315,52 +360,119 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl">
           <AnimatePresence mode="wait">
-            {activeSection === 'metrics' && isMetricsEnabled && (
-              <motion.div
-                key="metrics-section"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AdminMetrics />
-              </motion.div>
+            
+            {/* SECCIÓN 1: MÉTRICAS Y CAJA */}
+            {activeSection === 'metrics' && (
+              isMetricsEnabled ? (
+                <motion.div
+                  key="metrics-section"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <AdminMetrics />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="metrics-locked"
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="p-8 sm:p-12 rounded-3xl bg-[#0c0e14] border-2 border-red-500/40 text-center space-y-5 max-w-lg mx-auto my-12 shadow-[0_0_50px_rgba(239,68,68,0.2)]"
+                >
+                  <div className="relative w-20 h-20 rounded-full bg-red-950/80 border-2 border-red-500 flex items-center justify-center mx-auto text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.5)]">
+                    <Lock className="w-10 h-10 animate-pulse text-red-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="px-3.5 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono font-bold uppercase tracking-widest inline-block">
+                      Sección Bloqueada
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black text-red-400 uppercase tracking-wide">
+                      Métricas y Caja Bloqueado
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
+                      La visualización de métricas financieras, arqueo de caja y balance de ventas ha sido deshabilitada temporalmente por la administración central.
+                    </p>
+                  </div>
+                </motion.div>
+              )
             )}
 
-            {activeSection === 'orders' && isOrdersEnabled && (
-              <motion.div
-                key="orders-section"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AdminOrdersAndTables />
-              </motion.div>
+            {/* SECCIÓN 2: PEDIDOS Y MESAS */}
+            {activeSection === 'orders' && (
+              isOrdersEnabled ? (
+                <motion.div
+                  key="orders-section"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <AdminOrdersAndTables />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="orders-locked"
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="p-8 sm:p-12 rounded-3xl bg-[#0c0e14] border-2 border-red-500/40 text-center space-y-5 max-w-lg mx-auto my-12 shadow-[0_0_50px_rgba(239,68,68,0.2)]"
+                >
+                  <div className="relative w-20 h-20 rounded-full bg-red-950/80 border-2 border-red-500 flex items-center justify-center mx-auto text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.5)]">
+                    <Lock className="w-10 h-10 animate-pulse text-red-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="px-3.5 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono font-bold uppercase tracking-widest inline-block">
+                      Sección Bloqueada
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black text-red-400 uppercase tracking-wide">
+                      Gestión de Pedidos & Mesas Bloqueado
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
+                      El control de comandas en vivo, gestión de mesas 1 a 15 y cambio de estados de pedidos ha sido deshabilitado temporalmente por la administración central.
+                    </p>
+                  </div>
+                </motion.div>
+              )
             )}
 
-            {activeSection === 'settings' && isMenuEditorEnabled && (
-              <motion.div
-                key="settings-section"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AdminMenuSettings />
-              </motion.div>
-            )}
-
-            {!isMetricsEnabled && !isOrdersEnabled && !isMenuEditorEnabled && (
-              <div className="p-12 rounded-3xl bg-[#0e1017] border border-amber-500/30 text-center space-y-4 max-w-lg mx-auto my-12">
-                <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
-                  <Ban size={32} />
-                </div>
-                <h3 className="text-lg font-bold text-white">Módulos Deshabilitados</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Todas las secciones de administración (Métricas, Pedidos y Menú) han sido suspendidas temporalmente desde la central de la agencia.
-                </p>
-              </div>
+            {/* SECCIÓN 3: CONFIGURACIÓN DE MENÚ */}
+            {activeSection === 'settings' && (
+              isMenuEditorEnabled ? (
+                <motion.div
+                  key="settings-section"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <AdminMenuSettings />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="settings-locked"
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="p-8 sm:p-12 rounded-3xl bg-[#0c0e14] border-2 border-red-500/40 text-center space-y-5 max-w-lg mx-auto my-12 shadow-[0_0_50px_rgba(239,68,68,0.2)]"
+                >
+                  <div className="relative w-20 h-20 rounded-full bg-red-950/80 border-2 border-red-500 flex items-center justify-center mx-auto text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.5)]">
+                    <Lock className="w-10 h-10 animate-pulse text-red-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="px-3.5 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono font-bold uppercase tracking-widest inline-block">
+                      Sección Bloqueada
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black text-red-400 uppercase tracking-wide">
+                      Configuración de Menú Bloqueada
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
+                      La edición de platos, precios, fotos, categorías y promociones de la carta digital ha sido deshabilitada temporalmente por la administración central.
+                    </p>
+                  </div>
+                </motion.div>
+              )
             )}
           </AnimatePresence>
         </main>
