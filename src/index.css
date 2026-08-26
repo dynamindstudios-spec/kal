@@ -1,0 +1,499 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset & Custom Properties */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Outfit', 'Montserrat', sans-serif;
+}
+
+/* Base Dark Body Styles */
+html {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #000000;
+  color-scheme: dark;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-color);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Special styling when Modo Serpientes is active — Adaptive to dark snakes aesthetic */
+body.scene-serpientes,
+body.scene-disco {
+  --bg-color: #060709;
+  --bg-gradient: none;
+  background-color: #000000 !important;
+  background-image: none !important;
+  --surface-bg: rgba(9, 11, 15, 0.78);
+  --surface-border: rgba(6, 182, 212, 0.35);
+  --accent-color: #06b6d4;
+  --accent-glow: rgba(6, 182, 212, 0.85);
+  --card-bg: rgba(9, 11, 15, 0.75);
+  --card-border: rgba(6, 182, 212, 0.28);
+}
+
+body.scene-serpientes .glass-panel,
+body.scene-disco .glass-panel {
+  background-color: rgba(9, 11, 15, 0.76) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+body.scene-party,
+body.scene-bar-show,
+body.scene-fiesta {
+  background-color: #000000 !important;
+  background-image: none !important;
+}
+
+body.scene-party .glass-panel,
+body.scene-bar-show .glass-panel,
+body.scene-fiesta .glass-panel {
+  background-color: rgba(10, 10, 15, 0.72) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+/* ================= ULTRA-NIGHT EXOTIC THEMES (7 VIBRANT NEON COLORS) ================= */
+
+/* Theme 1: Kall Dark & Gold VIP (OLED Black & Intense Gold Neon Atmosphere) */
+body.theme-kall-dark {
+  --bg-color: #0b0801;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #362908 0%, #171103 45%, #050400 90%);
+  --surface-bg: rgba(18, 14, 4, 0.95);
+  --surface-border: rgba(234, 179, 8, 0.5);
+  --text-primary: #ffffff;
+  --text-secondary: #fef08a;
+  --text-muted: #a1a1aa;
+  --accent-color: #eab308;
+  --accent-glow: rgba(234, 179, 8, 0.85);
+  --accent-on: #000000;
+  --card-bg: #120e03;
+  --card-border: rgba(234, 179, 8, 0.4);
+  --card-shadow: 0 20px 60px -10px rgba(234, 179, 8, 0.35);
+  --hero-overlay: linear-gradient(to top, #0b0801 0%, rgba(11, 8, 1, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(234, 179, 8, 0.2);
+  --pill-active: rgba(234, 179, 8, 0.45);
+  --pill-active-text: #ffffff;
+  --pill-active-border: rgba(234, 179, 8, 0.95);
+  --neon-shadow: 0 0 22px rgba(234, 179, 8, 0.85), 0 0 50px rgba(234, 179, 8, 0.5);
+}
+
+/* Theme 2: Seduction Neon Pink (Stripper & Bar Show Vibe - Luminous Magenta) */
+body.theme-kall-neon {
+  --bg-color: #0f010c;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #4a033d 0%, #21011c 45%, #070006 90%);
+  --surface-bg: rgba(24, 2, 21, 0.95);
+  --surface-border: rgba(236, 72, 153, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #fbcfe8;
+  --text-muted: #f472b6;
+  --accent-color: #ec4899;
+  --accent-glow: rgba(236, 72, 153, 0.85);
+  --accent-on: #ffffff;
+  --card-bg: #1a0117;
+  --card-border: rgba(236, 72, 153, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(236, 72, 153, 0.4);
+  --hero-overlay: linear-gradient(to top, #0f010c 0%, rgba(15, 1, 12, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(236, 72, 153, 0.22);
+  --pill-active: rgba(236, 72, 153, 0.45);
+  --pill-active-text: #ffffff;
+  --pill-active-border: rgba(236, 72, 153, 0.95);
+  --neon-shadow: 0 0 22px rgba(236, 72, 153, 0.9), 0 0 50px rgba(236, 72, 153, 0.55);
+}
+
+/* Theme 3: Cyber Violet Exotic (Mystic Deep Purple) */
+body.theme-kall-purple {
+  --bg-color: #0c0117;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #3e0475 0%, #1c0238 45%, #06000c 90%);
+  --surface-bg: rgba(20, 3, 38, 0.95);
+  --surface-border: rgba(168, 85, 247, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #e9d5ff;
+  --text-muted: #c084fc;
+  --accent-color: #a855f7;
+  --accent-glow: rgba(168, 85, 247, 0.85);
+  --accent-on: #ffffff;
+  --card-bg: #17022a;
+  --card-border: rgba(168, 85, 247, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(168, 85, 247, 0.4);
+  --hero-overlay: linear-gradient(to top, #0c0117 0%, rgba(12, 1, 23, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(168, 85, 247, 0.22);
+  --pill-active: rgba(168, 85, 247, 0.45);
+  --pill-active-text: #ffffff;
+  --pill-active-border: rgba(168, 85, 247, 0.95);
+  --neon-shadow: 0 0 22px rgba(168, 85, 247, 0.9), 0 0 50px rgba(168, 85, 247, 0.55);
+}
+
+/* Theme 4: Emerald Cobra Lounge (Exotic Deep Green) */
+body.theme-kall-emerald {
+  --bg-color: #011409;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #034f2d 0%, #012413 45%, #000a04 90%);
+  --surface-bg: rgba(3, 26, 15, 0.95);
+  --surface-border: rgba(16, 185, 129, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #a7f3d0;
+  --text-muted: #34d399;
+  --accent-color: #10b981;
+  --accent-glow: rgba(16, 185, 129, 0.85);
+  --accent-on: #000000;
+  --card-bg: #021a0d;
+  --card-border: rgba(16, 185, 129, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(16, 185, 129, 0.4);
+  --hero-overlay: linear-gradient(to top, #011409 0%, rgba(1, 20, 9, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(16, 185, 129, 0.22);
+  --pill-active: rgba(16, 185, 129, 0.45);
+  --pill-active-text: #a7f3d0;
+  --pill-active-border: rgba(16, 185, 129, 0.95);
+  --neon-shadow: 0 0 22px rgba(16, 185, 129, 0.9), 0 0 50px rgba(16, 185, 129, 0.55);
+}
+
+/* Theme 5: Inferno Passion Red (Intense Night Crimson) */
+body.theme-kall-blood {
+  --bg-color: #140101;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #540303 0%, #260101 45%, #0a0000 90%);
+  --surface-bg: rgba(28, 3, 3, 0.95);
+  --surface-border: rgba(239, 68, 68, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #fecaca;
+  --text-muted: #f87171;
+  --accent-color: #ef4444;
+  --accent-glow: rgba(239, 68, 68, 0.85);
+  --accent-on: #ffffff;
+  --card-bg: #1c0202;
+  --card-border: rgba(239, 68, 68, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(239, 68, 68, 0.4);
+  --hero-overlay: linear-gradient(to top, #140101 0%, rgba(20, 1, 1, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(239, 68, 68, 0.22);
+  --pill-active: rgba(239, 68, 68, 0.45);
+  --pill-active-text: #ffffff;
+  --pill-active-border: rgba(239, 68, 68, 0.95);
+  --neon-shadow: 0 0 22px rgba(239, 68, 68, 0.9), 0 0 50px rgba(239, 68, 68, 0.55);
+}
+
+/* NEW Theme 6: Electric Cyan Party (Cyan/Aqua Neon - Fresh Night Vibe) */
+body.theme-kall-cyan {
+  --bg-color: #001117;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #024b61 0%, #01222e 45%, #000a0e 90%);
+  --surface-bg: rgba(2, 26, 36, 0.95);
+  --surface-border: rgba(6, 182, 212, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #cffafe;
+  --text-muted: #22d3ee;
+  --accent-color: #06b6d4;
+  --accent-glow: rgba(6, 182, 212, 0.85);
+  --accent-on: #000000;
+  --card-bg: #011b24;
+  --card-border: rgba(6, 182, 212, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(6, 182, 212, 0.4);
+  --hero-overlay: linear-gradient(to top, #001117 0%, rgba(0, 17, 23, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(6, 182, 212, 0.22);
+  --pill-active: rgba(6, 182, 212, 0.45);
+  --pill-active-text: #cffafe;
+  --pill-active-border: rgba(6, 182, 212, 0.95);
+  --neon-shadow: 0 0 22px rgba(6, 182, 212, 0.9), 0 0 50px rgba(6, 182, 212, 0.55);
+}
+
+/* NEW Theme 7: Sunset Amber Pulse (Fluorescent Orange/Amber Nightfall) */
+body.theme-kall-amber {
+  --bg-color: #170800;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #5e2200 0%, #2b0d00 45%, #0c0400 90%);
+  --surface-bg: rgba(36, 13, 0, 0.95);
+  --surface-border: rgba(249, 115, 22, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #ffedd5;
+  --text-muted: #fb923c;
+  --accent-color: #f97316;
+  --accent-glow: rgba(249, 115, 22, 0.85);
+  --accent-on: #000000;
+  --card-bg: #210a00;
+  --card-border: rgba(249, 115, 22, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(249, 115, 22, 0.4);
+  --hero-overlay: linear-gradient(to top, #170800 0%, rgba(23, 8, 0, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(249, 115, 22, 0.22);
+  --pill-active: rgba(249, 115, 22, 0.45);
+  --pill-active-text: #ffedd5;
+  --pill-active-border: rgba(249, 115, 22, 0.95);
+  --neon-shadow: 0 0 22px rgba(249, 115, 22, 0.9), 0 0 50px rgba(249, 115, 22, 0.55);
+}
+
+/* Theme 8: Electric Lime Acid (Acid Lime Green) */
+body.theme-kall-lime {
+  --bg-color: #061200;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #204700 0%, #0d2100 45%, #030800 90%);
+  --surface-bg: rgba(13, 33, 0, 0.95);
+  --surface-border: rgba(132, 204, 22, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #ecfccb;
+  --text-muted: #a3e635;
+  --accent-color: #84cc16;
+  --accent-glow: rgba(132, 204, 22, 0.85);
+  --accent-on: #000000;
+  --card-bg: #0b1c00;
+  --card-border: rgba(132, 204, 22, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(132, 204, 22, 0.4);
+  --hero-overlay: linear-gradient(to top, #061200 0%, rgba(6, 18, 0, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(132, 204, 22, 0.22);
+  --pill-active: rgba(132, 204, 22, 0.45);
+  --pill-active-text: #ecfccb;
+  --pill-active-border: rgba(132, 204, 22, 0.95);
+  --neon-shadow: 0 0 22px rgba(132, 204, 22, 0.9), 0 0 50px rgba(132, 204, 22, 0.55);
+}
+
+/* Theme 9: Ultraviolet Blacklight (Deep Violet Disco) */
+body.theme-kall-violet {
+  --bg-color: #080017;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #2b005e 0%, #150033 45%, #05000d 90%);
+  --surface-bg: rgba(21, 0, 51, 0.95);
+  --surface-border: rgba(124, 58, 237, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #ddd6fe;
+  --text-muted: #a78bfa;
+  --accent-color: #7c3aed;
+  --accent-glow: rgba(124, 58, 237, 0.85);
+  --accent-on: #ffffff;
+  --card-bg: #140030;
+  --card-border: rgba(124, 58, 237, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(124, 58, 237, 0.4);
+  --hero-overlay: linear-gradient(to top, #080017 0%, rgba(8, 0, 23, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(124, 58, 237, 0.22);
+  --pill-active: rgba(124, 58, 237, 0.45);
+  --pill-active-text: #ddd6fe;
+  --pill-active-border: rgba(124, 58, 237, 0.95);
+  --neon-shadow: 0 0 22px rgba(124, 58, 237, 0.9), 0 0 50px rgba(124, 58, 237, 0.55);
+}
+
+/* Theme 10: Fluorescent Military Green (Tactical Neon Green) */
+body.theme-kall-pink {
+  --bg-color: #0b1202;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #2f4508 0%, #162402 45%, #060a00 90%);
+  --surface-bg: rgba(22, 36, 2, 0.95);
+  --surface-border: rgba(101, 163, 13, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #ecfccb;
+  --text-muted: #84cc16;
+  --accent-color: #65a30d;
+  --accent-glow: rgba(101, 163, 13, 0.85);
+  --accent-on: #ffffff;
+  --card-bg: #142102;
+  --card-border: rgba(101, 163, 13, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(101, 163, 13, 0.4);
+  --hero-overlay: linear-gradient(to top, #0b1202 0%, rgba(11, 18, 2, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(101, 163, 13, 0.22);
+  --pill-active: rgba(101, 163, 13, 0.45);
+  --pill-active-text: #ecfccb;
+  --pill-active-border: rgba(101, 163, 13, 0.95);
+  --neon-shadow: 0 0 22px rgba(101, 163, 13, 0.9), 0 0 50px rgba(101, 163, 13, 0.55);
+}
+
+/* Theme 11: Volcano Coral Lava (Electric Coral Red) */
+body.theme-kall-coral {
+  --bg-color: #1a0006;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #610018 0%, #2e000a 45%, #0e0003 90%);
+  --surface-bg: rgba(46, 0, 10, 0.95);
+  --surface-border: rgba(255, 51, 102, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #ffe4e8;
+  --text-muted: #ff668c;
+  --accent-color: #ff3366;
+  --accent-glow: rgba(255, 51, 102, 0.85);
+  --accent-on: #ffffff;
+  --card-bg: #290008;
+  --card-border: rgba(255, 51, 102, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(255, 51, 102, 0.4);
+  --hero-overlay: linear-gradient(to top, #1a0006 0%, rgba(26, 0, 6, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(255, 51, 102, 0.22);
+  --pill-active: rgba(255, 51, 102, 0.45);
+  --pill-active-text: #ffe4e8;
+  --pill-active-border: rgba(255, 51, 102, 0.95);
+  --neon-shadow: 0 0 22px rgba(255, 51, 102, 0.9), 0 0 50px rgba(255, 51, 102, 0.55);
+}
+
+/* Theme 12: Fluorescent Deep Blue (Electric Sapphire Blue) */
+body.theme-kall-yellow {
+  --bg-color: #02091c;
+  --bg-gradient: radial-gradient(circle at 50% 40%, #0d286b 0%, #05143a 45%, #01040f 90%);
+  --surface-bg: rgba(5, 20, 58, 0.95);
+  --surface-border: rgba(37, 99, 235, 0.55);
+  --text-primary: #ffffff;
+  --text-secondary: #dbeafe;
+  --text-muted: #60a5fa;
+  --accent-color: #2563eb;
+  --accent-glow: rgba(37, 99, 235, 0.85);
+  --accent-on: #ffffff;
+  --card-bg: #041236;
+  --card-border: rgba(37, 99, 235, 0.45);
+  --card-shadow: 0 20px 60px -10px rgba(37, 99, 235, 0.4);
+  --hero-overlay: linear-gradient(to top, #02091c 0%, rgba(2, 9, 28, 0.7) 60%, transparent 100%);
+  --pill-bg: rgba(37, 99, 235, 0.22);
+  --pill-active: rgba(37, 99, 235, 0.45);
+  --pill-active-text: #dbeafe;
+  --pill-active-border: rgba(37, 99, 235, 0.95);
+  --neon-shadow: 0 0 22px rgba(37, 99, 235, 0.9), 0 0 50px rgba(37, 99, 235, 0.55);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color);
+}
+
+/* Neon Text Helpers */
+.serif-title {
+  font-family: var(--font-serif);
+}
+
+.neon-title-gold {
+  color: var(--accent-color);
+  text-shadow: 0 0 14px var(--accent-glow), 0 0 30px var(--accent-color);
+}
+
+.neon-title-pink {
+  color: #ec4899;
+  text-shadow: 0 0 14px rgba(236, 72, 153, 0.8), 0 0 30px rgba(236, 72, 153, 0.5);
+}
+
+.glass-panel {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ==========================================================================
+   MODO SERPIENTES VIP — COMPLETE AMBIENT OVERRIDE (HIGHEST SPECIFICITY)
+   ========================================================================== */
+body.scene-serpientes,
+body.scene-disco {
+  background-color: #000000 !important;
+  background-image: none !important;
+  --bg-color: #000000 !important;
+  --bg-gradient: none !important;
+  --accent-color: #06b6d4 !important;
+  --accent-glow: rgba(6, 182, 212, 0.85) !important;
+  --surface-bg: rgba(8, 10, 15, 0.78) !important;
+  --surface-border: rgba(6, 182, 212, 0.35) !important;
+  --card-bg: rgba(8, 10, 15, 0.75) !important;
+  --card-border: rgba(6, 182, 212, 0.3) !important;
+}
+
+body.scene-serpientes .glass-panel,
+body.scene-disco .glass-panel {
+  background-color: rgba(8, 10, 15, 0.76) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+/* ==========================================================================
+   ADMIN DASHBOARD ULTRA-VIBRANT NEON ACCENT SYSTEM
+   ========================================================================== */
+.admin-theme-scope {
+  --adm-accent: #ffcc00;
+  --adm-accent-light: #ffe066;
+  --adm-glow: rgba(255, 204, 0, 0.85);
+  --adm-subtle: rgba(255, 204, 0, 0.2);
+  --adm-border: rgba(255, 204, 0, 0.55);
+}
+
+.admin-theme-scope .text-amber-400,
+.admin-theme-scope .text-amber-300,
+.admin-theme-scope .text-yellow-400 {
+  color: var(--adm-accent, #ffcc00) !important;
+  text-shadow: 0 0 12px var(--adm-glow);
+}
+
+.admin-theme-scope .bg-amber-500,
+.admin-theme-scope .bg-amber-400 {
+  background-color: var(--adm-accent, #ffcc00) !important;
+  color: #000000 !important;
+  box-shadow: 0 0 20px var(--adm-glow), 0 0 40px var(--adm-subtle) !important;
+}
+
+.admin-theme-scope .from-amber-500 {
+  --tw-gradient-from: var(--adm-accent, #ffcc00) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: var(--adm-accent-light, #ffe066) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.admin-theme-scope .to-amber-400 {
+  --tw-gradient-to: var(--adm-accent-light, #ffe066) var(--tw-gradient-to-position) !important;
+}
+
+.admin-theme-scope .bg-amber-500\/10,
+.admin-theme-scope .bg-amber-500\/15,
+.admin-theme-scope .bg-amber-500\/20,
+.admin-theme-scope .bg-amber-500\/25,
+.admin-theme-scope .bg-amber-500\/30 {
+  background-color: var(--adm-subtle, rgba(255, 204, 0, 0.2)) !important;
+  box-shadow: 0 0 16px var(--adm-subtle) !important;
+}
+
+.admin-theme-scope .border-amber-500,
+.admin-theme-scope .border-amber-400,
+.admin-theme-scope .border-amber-500\/30,
+.admin-theme-scope .border-amber-500\/40,
+.admin-theme-scope .border-amber-500\/50 {
+  border-color: var(--adm-border, rgba(255, 204, 0, 0.55)) !important;
+  box-shadow: 0 0 14px var(--adm-subtle);
+}
+
+.admin-theme-scope .hover\:border-amber-400:hover,
+.admin-theme-scope .hover\:border-amber-500\/40:hover,
+.admin-theme-scope .hover\:border-amber-500:hover {
+  border-color: var(--adm-accent, #ffcc00) !important;
+  box-shadow: 0 0 20px var(--adm-glow) !important;
+}
+
+.admin-theme-scope .focus\:border-amber-400:focus,
+.admin-theme-scope .focus\:border-amber-500:focus {
+  border-color: var(--adm-accent, #ffcc00) !important;
+  box-shadow: 0 0 20px var(--adm-glow) !important;
+}
+
+.admin-theme-scope .hover\:bg-amber-400:hover,
+.admin-theme-scope .hover\:bg-amber-500:hover {
+  background-color: var(--adm-accent-light, #ffe066) !important;
+  box-shadow: 0 0 30px var(--adm-glow) !important;
+}
+
+.admin-theme-scope .shadow-amber-500\/20,
+.admin-theme-scope .shadow-amber-500\/10,
+.admin-theme-scope .shadow-amber-500\/30,
+.admin-theme-scope .shadow-amber-500\/5 {
+  box-shadow: 0 0 25px var(--adm-glow), 0 0 50px var(--adm-subtle) !important;
+}
+
+.admin-theme-scope .selection\:bg-amber-500::selection {
+  background-color: var(--adm-accent, #ffcc00) !important;
+  color: #000000 !important;
+}

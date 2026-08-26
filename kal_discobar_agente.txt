@@ -1,0 +1,97 @@
+==================================================
+BASE DE CONOCIMIENTO - KAL DISCOBAR (PARA AGENTE IA)
+==================================================
+
+1. INFORMACIÓN GENERAL Y DE CONTACTO
+--------------------------------------------------
+- Nombre del Establecimiento: KAL DISCOBAR
+- Teléfono / WhatsApp de Reservas: 3135248660
+- Instagram: @kal_discobar
+- Dirección: Calle 12, Carrera 23-43, Barrio Granada (Enseguida del colegio Zakurayima).
+- Ciudad: Armenia, Quindío.
+
+2. HORARIOS DE ATENCIÓN (Formato Lista)
+--------------------------------------------------
+- Lunes: Cerrado (Si es Lunes Festivo: 5:00 PM a 1:30 AM)
+- Martes: Cerrado
+- Miércoles: 5:00 PM a 1:30 AM
+- Jueves: 5:00 PM a 1:30 AM
+- Viernes: 5:00 PM a 2:30 AM
+- Sábado: 5:00 PM a 2:30 AM
+- Domingo: 5:00 PM a 1:30 AM
+* Nota de Horario: En días de eventos especiales (ej. Show de Pole Dance), la apertura puede ser desde las 4:00 PM.
+
+3. REGLAS Y POLÍTICAS DEL ESTABLECIMIENTO
+--------------------------------------------------
+- Ingreso exclusivo para mayores de edad (18+ con documento de identidad físico o digital).
+- Nos reservamos el derecho de admisión y permanencia.
+- Se recomienda reserva previa para fines de semana y eventos especiales.
+
+4. BRANDING Y DISEÑO (Guía Visual)
+--------------------------------------------------
+- Temática: Vida nocturna exótica, oscura y elegante. Misticismo y seducción.
+- Iconografía: Serpientes (cobras/víboras) y copas de martini.
+- Paleta de Colores:
+  * Fondo: Negro puro y degradados oscuros.
+  * Elegancia (Menú/Textos): Dorado, Bronce y Blanco.
+  * Fiesta/Eventos (Highlights): Rosa Neón, Magenta, Púrpura, Violeta.
+- Tipografía:
+  * Logo: Sans-serif geométrica, gruesa, 3D.
+  * Títulos: Serif clásica/elegante (tipo Playfair Display).
+  * Acentos: Script/Cursiva o trazo de brocha (Brush) para eventos.
+  * Textos legibles: Sans-serif moderna (tipo Montserrat/Gotham).
+
+5. MENÚ SUGERIDO (Licores, Bebidas y Snacks)
+--------------------------------------------------
+[LICORES NACIONALES E INTERNACIONALES - BOTELLA Y MEDIA]
+- Aguardiente:
+  * Aguardiente Antioqueño (Tapa Roja, Tapa Azul sin azúcar, Tapa Verde)
+  * Aguardiente Amarillo de Manzanares
+  * Aguardiente Néctar
+- Ron:
+  * Ron Viejo de Caldas (3 años, 5 años, 8 años, León Dormido)
+  * Ron Medellín
+  * Ron Zacapa Centenario
+- Whisky:
+  * Old Parr (12 años)
+  * Buchanan's (12 años, Master, 18 años)
+  * Johnnie Walker (Red Label, Black Label, Double Black)
+  * Chivas Regal (12 años)
+  * Jack Daniel's (Old No. 7, Honey)
+- Tequila:
+  * Don Julio (Blanco, Reposado, 70, 1942)
+  * Jose Cuervo (Especial, Tradicional)
+  * Patrón (Silver, Reposado)
+- Vodka y Ginebra:
+  * Absolut / Smirnoff / Grey Goose
+  * Tanqueray / Bombay Sapphire / Hendrick's
+
+[CERVEZAS]
+- Club Colombia (Dorada, Roja, Negra)
+- Corona
+- Stella Artois
+- Heineken
+- Águila / Águila Light
+
+[CÓCTELES CLÁSICOS]
+- Margarita (Clásica, Fresa, Maracuyá)
+- Mojito
+- Gin & Tonic
+- Cuba Libre
+- Piña Colada
+- Tequila Sunrise
+
+[BEBIDAS SIN ALCOHOL Y MEZCLADORES]
+- Gaseosas (Coca-Cola, Sprite, Cuatro)
+- Sodas y Aguas Tónicas
+- Red Bull / Vive100
+- Jugos naturales (Mandarina, Naranja)
+- Agua embotellada (con y sin gas)
+
+[CONFITERÍA Y SNACKS]
+- Papitas Margarita (Pollo, Limón, Natural)
+- Doritos / Todo Rico
+- Maní (Moto, Especial, Salado)
+- Gomas (Trululu, Grissly)
+- Chocolatinas (Jumbo, Jet)
+- Cigarrillos y Vapeadores (venta exclusiva a mayores de edad)

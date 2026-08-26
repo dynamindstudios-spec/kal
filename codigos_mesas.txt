@@ -1,0 +1,25 @@
+===================================================
+OSTERIA BIANCO — CÓDIGOS DE SEGURIDAD PARA MESAS
+===================================================
+
+Mesa #1  : B1k8X
+Mesa #2  : A9m2P
+Mesa #3  : K7v4Q
+Mesa #4  : X3r9L
+Mesa #5  : J5n1W
+Mesa #6  : Z8t3E
+Mesa #7  : H2y6M
+Mesa #8  : C4p8V
+Mesa #9  : F6s3N
+Mesa #10 : R1w9T
+Mesa #11 : G5k7D
+Mesa #12 : L3x2B
+Mesa #13 : V8m4Y
+Mesa #14 : P9q1H
+Mesa #15 : T2z6S
+
+===================================================
+Instrucciones: Al seleccionar una mesa en la carta digital,
+el cliente o mesero debe ingresar el código de 5 caracteres
+correspondiente para validar su ubicación.
+===================================================
