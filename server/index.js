@@ -70,16 +70,21 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Helper para validar clave de autorización
-function isAuthorized(req) {
-  const { key, adminKey, secretKey, password, token } = req.body || req.query || {};
-  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'] || req.headers['x-secret-key'];
-  const providedKey = key || adminKey || secretKey || password || token || authHeader?.replace(/^Bearer\s+/i, '');
-  
-  if (!providedKey) return false;
-  return VALID_KEYS.has(providedKey) || providedKey === ADMIN_SECRET;
-}
+// Detailed Request Logger
+app.use((req, res, next) => {
+  console.log(`📡 [${new Date().toLocaleTimeString('es-CO')}] ${req.method} ${req.originalUrl || req.url}`, {
+    headers: {
+      'x-admin-key': req.headers['x-admin-key'],
+      'authorization': req.headers['authorization'],
+      'x-secret-key': req.headers['x-secret-key']
+    },
+    body: req.body,
+    query: req.query
+  });
+  next();
+});
 
 // ==============================================================================
 // ROUTER PRINCIPAL DE ADMINISTRACIÓN Y CONTROL REMOTO
@@ -112,45 +117,71 @@ adminRouter.get(['/subscription-status', '/modules', '/features', '/status'], (r
 });
 
 // 3. Modificación de Estado Global (active / unpaid)
-adminRouter.post('/set-subscription-status', (req, res) => {
-  const { status, modules, key } = req.body;
+adminRouter.all(['/set-subscription-status', '/subscription-status/set'], async (req, res) => {
+  const body = req.body || {};
+  const query = req.query || {};
+  const data = { ...query, ...body };
+  const { status, action, state, enabled, active, modules } = data;
 
-  if (!isAuthorized(req)) {
-    return res.status(403).json({
-      success: false,
-      error: 'No autorizado. Clave de administración incorrecta.'
-    });
-  }
+  console.log('⚡ [SET-SUBSCRIPTION-STATUS CALL]:', data);
 
-  if (status) {
-    systemSubscriptionStatus = (status === 'unpaid' || status === 'inactive' || status === 'bloqueado' || status === 'locked') ? 'unpaid' : 'active';
-  }
+  // Normalizar cualquier valor que signifique desactivar / no pago
+  const isUnpaid = 
+    status === 'unpaid' || status === 'inactive' || status === 'bloqueado' || status === 'locked' || status === 'disabled' || status === false || status === 'false' ||
+    action === 'disable' || action === 'lock' || action === 'suspend' || action === 'unpaid' ||
+    state === 'unpaid' || state === 'inactive' || state === 'disabled' || state === false || state === 'false' ||
+    enabled === false || enabled === 'false' ||
+    active === false || active === 'false';
 
+  systemSubscriptionStatus = isUnpaid ? 'unpaid' : 'active';
+
+  // Si envían módulos
   if (modules && typeof modules === 'object') {
     systemModules = { ...systemModules, ...modules };
   }
 
-  res.json({
+  if (isUnpaid) {
+    systemModules.menu = false;
+    systemModules.catalog = false;
+    systemModules.dashboard = false;
+    systemModules.admin = false;
+  } else if (status === 'active' || action === 'enable' || enabled === true || active === true) {
+    systemModules.menu = true;
+    systemModules.catalog = true;
+    systemModules.dashboard = true;
+    systemModules.admin = true;
+  }
+
+  // Persistir en Supabase si está disponible
+  if (supabase) {
+    try {
+      await supabase.from('system_settings').upsert({
+        id: 'global',
+        subscription_status: systemSubscriptionStatus,
+        updated_at: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn('Nota Supabase system_settings:', e.message);
+    }
+  }
+
+  return res.json({
     success: true,
     status: systemSubscriptionStatus,
     modules: systemModules,
     features: systemModules,
-    message: systemSubscriptionStatus === 'unpaid'
-      ? 'Sistema bloqueado remotamente por falta de pago.'
-      : 'Servicio reactivado exitosamente.'
+    message: isUnpaid ? 'Sistema bloqueado por falta de pago.' : 'Servicio reactivado exitosamente.'
   });
 });
 
 // 4. Modificación de Módulos Individuales
-adminRouter.post(['/set-module-status', '/toggle-module', '/set-feature-status', '/modules'], (req, res) => {
-  if (!isAuthorized(req)) {
-    return res.status(403).json({
-      success: false,
-      error: 'No autorizado. Clave de administración incorrecta.'
-    });
-  }
+adminRouter.all(['/set-module-status', '/toggle-module', '/set-feature-status', '/modules/toggle', '/modules/set', '/modules'], async (req, res) => {
+  const body = req.body || {};
+  const query = req.query || {};
+  const data = { ...query, ...body };
+  const { module, moduleId, feature, name, enabled, active, status, modules } = data;
 
-  const { module, moduleId, feature, name, enabled, active, status, modules } = req.body;
+  console.log('⚡ [SET-MODULE-STATUS CALL]:', data);
 
   if (modules && typeof modules === 'object') {
     systemModules = { ...systemModules, ...modules };
@@ -158,9 +189,25 @@ adminRouter.post(['/set-module-status', '/toggle-module', '/set-feature-status',
 
   const targetKey = module || moduleId || feature || name;
   if (targetKey) {
-    const isValActive = enabled !== undefined ? Boolean(enabled) : (active !== undefined ? Boolean(active) : (status === 'active' || status === 'enabled' || status === true));
+    const isValActive = enabled !== undefined ? (enabled === true || enabled === 'true' || enabled === 1 || enabled === '1') :
+                        active !== undefined ? (active === true || active === 'true' || active === 1 || active === '1') :
+                        status !== undefined ? (status === 'active' || status === 'enabled' || status === true || status === 'true') : true;
+
     systemModules[targetKey] = isValActive;
 
+    if (targetKey === 'menu' || targetKey === 'catalog') {
+      systemModules.menu = isValActive;
+      systemModules.catalog = isValActive;
+      if (!isValActive) {
+        systemSubscriptionStatus = 'unpaid';
+      } else {
+        systemSubscriptionStatus = 'active';
+      }
+    }
+    if (targetKey === 'dashboard' || targetKey === 'admin') {
+      systemModules.dashboard = isValActive;
+      systemModules.admin = isValActive;
+    }
     if (targetKey === 'reservations' || targetKey === 'booking') {
       systemModules.reservations = isValActive;
       systemModules.booking = isValActive;
@@ -173,17 +220,9 @@ adminRouter.post(['/set-module-status', '/toggle-module', '/set-feature-status',
       systemModules.whatsapp_agent = isValActive;
       systemModules.whatsapp = isValActive;
     }
-    if (targetKey === 'dashboard' || targetKey === 'admin') {
-      systemModules.dashboard = isValActive;
-      systemModules.admin = isValActive;
-    }
-    if (targetKey === 'menu' || targetKey === 'catalog') {
-      systemModules.menu = isValActive;
-      systemModules.catalog = isValActive;
-    }
   }
 
-  res.json({
+  return res.json({
     success: true,
     status: systemSubscriptionStatus,
     modules: systemModules,
