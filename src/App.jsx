@@ -21,6 +21,7 @@ import ReservationModal from './components/ReservationModal';
 import LoadingScreen from './components/LoadingScreen';
 import { DISHES, UI_TEXT, RESTAURANT_DATA, MENU_CATEGORIES } from './data/menuData';
 import { adminStore } from './services/adminStore';
+import { getSubscriptionStatus } from './services/api';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminLogin from './components/admin/AdminLogin';
 import FloatingSocialButton from './components/FloatingSocialButton';
@@ -82,41 +83,25 @@ export default function App() {
     window.addEventListener('hashchange', handleHash);
     window.addEventListener('popstate', handleHash);
 
-    const handleSyncState = () => {
-      const subStatus = adminStore.getSubscriptionStatus();
-      const activeModules = adminStore.getModules();
-      const locked = subStatus === 'unpaid' || activeModules.menu === false || activeModules.catalog === false;
-      setIsSiteLocked(locked);
-      if (locked) {
-        setIsLoading(false);
-      }
-    };
-
-    // Initial check and fast polling every 2s
-    adminStore.checkRemoteStatus().then((data) => {
-      if (data) {
-        const locked = data.status === 'unpaid' || data.modules?.menu === false || data.modules?.catalog === false;
-        setIsSiteLocked(locked);
+    // Consulta de estado remoto con observabilidad en tiempo real (idéntico a Quimbayas)
+    const checkStatus = async () => {
+      try {
+        const res = await getSubscriptionStatus();
+        const locked = res && (res.status === 'unpaid' || res.modules?.menu === false || res.modules?.catalog === false);
+        console.log(`🔒 [KALL MONITOR] Estado remoto: ${res?.status || 'desconocido'} | Bloqueado: ${locked}`);
+        setIsSiteLocked(Boolean(locked));
         if (locked) {
           setIsLoading(false);
         }
+      } catch (err) {
+        console.warn('[KALL MONITOR] Error verificando estado remoto:', err);
       }
-    });
+    };
 
-    const pollInterval = setInterval(() => {
-      adminStore.checkRemoteStatus().then((data) => {
-        if (data) {
-          const locked = data.status === 'unpaid' || data.modules?.menu === false || data.modules?.catalog === false;
-          setIsSiteLocked(locked);
-          if (locked) {
-            setIsLoading(false);
-          }
-        }
-      });
-    }, 2000);
+    checkStatus();
+    const pollInterval = setInterval(checkStatus, 2000);
 
     const unsubscribe = adminStore.subscribe(() => {
-      handleSyncState();
       setAuthVersion((v) => v + 1);
       setLiveDishes(adminStore.getDishes());
       setLiveCategories(adminStore.getCategories());
