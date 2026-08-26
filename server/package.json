@@ -1,6 +1,7 @@
 {
   "name": "kal-discobar-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend API para KAL DISCOBAR y control remoto de estado de suscripción",
   "main": "index.js",
   "scripts": {
