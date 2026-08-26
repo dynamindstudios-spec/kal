@@ -52,6 +52,30 @@ let systemModules = {
   catalog: true
 };
 
+// Cargar estado persistente desde Supabase al iniciar
+if (supabase) {
+  supabase
+    .from('system_settings')
+    .select('subscription_status, modules')
+    .eq('id', 'global')
+    .single()
+    .then(({ data, error }) => {
+      if (!error && data) {
+        if (data.subscription_status) {
+          systemSubscriptionStatus = data.subscription_status;
+          console.log(`🔒 [Supabase Boot] Estado cargado: ${systemSubscriptionStatus}`);
+        }
+        if (data.modules && typeof data.modules === 'object') {
+          systemModules = { ...systemModules, ...data.modules };
+          console.log('🔒 [Supabase Boot] Módulos cargados:', systemModules);
+        }
+      }
+    })
+    .catch((err) => {
+      console.warn('Nota Supabase boot:', err.message);
+    });
+}
+
 // Middleware CORS Ultra-Permisivo
 app.use(cors({
   origin: '*',

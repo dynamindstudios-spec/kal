@@ -1,4 +1,5 @@
 import { DISHES, MENU_CATEGORIES, TABLE_SECURITY_CODES, ALCOHOL_INTENSITY_FILTERS, DRINK_TASTE_FILTERS } from '../data/menuData';
+import { supabase } from './supabaseClient';
 
 const STORAGE_KEYS = {
   AUTH: 'kal_admin_auth',
@@ -380,6 +381,7 @@ class AdminStoreService {
       const url = apiBaseUrl || import.meta.env.VITE_API_URL || defaultUrl;
       const cleanUrl = url.replace(/\/+$/, '');
 
+      // Tier 1: Consultar a Backend en Render
       const res = await fetch(`${cleanUrl}/api/bookings/admin/subscription-status`, {
         cache: 'no-store',
         headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
@@ -398,8 +400,32 @@ class AdminStoreService {
         }
       }
     } catch (err) {
-      console.warn('Fallback a almacenamiento local:', err);
+      console.warn('Fallback a Supabase Cloud:', err);
     }
+
+    // Tier 2: Consultar a Supabase PostgreSQL Cloud directamente
+    try {
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('subscription_status, modules')
+          .eq('id', 'global')
+          .single();
+
+        if (!error && data) {
+          if (data.subscription_status) {
+            this.setSubscriptionStatus(data.subscription_status);
+          }
+          if (data.modules && typeof data.modules === 'object') {
+            this.setModules(data.modules);
+          }
+          return { status: data.subscription_status, modules: data.modules };
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Fallback a almacenamiento local:', dbErr);
+    }
+
     return { status: this.getSubscriptionStatus(), modules: this.getModules() };
   }
 
