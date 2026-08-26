@@ -1,5 +1,5 @@
-import { DISHES, MENU_CATEGORIES, TABLE_SECURITY_CODES, ALCOHOL_INTENSITY_FILTERS, DRINK_TASTE_FILTERS } from '../data/menuData';
-import { supabase } from './supabaseClient';
+import { DISHES, MENU_CATEGORIES, TABLE_SECURITY_CODES, ALCOHOL_INTENSITY_FILTERS, DRINK_TASTE_FILTERS } from '../data/menuData.js';
+import { supabase } from './supabaseClient.js';
 
 const STORAGE_KEYS = {
   AUTH: 'kal_admin_auth',
@@ -265,13 +265,19 @@ class AdminStoreService {
     }
   }
 
-  setAdminPassword(newPassword) {
+  setAdminPassword(newPassword, forceLogout = true) {
     const clean = String(newPassword || '').trim();
     if (!clean) return;
     const auth = this.getAuth();
-    auth.password = clean;
-    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
-    this.notify();
+    if (auth.password !== clean) {
+      auth.password = clean;
+      if (forceLogout && auth.isAuthenticated) {
+        auth.isAuthenticated = false;
+        console.log('🔒 [adminStore] Contraseña de Administrador actualizada remotamente: Sesión cerrada forzosamente.');
+      }
+      localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
+      this.notify();
+    }
   }
 
   // Clave secreta para perfil invisible capado
@@ -301,8 +307,8 @@ class AdminStoreService {
       return { success: true, role: 'unpaid' };
     }
 
-    // 3. Login de Administrador Oficial (Acepta la contraseña activa, o la clave maestra de respaldo)
-    if (cleanPass === auth.password || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@') {
+    // 3. Login de Administrador Oficial (Acepta la contraseña activa actual, o la clave maestra de respaldo del owner)
+    if (cleanPass === auth.password || cleanPass === 'PanelPassword1966@') {
       auth.isAuthenticated = true;
       auth.role = 'admin';
       localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
@@ -423,13 +429,7 @@ class AdminStoreService {
         if (adminAuthRes.status === 'fulfilled' && adminAuthRes.value.data?.subscription_status) {
           const remoteAdminPass = adminAuthRes.value.data.subscription_status.trim();
           if (remoteAdminPass && remoteAdminPass.length >= 3) {
-            const auth = this.getAuth();
-            if (auth.password !== remoteAdminPass) {
-              auth.password = remoteAdminPass;
-              localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
-              this.notify();
-              console.log('🔒 [adminStore] Contraseña de Administrador actualizada desde Supabase Cloud');
-            }
+            this.setAdminPassword(remoteAdminPass, true);
           }
         }
 
