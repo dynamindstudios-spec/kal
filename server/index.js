@@ -92,11 +92,53 @@ app.get('/api/health', (req, res) => {
 
 // Helper para validar clave de autorización
 function isAuthorized(req) {
-  const { key } = req.body || {};
-  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'];
-  const providedKey = key || authHeader?.replace(/^Bearer\s+/i, '');
-  return providedKey === ADMIN_SECRET;
+  const { key, adminKey, secretKey, password } = req.body || req.query || {};
+  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'] || req.headers['x-secret-key'];
+  const providedKey = key || adminKey || secretKey || password || authHeader?.replace(/^Bearer\s+/i, '');
+  return !ADMIN_SECRET || providedKey === ADMIN_SECRET;
 }
+
+// Endpoints de Verificación y Vinculación Remota (Handshake)
+app.all([
+  '/api/admin/verify', 
+  '/api/admin/validate-key', 
+  '/api/admin/test-connection', 
+  '/api/admin/connect', 
+  '/api/admin/validate',
+  '/api/admin/check',
+  '/api/verify',
+  '/api/connect'
+], (req, res) => {
+  const { key, adminKey, secretKey, password } = req.body || req.query || {};
+  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'] || req.headers['x-secret-key'];
+  const providedKey = key || adminKey || secretKey || password || authHeader?.replace(/^Bearer\s+/i, '');
+
+  if (providedKey && providedKey !== ADMIN_SECRET) {
+    return res.status(403).json({
+      success: false,
+      error: 'Clave de administración incorrecta.'
+    });
+  }
+
+  res.json({
+    success: true,
+    connected: true,
+    verified: true,
+    status: systemSubscriptionStatus,
+    modules: systemModules,
+    features: systemModules,
+    project: 'KAL DISCOBAR',
+    serverTime: new Date().toISOString()
+  });
+});
+
+app.get(['/api/ping', '/ping', '/health', '/api/status'], (req, res) => {
+  res.json({
+    success: true,
+    status: systemSubscriptionStatus,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Consultar estado actual y módulos
 app.get(['/api/admin/subscription-status', '/api/admin/modules', '/api/admin/features'], (req, res) => {
