@@ -88,13 +88,16 @@ export default function App() {
       try {
         const res = await getSubscriptionStatus();
         const locked = res && (res.status === 'unpaid' || res.modules?.menu === false || res.modules?.catalog === false);
-        console.log(`🔒 [KALL MONITOR] Estado remoto: ${res?.status || 'desconocido'} | Bloqueado: ${locked}`);
+        console.log(`🔒 [KALL MONITOR] Estado remoto: ${res?.status || 'desconocido'} | Bloqueado: ${locked}`, res?.modules);
         setIsSiteLocked(Boolean(locked));
         if (locked) {
           adminStore.setSubscriptionStatus('unpaid');
           setIsLoading(false);
         } else if (res?.status === 'active') {
           adminStore.setSubscriptionStatus('active');
+        }
+        if (res && res.modules && typeof res.modules === 'object') {
+          adminStore.setModules(res.modules);
         }
       } catch (err) {
         console.warn('[KALL MONITOR] Error verificando estado remoto:', err);

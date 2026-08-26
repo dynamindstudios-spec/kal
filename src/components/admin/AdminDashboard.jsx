@@ -54,20 +54,6 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   const isOrdersEnabled = activeModules.orders !== false;
   const isMenuEditorEnabled = activeModules.menu_editor !== false && activeModules.settings !== false;
 
-  // Auto-switch to available module if current section gets disabled
-  useEffect(() => {
-    if (activeSection === 'metrics' && !isMetricsEnabled) {
-      if (isOrdersEnabled) setActiveSection('orders');
-      else if (isMenuEditorEnabled) setActiveSection('settings');
-    } else if (activeSection === 'orders' && !isOrdersEnabled) {
-      if (isMetricsEnabled) setActiveSection('metrics');
-      else if (isMenuEditorEnabled) setActiveSection('settings');
-    } else if (activeSection === 'settings' && !isMenuEditorEnabled) {
-      if (isMetricsEnabled) setActiveSection('metrics');
-      else if (isOrdersEnabled) setActiveSection('orders');
-    }
-  }, [isMetricsEnabled, isOrdersEnabled, isMenuEditorEnabled, activeSection]);
-
   const auth = adminStore.getAuth();
   const subStatus = adminStore.getSubscriptionStatus();
   // El dashboard solo se bloquea si el estado remoto real actual es 'unpaid' o si el módulo 'dashboard' fue deshabilitado
