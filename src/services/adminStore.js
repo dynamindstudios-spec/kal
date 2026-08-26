@@ -340,6 +340,9 @@ class AdminStoreService {
   getModules() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.MODULES)) || {
+        metrics: true,
+        orders: true,
+        menu_editor: true,
         reservations: true,
         booking: true,
         payments: true,
@@ -353,6 +356,9 @@ class AdminStoreService {
       };
     } catch {
       return {
+        metrics: true,
+        orders: true,
+        menu_editor: true,
         reservations: true,
         booking: true,
         payments: true,
@@ -378,7 +384,7 @@ class AdminStoreService {
   async checkRemoteStatus(apiBaseUrl = '') {
     try {
       const defaultUrl = 'https://kal-discobar-backend.onrender.com';
-      const url = apiBaseUrl || import.meta.env.VITE_API_URL || defaultUrl;
+      const url = apiBaseUrl || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) || defaultUrl;
       const cleanUrl = url.replace(/\/+$/, '');
 
       // Tier 1: Consultar a Backend en Render
@@ -408,18 +414,18 @@ class AdminStoreService {
       if (supabase) {
         const { data, error } = await supabase
           .from('system_settings')
-          .select('subscription_status, modules')
+          .select('subscription_status')
           .eq('id', 'global')
           .single();
 
         if (!error && data) {
           if (data.subscription_status) {
             this.setSubscriptionStatus(data.subscription_status);
+            if (data.subscription_status === 'unpaid') {
+              this.setModules({ menu: false, catalog: false, dashboard: false, admin: false });
+            }
           }
-          if (data.modules && typeof data.modules === 'object') {
-            this.setModules(data.modules);
-          }
-          return { status: data.subscription_status, modules: data.modules };
+          return { status: data.subscription_status, modules: this.getModules() };
         }
       }
     } catch (dbErr) {

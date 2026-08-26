@@ -14,17 +14,26 @@ import ResetDefaultsModal from './ResetDefaultsModal';
 import AdminColorThemePicker from './AdminColorThemePicker';
 
 export default function AdminDashboard({ onLogout, onReturnToMenu }) {
-  const [activeSection, setActiveSection] = useState('metrics'); // 'metrics' | 'orders' | 'settings'
+  const [activeModules, setActiveModules] = useState(() => adminStore.getModules());
+  const [activeSection, setActiveSection] = useState(() => {
+    const mods = adminStore.getModules();
+    if (mods.metrics !== false) return 'metrics';
+    if (mods.orders !== false) return 'orders';
+    if (mods.menu_editor !== false && mods.settings !== false) return 'settings';
+    return 'metrics';
+  });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [adminThemeId, setAdminThemeId] = useState(() => adminStore.getAdminTheme());
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Live Clock & Theme Sync
+  // Live Clock & Theme / Modules Sync
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     const unsubscribe = adminStore.subscribe(() => {
       setAdminThemeId(adminStore.getAdminTheme());
+      const currentMods = adminStore.getModules();
+      setActiveModules(currentMods);
     });
     return () => {
       clearInterval(timer);
@@ -32,9 +41,26 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
     };
   }, []);
 
+  const isMetricsEnabled = activeModules.metrics !== false;
+  const isOrdersEnabled = activeModules.orders !== false;
+  const isMenuEditorEnabled = activeModules.menu_editor !== false && activeModules.settings !== false;
+
+  // Auto-switch to available module if current section gets disabled
+  useEffect(() => {
+    if (activeSection === 'metrics' && !isMetricsEnabled) {
+      if (isOrdersEnabled) setActiveSection('orders');
+      else if (isMenuEditorEnabled) setActiveSection('settings');
+    } else if (activeSection === 'orders' && !isOrdersEnabled) {
+      if (isMetricsEnabled) setActiveSection('metrics');
+      else if (isMenuEditorEnabled) setActiveSection('settings');
+    } else if (activeSection === 'settings' && !isMenuEditorEnabled) {
+      if (isMetricsEnabled) setActiveSection('metrics');
+      else if (isOrdersEnabled) setActiveSection('orders');
+    }
+  }, [isMetricsEnabled, isOrdersEnabled, isMenuEditorEnabled, activeSection]);
+
   const auth = adminStore.getAuth();
   const subStatus = adminStore.getSubscriptionStatus();
-  const activeModules = adminStore.getModules();
   const isUnpaid = auth.role === 'unpaid' || subStatus === 'unpaid' || activeModules.dashboard === false || activeModules.admin === false;
 
   // ----------------------------------------------------
@@ -183,64 +209,70 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
         <aside className="w-full md:w-64 bg-[#0c0e14] border-r border-[#1e2230] p-4 flex flex-row md:flex-col gap-2 shrink-0 overflow-x-auto md:overflow-visible">
           
           {/* Navigation Item 1: Metrics & Cash Register */}
-          <button
-            onClick={() => setActiveSection('metrics')}
-            className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
-              activeSection === 'metrics'
-                ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
-                : 'text-gray-400 hover:text-white hover:bg-[#141722]'
-            }`}
-          >
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-              activeSection === 'metrics' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
-            }`}>
-              <BarChart3 size={18} />
-            </div>
-            <div>
-              <span className="text-xs font-extrabold block leading-tight">Métricas y Caja</span>
-              <span className="text-[10px] opacity-75 hidden md:block">Ingresos & Arqueo Diario</span>
-            </div>
-          </button>
+          {isMetricsEnabled && (
+            <button
+              onClick={() => setActiveSection('metrics')}
+              className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
+                activeSection === 'metrics'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
+                  : 'text-gray-400 hover:text-white hover:bg-[#141722]'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                activeSection === 'metrics' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
+              }`}>
+                <BarChart3 size={18} />
+              </div>
+              <div>
+                <span className="text-xs font-extrabold block leading-tight">Métricas y Caja</span>
+                <span className="text-[10px] opacity-75 hidden md:block">Ingresos & Arqueo Diario</span>
+              </div>
+            </button>
+          )}
 
           {/* Navigation Item 2: Live Orders, Tables & Reservations */}
-          <button
-            onClick={() => setActiveSection('orders')}
-            className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
-              activeSection === 'orders'
-                ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
-                : 'text-gray-400 hover:text-white hover:bg-[#141722]'
-            }`}
-          >
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-              activeSection === 'orders' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
-            }`}>
-              <UtensilsCrossed size={18} />
-            </div>
-            <div>
-              <span className="text-xs font-extrabold block leading-tight">Pedidos & Mesas</span>
-              <span className="text-[10px] opacity-75 hidden md:block">Mesas 1-15 & Reservas</span>
-            </div>
-          </button>
+          {isOrdersEnabled && (
+            <button
+              onClick={() => setActiveSection('orders')}
+              className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
+                activeSection === 'orders'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
+                  : 'text-gray-400 hover:text-white hover:bg-[#141722]'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                activeSection === 'orders' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
+              }`}>
+                <UtensilsCrossed size={18} />
+              </div>
+              <div>
+                <span className="text-xs font-extrabold block leading-tight">Pedidos & Mesas</span>
+                <span className="text-[10px] opacity-75 hidden md:block">Mesas 1-15 & Reservas</span>
+              </div>
+            </button>
+          )}
 
           {/* Navigation Item 3: Menu Customization & Security */}
-          <button
-            onClick={() => setActiveSection('settings')}
-            className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
-              activeSection === 'settings'
-                ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
-                : 'text-gray-400 hover:text-white hover:bg-[#141722]'
-            }`}
-          >
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-              activeSection === 'settings' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
-            }`}>
-              <Settings size={18} />
-            </div>
-            <div>
-              <span className="text-xs font-extrabold block leading-tight">Configuración Menú</span>
-              <span className="text-[10px] opacity-75 hidden md:block">Precios, Platos & Claves</span>
-            </div>
-          </button>
+          {isMenuEditorEnabled && (
+            <button
+              onClick={() => setActiveSection('settings')}
+              className={`w-full p-3.5 rounded-2xl text-left flex items-center gap-3 transition-all cursor-pointer shrink-0 ${
+                activeSection === 'settings'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
+                  : 'text-gray-400 hover:text-white hover:bg-[#141722]'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                activeSection === 'settings' ? 'bg-black/20 text-black' : 'bg-white/5 text-amber-400'
+              }`}>
+                <Settings size={18} />
+              </div>
+              <div>
+                <span className="text-xs font-extrabold block leading-tight">Configuración Menú</span>
+                <span className="text-[10px] opacity-75 hidden md:block">Precios, Platos & Claves</span>
+              </div>
+            </button>
+          )}
 
           {/* Dedicated Change Password Button at Bottom of Sidebar */}
           <div className="mt-auto pt-4 border-t border-[#1e2230] space-y-2">
@@ -273,7 +305,7 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-7xl">
           <AnimatePresence mode="wait">
-            {activeSection === 'metrics' && (
+            {activeSection === 'metrics' && isMetricsEnabled && (
               <motion.div
                 key="metrics-section"
                 initial={{ opacity: 0, y: 8 }}
@@ -285,7 +317,7 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
               </motion.div>
             )}
 
-            {activeSection === 'orders' && (
+            {activeSection === 'orders' && isOrdersEnabled && (
               <motion.div
                 key="orders-section"
                 initial={{ opacity: 0, y: 8 }}
@@ -297,7 +329,7 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
               </motion.div>
             )}
 
-            {activeSection === 'settings' && (
+            {activeSection === 'settings' && isMenuEditorEnabled && (
               <motion.div
                 key="settings-section"
                 initial={{ opacity: 0, y: 8 }}
@@ -307,6 +339,18 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
               >
                 <AdminMenuSettings />
               </motion.div>
+            )}
+
+            {!isMetricsEnabled && !isOrdersEnabled && !isMenuEditorEnabled && (
+              <div className="p-12 rounded-3xl bg-[#0e1017] border border-amber-500/30 text-center space-y-4 max-w-lg mx-auto my-12">
+                <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+                  <Ban size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-white">Módulos Deshabilitados</h3>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Todas las secciones de administración (Métricas, Pedidos y Menú) han sido suspendidas temporalmente desde la central de la agencia.
+                </p>
+              </div>
             )}
           </AnimatePresence>
         </main>

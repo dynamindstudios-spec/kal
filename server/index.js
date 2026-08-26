@@ -40,16 +40,22 @@ let systemSubscriptionStatus = process.env.INITIAL_SUBSCRIPTION_STATUS || 'activ
 
 // Estado de Módulos Remotos
 let systemModules = {
-  reservations: true,   // Motor de Reservas & Calendario
-  booking: true,
-  payments: true,       // Pasarela de Pagos & Depósitos
-  checkout: true,
-  whatsapp_agent: true, // Agente IA de WhatsApp
-  whatsapp: true,
+  // 3 Módulos Principales del Dashboard de KAL DISCOBAR
+  metrics: true,        // 📊 Métricas & Caja (Finanzas, Balance, Arqueo)
+  orders: true,         // 🛎️ Pedidos & Mesas (Comandas en Vivo)
+  menu_editor: true,    // 📋 Configuración de Menú & Platos
+
+  // Módulos Generales y Compatibilidad
   dashboard: true,      // Dashboard del Cliente (/dsb)
   admin: true,
-  menu: true,           // Catálogo & Menú Digital
-  catalog: true
+  menu: true,           // Catálogo & Menú Digital Público
+  catalog: true,
+  reservations: true,
+  booking: true,
+  payments: true,
+  checkout: true,
+  whatsapp_agent: true,
+  whatsapp: true
 };
 
 // Cargar estado persistente desde Supabase al iniciar
@@ -221,6 +227,15 @@ adminRouter.all(['/set-module-status', '/toggle-module', '/set-feature-status', 
 
     systemModules[targetKey] = isValActive;
 
+    if (targetKey === 'metrics' || targetKey === 'caja' || targetKey === 'finance' || targetKey === 'finanzas') {
+      systemModules.metrics = isValActive;
+    }
+    if (targetKey === 'orders' || targetKey === 'pedidos' || targetKey === 'mesas' || targetKey === 'tables') {
+      systemModules.orders = isValActive;
+    }
+    if (targetKey === 'menu_editor' || targetKey === 'menu_config' || targetKey === 'settings' || targetKey === 'dishes' || targetKey === 'menuConfig') {
+      systemModules.menu_editor = isValActive;
+    }
     if (targetKey === 'menu' || targetKey === 'catalog') {
       systemModules.menu = isValActive;
       systemModules.catalog = isValActive;
