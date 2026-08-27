@@ -1,0 +1,13 @@
+# ==============================================================================
+# PLANTILLA DE FACTURAS DE CONTINGENCIA - KAL DISCOBAR
+# ==============================================================================
+# INSTRUCCIONES:
+# 1. Rellena una linea por cada factura fisica emitida en el talonario durante contingencia.
+# 2. Formato: NroFactura | MontoCOP | MedioPago | MesaOBarra | Motivo / Detalle
+# 3. Medios de pago validos: Efectivo, Bancolombia, Nequi, Daviplata, Datafono
+# 4. Guarda este archivo y subelo directamente en el Dashboard de KAL DISCOBAR.
+# ==============================================================================
+
+TAL-1001 | 150000 | Efectivo | Mesa 4 | Contingencia por corte de internet
+TAL-1002 | 85000  | Bancolombia | Barra | Falla de red wifi
+TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual

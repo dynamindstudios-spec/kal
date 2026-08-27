@@ -20,7 +20,11 @@ export default function AdminInventory() {
   const [showWasteModal, setShowWasteModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showWasteHistoryModal, setShowWasteHistoryModal] = useState(false);
+  
+  // Manual edit state
   const [editingItem, setEditingItem] = useState(null);
+  const [editingPassword, setEditingPassword] = useState('');
+  const [editError, setEditError] = useState('');
 
   // Formulario Entrada de Mercancía
   const [entryForm, setEntryForm] = useState({
@@ -173,19 +177,50 @@ export default function AdminInventory() {
     }
   };
 
-  // Manejar Ajuste Manual
+  // Abrir Modal de Edición Manual
+  const handleOpenManualEdit = (item) => {
+    setEditingItem({
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      stockBottles: String(item.stockBottles ?? 0),
+      stockUnits: String(item.stockUnits ?? 0),
+      openedBottlesMl: String(item.openedBottlesMl ?? 0),
+      minStock: String(item.minStock ?? 3)
+    });
+    setEditingPassword('');
+    setEditError('');
+  };
+
+  // Manejar Guardado de Ajuste Manual
   const handleSaveManualEdit = (e) => {
     e.preventDefault();
+    setEditError('');
+
     if (!editingItem) return;
 
-    adminStore.updateStockManually(editingItem.id, {
+    if (!editingPassword) {
+      setEditError('Ingresa tu contraseña de administrador para autorizar el ajuste de stock.');
+      return;
+    }
+
+    const updates = {
       stockBottles: parseInt(editingItem.stockBottles, 10) || 0,
       stockUnits: parseInt(editingItem.stockUnits, 10) || 0,
       openedBottlesMl: parseInt(editingItem.openedBottlesMl, 10) || 0,
       minStock: parseInt(editingItem.minStock, 10) || 3
-    });
+    };
 
-    setEditingItem(null);
+    const res = adminStore.updateStockManually(editingItem.id, updates, editingPassword);
+
+    if (res.success) {
+      setInventory(adminStore.getInventory());
+      setEditingItem(null);
+      setEditingPassword('');
+      setEditError('');
+    } else {
+      setEditError(res.message || 'Contraseña incorrecta o error al guardar.');
+    }
   };
 
   const selectedWasteItem = inventory.find((i) => i.id === wasteForm.itemId);
@@ -193,30 +228,52 @@ export default function AdminInventory() {
   return (
     <div className="space-y-6 font-sans">
       
-      {/* HEADER PRINCIPAL */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[#11131c] p-5 sm:p-6 rounded-3xl border border-[#232738] shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black">
+      {/* HEADER PRINCIPAL (Sin subtítulo, título en una sola línea, botones principales a la derecha y secundarios abajo) */}
+      <div className="bg-[#11131c] p-5 sm:p-6 rounded-3xl border border-[#232738] shadow-xl space-y-3.5">
+        
+        {/* Fila 1: Título en una sola línea + Botones Operativos a la Derecha */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 font-black shrink-0">
               <Boxes className="w-5 h-5" />
             </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wider">
-                Control de Inventario & Botellas
-              </h1>
-              <p className="text-xs text-gray-400">
-                Seguimiento de botellas, conversión de copas/ml, entradas y mermas con autorización admin
-              </p>
-            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wider whitespace-nowrap">
+              Control de Inventario & Botellas
+            </h1>
+          </div>
+
+          {/* Botones Principales a la Derecha */}
+          <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
+            <button
+              type="button"
+              onClick={() => {
+                setWasteError('');
+                setShowWasteModal(true);
+              }}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-red-950/60 hover:bg-red-900/70 border border-red-500/40 text-red-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
+              title="Dar de baja mercancía por daño o merma"
+            >
+              <Trash2 size={15} className="text-red-400" />
+              <span>Bajar Mercancía / Merma</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowEntryModal(true)}
+              className="flex-1 sm:flex-none px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-all cursor-pointer"
+            >
+              <Plus size={16} strokeWidth={3} />
+              <span>Entrada de Mercancía</span>
+            </button>
           </div>
         </div>
 
-        {/* ACCIONES TOP NAVBAR */}
-        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+        {/* Fila 2: Botones de Auditoría e Historial Justo Abajo del Título */}
+        <div className="flex items-center gap-2 pt-2 border-t border-white/5 flex-wrap">
           <button
             type="button"
             onClick={() => setShowWasteHistoryModal(true)}
-            className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-2xl bg-[#181c29] border border-[#2c3247] hover:border-red-500/50 text-red-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
+            className="px-3.5 py-2 rounded-xl bg-[#181c29] border border-[#2c3247] hover:border-red-500/50 text-red-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
             title="Ver auditoría de bajas y mermas"
           >
             <ShieldAlert size={14} className="text-red-400" />
@@ -231,45 +288,24 @@ export default function AdminInventory() {
           <button
             type="button"
             onClick={() => setShowHistoryModal(true)}
-            className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-2xl bg-[#181c29] border border-[#2c3247] hover:border-amber-400 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
+            className="px-3.5 py-2 rounded-xl bg-[#181c29] border border-[#2c3247] hover:border-amber-400 text-gray-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
             title="Kardex general de movimientos"
           >
             <History size={14} className="text-amber-400" />
             <span>Kardex General</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setWasteError('');
-              setShowWasteModal(true);
-            }}
-            className="flex-1 sm:flex-none px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-red-950/80 to-red-900/80 hover:from-red-900 hover:to-red-800 border border-red-500/40 text-red-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md"
-            title="Dar de baja mercancía por daño o merma"
-          >
-            <Trash2 size={14} className="text-red-400" />
-            <span>Bajar Mercancía / Merma</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowEntryModal(true)}
-            className="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 text-black text-xs font-black flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 hover:brightness-110 transition-all cursor-pointer"
-          >
-            <Plus size={15} strokeWidth={3} />
-            <span>Entrada de Mercancía</span>
-          </button>
         </div>
+
       </div>
 
-      {/* KPI METRIC CARDS (Palabras completas abajo a la derecha) */}
+      {/* KPI METRIC CARDS (Colores refinados y palabras completas abajo a la derecha) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Total Botellas */}
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-[#121624] to-[#171b2b] border border-amber-500/30 flex flex-col justify-between space-y-3 shadow-lg">
+        <div className="p-5 rounded-3xl bg-[#11131c] border border-amber-500/30 flex flex-col justify-between space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-gray-400">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-300">Botellas en Stock</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center">
               <Wine size={18} />
             </div>
           </div>
@@ -287,7 +323,7 @@ export default function AdminInventory() {
         <div className="p-5 rounded-3xl bg-[#11131c] border border-[#232738] flex flex-col justify-between space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-gray-400">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-300">Copas Disponibles</span>
-            <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
               <Sparkles size={18} />
             </div>
           </div>
@@ -305,7 +341,7 @@ export default function AdminInventory() {
         <div className="p-5 rounded-3xl bg-[#11131c] border border-[#232738] flex flex-col justify-between space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-gray-400">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">Cervezas & Bebidas</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
               <ShoppingBag size={18} />
             </div>
           </div>
@@ -323,7 +359,7 @@ export default function AdminInventory() {
         <div className="p-5 rounded-3xl bg-[#11131c] border border-red-500/30 flex flex-col justify-between space-y-3 shadow-lg">
           <div className="flex items-center justify-between text-gray-400">
             <span className="text-xs font-bold uppercase tracking-wider text-red-400">Stock Crítico</span>
-            <div className="w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-red-500/15 text-red-400 flex items-center justify-center">
               <AlertTriangle size={18} />
             </div>
           </div>
@@ -359,7 +395,7 @@ export default function AdminInventory() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-3.5 py-2 rounded-2xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === cat
-                  ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
+                  ? 'bg-amber-400 text-black shadow-md shadow-amber-400/10'
                   : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5'
               }`}
             >
@@ -371,7 +407,7 @@ export default function AdminInventory() {
             onClick={() => setSelectedCategory('LOW_STOCK')}
             className={`px-3.5 py-2 rounded-2xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
               selectedCategory === 'LOW_STOCK'
-                ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+                ? 'bg-red-600 text-white shadow-md shadow-red-600/20'
                 : 'bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-500/30'
             }`}
           >
@@ -498,11 +534,11 @@ export default function AdminInventory() {
                       )}
                     </td>
 
-                    {/* ACCIONES */}
+                    {/* ACCIONES (Botón de Lápiz) */}
                     <td className="py-4 px-5 text-center">
                       <button
                         type="button"
-                        onClick={() => setEditingItem({ ...item })}
+                        onClick={() => handleOpenManualEdit(item)}
                         className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-amber-400 border border-white/10 transition-colors cursor-pointer"
                         title="Ajustar Stock Manualmente"
                       >
@@ -519,7 +555,7 @@ export default function AdminInventory() {
       </div>
 
       {/* ==================================================== */}
-      {/* MODAL: ENTRADA DE MERCANCÍA (Con CustomSelect VIP)   */}
+      {/* MODAL: ENTRADA DE MERCANCÍA                         */}
       {/* ==================================================== */}
       <AnimatePresence>
         {showEntryModal && (
@@ -634,7 +670,7 @@ export default function AdminInventory() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-amber-500/10 cursor-pointer"
                   >
                     Guardar Entrada
                   </button>
@@ -816,7 +852,7 @@ export default function AdminInventory() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-red-600/30 cursor-pointer"
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-red-600/20 cursor-pointer"
                   >
                     Confirmar Baja
                   </button>
@@ -897,7 +933,7 @@ export default function AdminInventory() {
       </AnimatePresence>
 
       {/* ==================================================== */}
-      {/* MODAL: AJUSTE MANUAL                                 */}
+      {/* MODAL: AJUSTE MANUAL (CON CLAVE ADMIN & INPUTS FIX)  */}
       {/* ==================================================== */}
       <AnimatePresence>
         {editingItem && (
@@ -922,14 +958,25 @@ export default function AdminInventory() {
                 </button>
               </div>
 
+              {editError && (
+                <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-bold text-center">
+                  {editError}
+                </div>
+              )}
+
               <form onSubmit={handleSaveManualEdit} className="space-y-3.5">
                 {editingItem.type === 'unit' ? (
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">Unidades en Stock</label>
                     <input
-                      type="number"
-                      value={editingItem.stockUnits || 0}
-                      onChange={(e) => setEditingItem({ ...editingItem, stockUnits: e.target.value })}
+                      type="text"
+                      inputMode="numeric"
+                      value={editingItem.stockUnits}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setEditingItem({ ...editingItem, stockUnits: val });
+                      }}
+                      placeholder="0"
                       className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 font-bold font-mono"
                     />
                   </div>
@@ -938,9 +985,14 @@ export default function AdminInventory() {
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">Botellas Completas</label>
                       <input
-                        type="number"
-                        value={editingItem.stockBottles || 0}
-                        onChange={(e) => setEditingItem({ ...editingItem, stockBottles: e.target.value })}
+                        type="text"
+                        inputMode="numeric"
+                        value={editingItem.stockBottles}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setEditingItem({ ...editingItem, stockBottles: val });
+                        }}
+                        placeholder="0"
                         className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 font-bold font-mono"
                       />
                     </div>
@@ -948,9 +1000,14 @@ export default function AdminInventory() {
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">Mililitros Restantes en Barra</label>
                       <input
-                        type="number"
-                        value={editingItem.openedBottlesMl || 0}
-                        onChange={(e) => setEditingItem({ ...editingItem, openedBottlesMl: e.target.value })}
+                        type="text"
+                        inputMode="numeric"
+                        value={editingItem.openedBottlesMl}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          setEditingItem({ ...editingItem, openedBottlesMl: val });
+                        }}
+                        placeholder="0"
                         className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-purple-300 focus:outline-none focus:border-purple-400 font-bold font-mono"
                       />
                     </div>
@@ -960,14 +1017,35 @@ export default function AdminInventory() {
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">Stock Mínimo de Alerta</label>
                   <input
-                    type="number"
-                    value={editingItem.minStock || 3}
-                    onChange={(e) => setEditingItem({ ...editingItem, minStock: e.target.value })}
+                    type="text"
+                    inputMode="numeric"
+                    value={editingItem.minStock}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setEditingItem({ ...editingItem, minStock: val });
+                    }}
+                    placeholder="3"
                     className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 font-mono"
                   />
                 </div>
 
-                <div className="flex items-center gap-2.5 pt-2">
+                {/* AUTORIZACIÓN OBLIGATORIA CON CONTRASEÑA */}
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2">
+                  <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <KeyRound size={14} className="text-amber-400" />
+                    <span>Clave de Administrador para Guardar *</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={editingPassword}
+                    onChange={(e) => setEditingPassword(e.target.value)}
+                    placeholder="Ingresa clave del panel"
+                    required
+                    className="w-full bg-[#141620] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2.5 pt-2 border-t border-white/10">
                   <button
                     type="button"
                     onClick={() => setEditingItem(null)}
@@ -977,7 +1055,7 @@ export default function AdminInventory() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/20"
+                    className="flex-1 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-amber-500/15"
                   >
                     Guardar Ajuste
                   </button>

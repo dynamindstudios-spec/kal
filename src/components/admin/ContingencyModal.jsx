@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FileSpreadsheet, X, AlertCircle } from 'lucide-react';
+import { FileSpreadsheet, X, AlertCircle, Upload, Download, CheckCircle2 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import CustomSelect from '../common/CustomSelect';
 
@@ -10,6 +10,9 @@ export default function ContingencyModal({ onClose, onSuccess }) {
   const [paymentMethod, setPaymentMethod] = useState('Efectivo');
   const [tableNumber, setTableNumber] = useState('1');
   const [notes, setNotes] = useState('Factura manual por contingencia offline');
+  
+  const [importStatusMsg, setImportStatusMsg] = useState('');
+  const fileInputRef = useRef(null);
 
   const paymentOptions = [
     { value: 'Efectivo', label: '💵 Efectivo' },
@@ -27,6 +30,7 @@ export default function ContingencyModal({ onClose, onSuccess }) {
     }))
   ];
 
+  // Manejar Registro Individual Manual
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!totalCOP || parseFloat(totalCOP) <= 0) return;
@@ -46,6 +50,46 @@ export default function ContingencyModal({ onClose, onSuccess }) {
     }
   };
 
+  // Descargar Plantilla Offline de Escritorio
+  const handleDownloadTemplate = () => {
+    const text = adminStore.getContingencyTemplateText();
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Plantilla_Facturas_Contingencia_KAL.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Subir Archivo de Facturas
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportStatusMsg('');
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result;
+      if (content) {
+        const res = adminStore.importContingencyFromText(String(content));
+        if (res.success) {
+          setImportStatusMsg(res.message);
+          setTimeout(() => {
+            onSuccess?.(res);
+            onClose?.();
+          }, 1500);
+        } else {
+          setImportStatusMsg(res.message || 'Error al procesar el archivo.');
+        }
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   return (
     <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 font-sans">
       <motion.div
@@ -60,7 +104,7 @@ export default function ContingencyModal({ onClose, onSuccess }) {
               <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black uppercase text-white">Factura de Contingencia</h2>
+              <h2 className="text-lg font-black uppercase text-white">Facturas de Contingencia</h2>
               <p className="text-xs text-gray-400">Registro de talonario físico offline para caja</p>
             </div>
           </div>
@@ -73,7 +117,57 @@ export default function ContingencyModal({ onClose, onSuccess }) {
           </button>
         </div>
 
+        {/* Cargar desde Archivo Banner */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+          accept=".txt,.csv,.json"
+          className="hidden"
+        />
+
+        <div className="p-3.5 rounded-2xl bg-[#181b28] border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <span className="text-xs font-bold text-amber-300 block">
+              📄 Carga Masiva desde Archivo
+            </span>
+            <p className="text-[11px] text-gray-400">
+              Sube tu archivo de texto rellenado en el Escritorio
+            </p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              title="Descargar plantilla para rellenar"
+            >
+              <Download size={13} className="text-amber-400" />
+              <span>Plantilla</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/10 cursor-pointer"
+            >
+              <Upload size={13} />
+              <span>Subir Archivo</span>
+            </button>
+          </div>
+        </div>
+
+        {importStatusMsg && (
+          <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center">
+            {importStatusMsg}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">O registrar manualmente:</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">N° Talonario / Factura *</label>
@@ -136,7 +230,7 @@ export default function ContingencyModal({ onClose, onSuccess }) {
           <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5 text-xs text-amber-200">
             <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
             <p className="text-[11px] leading-relaxed">
-              💡 Esta factura manual se registrará en el <strong>Informe de Contingencias</strong> y se sumará al cuadre diario de caja.
+              💡 Esta factura manual se registrará en el <strong>Informe de Contingencias</strong> y se sumará al totalizado y medios de pago de caja.
             </p>
           </div>
 
@@ -150,7 +244,7 @@ export default function ContingencyModal({ onClose, onSuccess }) {
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
+              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-amber-500/10 cursor-pointer"
             >
               Registrar en Caja
             </button>
