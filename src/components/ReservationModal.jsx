@@ -7,6 +7,7 @@ import {
 import confetti from 'canvas-confetti';
 import { adminStore } from '../services/adminStore';
 import WompiCheckoutModal from './admin/WompiCheckoutModal';
+import InteractiveTableMap from './common/InteractiveTableMap';
 
 // SVG Table Icon
 function TableIcon({ size = 28, className = "" }) {
@@ -592,38 +593,25 @@ export default function ReservationModal({ isOpen, onClose, currentLang = 'es' }
                   </div>
                 </motion.div>
 
-                {/* 2. SECTION: Interactive Table Picker Grid */}
+                {/* 2. SECTION: Interactive Table Picker VIP Map */}
                 <motion.div variants={itemVariants} className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black text-[var(--accent-color)] uppercase tracking-wider">
                       2. Elige las {tableCount} {tableCount === 1 ? 'Mesa' : 'Mesas'} en la Planta
                     </span>
                     <span className="text-[11px] font-bold text-[var(--text-primary)]">
-                      Seleccionadas: <b className="text-[var(--accent-color)]">{selectedTables.map(t => `#${t}`).join(', ')}</b> ({selectedTables.length}/{tableCount})
+                      Seleccionadas: <b className="text-[var(--accent-color)]">{selectedTables.map(t => `#${t}`).join(', ') || 'Ninguna'}</b> ({selectedTables.length}/{tableCount})
                     </span>
                   </div>
 
-                  {/* 15 Table Buttons Grid */}
-                  <div className="grid grid-cols-5 gap-2 max-h-36 overflow-y-auto p-1.5 bg-[var(--pill-bg)] rounded-2xl border border-[var(--surface-border)]">
-                    {Array.from({ length: 15 }, (_, i) => i + 1).map((tableNum) => {
-                      const isSelected = selectedTables.includes(tableNum);
-                      return (
-                        <motion.button
-                          key={tableNum}
-                          type="button"
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => handleTableClick(tableNum)}
-                          className={`p-2 rounded-xl text-xs font-black transition-all border flex flex-col items-center justify-center gap-0.5 ${
-                            isSelected
-                              ? 'bg-[var(--accent-color)] text-[var(--accent-on)] border-transparent shadow-md scale-105'
-                              : 'bg-[var(--card-bg)] text-[var(--text-primary)] border-[var(--surface-border)] hover:border-[var(--accent-color)]'
-                          }`}
-                        >
-                          <TableIcon size={18} className={isSelected ? 'text-[var(--accent-on)]' : 'text-[var(--text-secondary)]'} />
-                          <span>#{tableNum}</span>
-                        </motion.button>
-                      );
-                    })}
+                  <div className="p-2.5 rounded-2xl bg-[var(--pill-bg)] border border-[var(--surface-border)]">
+                    <InteractiveTableMap
+                      selectedTables={selectedTables}
+                      multiSelect={true}
+                      onSelectTable={(tableNum) => handleTableClick(tableNum)}
+                      isWaiter={false}
+                      allowLockedSelection={false}
+                    />
                   </div>
                 </motion.div>
 

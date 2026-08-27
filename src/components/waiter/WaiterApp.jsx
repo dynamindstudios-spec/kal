@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   UtensilsCrossed, LogOut, Check, Search, Plus, Minus, 
-  Trash2, Send, ShoppingBag
+  Trash2, Send, ShoppingBag, RefreshCw
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import InteractiveTableMap from '../common/InteractiveTableMap';
@@ -244,12 +244,24 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
         {step === 'menu' && (
           <div className="space-y-4">
             
-            <div className="bg-[#111420] p-4 rounded-2xl border border-amber-500/30 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase">
-                  Comanda en Proceso
-                </span>
-                <h3 className="text-lg font-black text-white uppercase">Mesa #{selectedTable}</h3>
+            <div className="bg-[#111420] p-4 rounded-2xl border border-amber-500/30 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-3">
+                <div className="space-y-0.5">
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase">
+                    Comanda en Proceso
+                  </span>
+                  <h3 className="text-lg font-black text-white uppercase">Mesa #{selectedTable}</h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setStep('select_table')}
+                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500 hover:text-black text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  title="Seleccionar otra mesa"
+                >
+                  <RefreshCw size={12} />
+                  <span>Cambiar Mesa</span>
+                </button>
               </div>
 
               {cart.length > 0 && (

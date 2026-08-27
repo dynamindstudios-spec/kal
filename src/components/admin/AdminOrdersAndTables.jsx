@@ -11,6 +11,7 @@ import ContingencyModal from './ContingencyModal';
 import RefundsAndDuplicatesModal from './RefundsAndDuplicatesModal';
 import ElectronicInvoiceModal from './ElectronicInvoiceModal';
 import TableQRsModal from './TableQRsModal';
+import InteractiveTableMap from '../common/InteractiveTableMap';
 
 export default function AdminOrdersAndTables() {
   const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'reservations' | 'history'
@@ -928,28 +929,26 @@ export default function AdminOrdersAndTables() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-gray-400 block mb-1 font-bold">Teléfono / WhatsApp</label>
-                    <input
-                      type="tel"
-                      value={newResPhone}
-                      onChange={(e) => setNewResPhone(e.target.value)}
-                      placeholder="312 456 7890"
-                      className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#2a2e3f] text-white focus:outline-none focus:border-amber-400"
+                <div>
+                  <label className="text-gray-400 block mb-1 font-bold">Teléfono / WhatsApp</label>
+                  <input
+                    type="tel"
+                    value={newResPhone}
+                    onChange={(e) => setNewResPhone(e.target.value)}
+                    placeholder="312 456 7890"
+                    className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#2a2e3f] text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-gray-400 block font-bold">Mesa Asignada</label>
+                  <div className="p-2 rounded-2xl bg-[#0a0c12] border border-[#2a2e3f]">
+                    <InteractiveTableMap
+                      selectedTable={Number(newResTable)}
+                      onSelectTable={(tblNum) => setNewResTable(String(tblNum))}
+                      isWaiter={false}
+                      allowLockedSelection={true}
                     />
-                  </div>
-                  <div>
-                    <label className="text-gray-400 block mb-1 font-bold">Mesa Asignada</label>
-                    <select
-                      value={newResTable}
-                      onChange={(e) => setNewResTable(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#2a2e3f] text-white focus:outline-none focus:border-amber-400"
-                    >
-                      {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => (
-                        <option key={n} value={n}>Mesa #{n}</option>
-                      ))}
-                    </select>
                   </div>
                 </div>
 
