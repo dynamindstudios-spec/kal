@@ -35,6 +35,8 @@ export default function AdminInventory() {
     costPerUnit: '',
     notes: ''
   });
+  const [entryAdminPassword, setEntryAdminPassword] = useState('');
+  const [entryError, setEntryError] = useState('');
 
   // Formulario Baja de Mercancía / Merma
   const [wasteForm, setWasteForm] = useState({
@@ -108,10 +110,16 @@ export default function AdminInventory() {
     { value: 'Otro Motivo Justificado', label: '📝 Otro Motivo Justificado' }
   ];
 
-  // Manejar Entrada de Stock
+  // Manejar Entrada de Stock (Requiere Clave Admin)
   const handleAddStock = (e) => {
     e.preventDefault();
+    setEntryError('');
     if (!entryForm.itemId || !entryForm.quantity) return;
+
+    if (!entryAdminPassword.trim()) {
+      setEntryError('Debes ingresar tu contraseña de administrador para autorizar el ingreso de mercancía.');
+      return;
+    }
 
     const res = adminStore.addStockEntry({
       itemId: entryForm.itemId,
@@ -119,11 +127,14 @@ export default function AdminInventory() {
       supplier: entryForm.supplier,
       invoiceRef: entryForm.invoiceRef,
       costPerUnit: parseFloat(entryForm.costPerUnit) || 0,
-      notes: entryForm.notes
+      notes: entryForm.notes,
+      adminPassword: entryAdminPassword
     });
 
     if (res.success) {
       setShowEntryModal(false);
+      setEntryAdminPassword('');
+      setEntryError('');
       setEntryForm({
         itemId: '',
         quantity: '',
@@ -132,6 +143,8 @@ export default function AdminInventory() {
         costPerUnit: '',
         notes: ''
       });
+    } else {
+      setEntryError(res.message || 'Error al ingresar mercancía.');
     }
   };
 
@@ -177,8 +190,10 @@ export default function AdminInventory() {
     }
   };
 
-  // Abrir Modal de Edición Manual
+  // Abrir Modal de Edición Manual (Lápiz)
   const handleOpenManualEdit = (item) => {
+    const initialSalePrice = String(item.type === 'unit' ? (item.salePriceUnit || item.price || 0) : (item.salePriceBottle || item.price || 0));
+    const initialCostPrice = String(item.costPrice || 0);
     setEditingItem({
       id: item.id,
       name: item.name,
@@ -186,7 +201,11 @@ export default function AdminInventory() {
       stockBottles: String(item.stockBottles ?? 0),
       stockUnits: String(item.stockUnits ?? 0),
       openedBottlesMl: String(item.openedBottlesMl ?? 0),
-      minStock: String(item.minStock ?? 3)
+      minStock: String(item.minStock ?? 3),
+      salePrice: initialSalePrice,
+      costPrice: initialCostPrice,
+      initialSalePrice,
+      initialCostPrice
     });
     setEditingPassword('');
     setEditError('');
@@ -199,8 +218,12 @@ export default function AdminInventory() {
 
     if (!editingItem) return;
 
-    if (!editingPassword) {
-      setEditError('Ingresa tu contraseña de administrador para autorizar el ajuste de stock.');
+    // Detectar si se modificó el precio de venta o costo
+    const isPriceModified = (editingItem.salePrice !== editingItem.initialSalePrice) || 
+                            (editingItem.costPrice !== editingItem.initialCostPrice);
+
+    if (isPriceModified && !editingPassword.trim()) {
+      setEditError('Se detectó modificación de precio: ingresa tu clave de administrador para autorizar.');
       return;
     }
 
@@ -208,7 +231,9 @@ export default function AdminInventory() {
       stockBottles: parseInt(editingItem.stockBottles, 10) || 0,
       stockUnits: parseInt(editingItem.stockUnits, 10) || 0,
       openedBottlesMl: parseInt(editingItem.openedBottlesMl, 10) || 0,
-      minStock: parseInt(editingItem.minStock, 10) || 3
+      minStock: parseInt(editingItem.minStock, 10) || 3,
+      salePrice: parseFloat(editingItem.salePrice) || 0,
+      costPrice: parseFloat(editingItem.costPrice) || 0
     };
 
     const res = adminStore.updateStockManually(editingItem.id, updates, editingPassword);
@@ -219,7 +244,7 @@ export default function AdminInventory() {
       setEditingPassword('');
       setEditError('');
     } else {
-      setEditError(res.message || 'Contraseña incorrecta o error al guardar.');
+      setEditError(res.message || 'Error al guardar ajuste.');
     }
   };
 
@@ -585,6 +610,12 @@ export default function AdminInventory() {
                 </button>
               </div>
 
+              {entryError && (
+                <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-bold text-center">
+                  {entryError}
+                </div>
+              )}
+
               <form onSubmit={handleAddStock} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
@@ -657,6 +688,22 @@ export default function AdminInventory() {
                     onChange={(e) => setEntryForm({ ...entryForm, notes: e.target.value })}
                     placeholder="Ej: Lote recibido en bodega VIP"
                     className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                {/* Clave de Administrador Obligatoria para Entrada */}
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2">
+                  <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <KeyRound size={14} className="text-amber-400" />
+                    <span>Clave de Administrador para Autorizar Ingreso *</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={entryAdminPassword}
+                    onChange={(e) => setEntryAdminPassword(e.target.value)}
+                    placeholder="Ingresa clave del panel"
+                    required
+                    className="w-full bg-[#141620] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
                   />
                 </div>
 
@@ -1029,21 +1076,71 @@ export default function AdminInventory() {
                   />
                 </div>
 
-                {/* AUTORIZACIÓN OBLIGATORIA CON CONTRASEÑA */}
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2">
-                  <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <KeyRound size={14} className="text-amber-400" />
-                    <span>Clave de Administrador para Guardar *</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={editingPassword}
-                    onChange={(e) => setEditingPassword(e.target.value)}
-                    placeholder="Ingresa clave del panel"
-                    required
-                    className="w-full bg-[#141620] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
-                  />
+                {/* Precios (Venta y Costo) */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                      Precio Venta ($ COP)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={editingItem.salePrice}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setEditingItem({ ...editingItem, salePrice: val });
+                      }}
+                      placeholder="0"
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2 text-sm text-amber-400 focus:outline-none focus:border-amber-400 font-bold font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                      Costo Unitario ($ COP)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={editingItem.costPrice}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setEditingItem({ ...editingItem, costPrice: val });
+                      }}
+                      placeholder="0"
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-amber-400 font-mono"
+                    />
+                  </div>
                 </div>
+
+                {/* AUTORIZACIÓN CON CONTRASEÑA SOLO SI SE MODIFICA EL PRECIO */}
+                {(() => {
+                  const isPriceModified = editingItem && ((editingItem.salePrice !== editingItem.initialSalePrice) || (editingItem.costPrice !== editingItem.initialCostPrice));
+                  if (!isPriceModified) return null;
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2"
+                    >
+                      <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <KeyRound size={14} className="text-amber-400" />
+                        <span>Autorizar Cambio de Precio: Clave Admin *</span>
+                      </label>
+                      <input
+                        type="password"
+                        value={editingPassword}
+                        onChange={(e) => setEditingPassword(e.target.value)}
+                        placeholder="Ingresa clave del panel"
+                        required
+                        className="w-full bg-[#141620] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
+                      />
+                      <p className="text-[10px] text-gray-400">
+                        🔒 Se detectó modificación en el precio. Ingresa tu contraseña de administrador para autorizar el cambio.
+                      </p>
+                    </motion.div>
+                  );
+                })()}
 
                 <div className="flex items-center gap-2.5 pt-2 border-t border-white/10">
                   <button

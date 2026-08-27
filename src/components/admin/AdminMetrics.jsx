@@ -4,7 +4,7 @@ import {
   Calendar as CalendarIcon, DollarSign, TrendingUp, CreditCard, ShoppingBag, 
   Printer, CheckCircle2, Lock, ArrowUpRight, BarChart3, 
   Smartphone, Building2, Wallet, RefreshCw, AlertCircle, X, ChevronLeft, ChevronRight, ChevronDown, Key,
-  Download, FileText, RotateCcw, Edit3, ShieldAlert, FileSpreadsheet, Upload, Coins
+  Download, FileText, RotateCcw, Edit3, ShieldAlert, FileSpreadsheet, Upload, Coins, Laptop
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import { RESTAURANT_DATA } from '../../data/menuData';
@@ -442,6 +442,33 @@ export default function AdminMetrics() {
     };
     reader.readAsText(file);
     e.target.value = '';
+  };
+
+  // Sincronizar Cola de Terminal Offline Local de este Equipo
+  const handleSyncOfflineAppQueue = () => {
+    try {
+      const offlineQueue = JSON.parse(localStorage.getItem('kal_contingency_offline_queue')) || [];
+      if (offlineQueue.length === 0) {
+        setImportStatusMsg('No hay facturas pendientes en la Terminal Offline de este equipo.');
+        return;
+      }
+      let text = '';
+      offlineQueue.forEach((i) => {
+        text += `${i.invoiceNumber} | ${i.totalCOP} | ${i.paymentMethod} | ${i.tableNumber} | ${i.notes}\n`;
+      });
+      const res = adminStore.importContingencyFromText(text, selectedDate);
+      if (res.success) {
+        setContingencyInvoices(adminStore.getContingencyInvoicesForDate(selectedDate));
+        setMetrics(adminStore.getMetricsForDate(selectedDate));
+        setCashRegister(adminStore.getCashRegister());
+        setImportStatusMsg(`⚡ ¡${res.message}! Sincronizadas desde la Terminal Offline.`);
+        localStorage.removeItem('kal_contingency_offline_queue');
+      } else {
+        setImportStatusMsg(res.message || 'Error al sincronizar.');
+      }
+    } catch (e) {
+      setImportStatusMsg('Error al leer las facturas locales de la Terminal Offline.');
+    }
   };
 
   const totalDigital = (metrics.paymentBreakdown.bancolombia || 0) +
@@ -1366,32 +1393,55 @@ export default function AdminMetrics() {
                 className="hidden"
               />
 
-              {/* Offline File Tools Banner */}
-              <div className="p-3.5 rounded-2xl bg-[#181b28] border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shrink-0">
-                <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-white block">
-                    📄 Cargar Facturas desde Archivo
-                  </span>
-                  <p className="text-[11px] text-gray-400">
-                    Rellena la plantilla en tu escritorio y súbela para registrar todas las facturas en 1 segundo
-                  </p>
+              {/* Offline File Tools & Desktop App Banner */}
+              <div className="p-4 rounded-2xl bg-[#181b28] border border-white/10 space-y-3 shrink-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-black text-amber-300 block uppercase tracking-wide">
+                      🖥️ Terminal Offline de Escritorio & Carga Masiva
+                    </span>
+                    <p className="text-[11px] text-gray-400">
+                      Usa la App de Escritorio sin internet o sube tu archivo para registrar todas las facturas
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => window.open('/KAL_Contingencia_Offline.html', '_blank')}
+                      className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 hover:text-amber-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                      title="Abrir la aplicación web local de contingencia offline"
+                    >
+                      <Laptop size={14} className="text-amber-400" />
+                      <span>Abrir App Offline</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSyncOfflineAppQueue}
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 hover:text-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                      title="Importar facturas guardadas en la App Offline de este equipo"
+                    >
+                      <RefreshCw size={14} className="text-emerald-400" />
+                      <span>Sincronizar App Local</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+
+                <div className="flex items-center gap-2 pt-2 border-t border-white/5 flex-wrap">
+                  <span className="text-[11px] text-gray-400 font-bold uppercase">O mediante archivo:</span>
                   <button
                     type="button"
                     onClick={handleDownloadContingencyTemplate}
-                    className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    title="Descargar archivo de texto modelo para rellenar en el Escritorio"
+                    className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    <Download size={14} className="text-amber-400" />
+                    <Download size={13} className="text-amber-400" />
                     <span>Descargar Plantilla (.txt)</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/10 cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/10 cursor-pointer ml-auto"
                   >
-                    <Upload size={14} />
+                    <Upload size={13} />
                     <span>Subir Documento</span>
                   </button>
                 </div>

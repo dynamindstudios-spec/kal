@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FileSpreadsheet, X, AlertCircle, Upload, Download, CheckCircle2 } from 'lucide-react';
+import { FileSpreadsheet, X, AlertCircle, Upload, Download, CheckCircle2, Laptop, RefreshCw } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import CustomSelect from '../common/CustomSelect';
 
@@ -90,6 +90,34 @@ export default function ContingencyModal({ onClose, onSuccess }) {
     e.target.value = '';
   };
 
+  // Sincronizar Cola Local de la Terminal Offline
+  const handleSyncLocalQueue = () => {
+    try {
+      const queue = JSON.parse(localStorage.getItem('kal_contingency_offline_queue')) || [];
+      if (queue.length === 0) {
+        setImportStatusMsg('No hay facturas pendientes en la App Offline de este equipo.');
+        return;
+      }
+      let text = '';
+      queue.forEach((i) => {
+        text += `${i.invoiceNumber} | ${i.totalCOP} | ${i.paymentMethod} | ${i.tableNumber} | ${i.notes}\n`;
+      });
+      const res = adminStore.importContingencyFromText(text);
+      if (res.success) {
+        setImportStatusMsg(`⚡ ¡${res.message}! Sincronizadas desde la App Offline.`);
+        localStorage.removeItem('kal_contingency_offline_queue');
+        setTimeout(() => {
+          onSuccess?.(res);
+          onClose?.();
+        }, 1500);
+      } else {
+        setImportStatusMsg(res.message || 'Error al sincronizar.');
+      }
+    } catch (e) {
+      setImportStatusMsg('Error al leer los datos locales.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 font-sans">
       <motion.div
@@ -117,7 +145,7 @@ export default function ContingencyModal({ onClose, onSuccess }) {
           </button>
         </div>
 
-        {/* Cargar desde Archivo Banner */}
+        {/* Cargar desde Archivo o Terminal Banner */}
         <input
           type="file"
           ref={fileInputRef}
@@ -126,31 +154,54 @@ export default function ContingencyModal({ onClose, onSuccess }) {
           className="hidden"
         />
 
-        <div className="p-3.5 rounded-2xl bg-[#181b28] border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <span className="text-xs font-bold text-amber-300 block">
-              📄 Carga Masiva desde Archivo
-            </span>
-            <p className="text-[11px] text-gray-400">
-              Sube tu archivo de texto rellenado en el Escritorio
-            </p>
+        <div className="p-3.5 rounded-2xl bg-[#181b28] border border-white/10 space-y-2.5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-amber-300 block uppercase">
+                🖥️ Terminal Offline de Escritorio
+              </span>
+              <p className="text-[11px] text-gray-400">
+                Registra talonarios sin internet y sincroniza con 1 clic
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => window.open('/KAL_Contingencia_Offline.html', '_blank')}
+                className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                title="Abrir App de Escritorio Offline"
+              >
+                <Laptop size={13} className="text-amber-400" />
+                <span>Abrir App</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSyncLocalQueue}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                title="Sincronizar facturas guardadas en la App Offline"
+              >
+                <RefreshCw size={13} className="text-emerald-400" />
+                <span>Sincronizar</span>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+
+          <div className="flex items-center gap-2 pt-2 border-t border-white/5 flex-wrap">
+            <span className="text-[10px] text-gray-400 font-bold uppercase">O por archivo:</span>
             <button
               type="button"
               onClick={handleDownloadTemplate}
-              className="flex-1 sm:flex-none px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              title="Descargar plantilla para rellenar"
+              className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer"
             >
-              <Download size={13} className="text-amber-400" />
-              <span>Plantilla</span>
+              <Download size={12} className="text-amber-400" />
+              <span>Plantilla (.txt)</span>
             </button>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex-1 sm:flex-none px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/10 cursor-pointer"
+              className="px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-[11px] font-black flex items-center gap-1 transition-all shadow-sm cursor-pointer ml-auto"
             >
-              <Upload size={13} />
+              <Upload size={12} />
               <span>Subir Archivo</span>
             </button>
           </div>

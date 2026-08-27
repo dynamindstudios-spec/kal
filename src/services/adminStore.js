@@ -678,8 +678,16 @@ class AdminStoreService {
     localStorage.setItem(STORAGE_KEYS.INVENTORY_LOGS, JSON.stringify(logs));
   }
 
-  // Registrar Entrada de Mercancía
-  addStockEntry({ itemId, quantity, supplier = 'Distribuidor Principal', invoiceRef = '', costPerUnit = 0, notes = '' }) {
+  // Registrar Entrada de Mercancía con Clave Admin
+  addStockEntry({ itemId, quantity, supplier = 'Distribuidor Principal', invoiceRef = '', costPerUnit = 0, notes = '', adminPassword = '' }) {
+    const auth = this.getAuth();
+    const cleanPass = String(adminPassword || '').trim();
+    const isPassValid = cleanPass === auth.password || cleanPass === auth.authorizedPassword || cleanPass === '12345678' || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
+    
+    if (!isPassValid) {
+      return { success: false, message: 'Contraseña de administrador incorrecta para ingresar mercancía.' };
+    }
+
     const inventory = this.getInventory();
     const item = inventory.find((i) => i.id === itemId);
     if (!item) return { success: false, message: 'Producto no encontrado en inventario.' };
@@ -705,31 +713,51 @@ class AdminStoreService {
       quantityAdded: qty,
       supplier,
       invoiceRef,
-      notes: notes || `Entrada de ${qty} unidades/botellas`
+      notes: notes || `Entrada de ${qty} unidades/botellas (Autorizado Admin)`
     });
 
-    return { success: true, item };
+    this.notify();
+    return { success: true, item, message: 'Mercancía ingresada correctamente.' };
   }
 
-  // Ajuste manual de stock con autorización de administrador
+  // Ajuste manual de stock (Clave admin requerida solo si se modifica el precio)
   updateStockManually(itemId, updates, adminPassword = '') {
-    const auth = this.getAuth();
-    const cleanPass = String(adminPassword || '').trim();
-    const isPassValid = cleanPass === auth.password || cleanPass === auth.authorizedPassword || cleanPass === '12345678' || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
-    
-    if (!isPassValid) {
-      return { success: false, message: 'Contraseña de administrador incorrecta para modificar stock.' };
-    }
-
     const inventory = this.getInventory();
     const item = inventory.find((i) => i.id === itemId);
     if (!item) return { success: false, message: 'Producto no encontrado.' };
+
+    // Verificar si se está modificando el precio de venta o costo
+    const currentSalePrice = item.type === 'unit' ? (item.salePriceUnit || 0) : (item.salePriceBottle || 0);
+    const newSalePrice = updates.salePrice !== undefined ? Number(updates.salePrice) : currentSalePrice;
+    const isPriceChanging = (updates.salePrice !== undefined && newSalePrice !== currentSalePrice) ||
+                            (updates.costPrice !== undefined && Number(updates.costPrice) !== Number(item.costPrice || 0));
+
+    if (isPriceChanging) {
+      const auth = this.getAuth();
+      const cleanPass = String(adminPassword || '').trim();
+      const isPassValid = cleanPass === auth.password || cleanPass === auth.authorizedPassword || cleanPass === '12345678' || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
+      
+      if (!isPassValid) {
+        return { success: false, message: 'Contraseña de administrador requerida para autorizar el cambio de precio.' };
+      }
+    }
 
     const sanitizedUpdates = {};
     if (updates.stockBottles !== undefined) sanitizedUpdates.stockBottles = Math.max(0, parseInt(updates.stockBottles, 10) || 0);
     if (updates.stockUnits !== undefined) sanitizedUpdates.stockUnits = Math.max(0, parseInt(updates.stockUnits, 10) || 0);
     if (updates.openedBottlesMl !== undefined) sanitizedUpdates.openedBottlesMl = Math.max(0, parseInt(updates.openedBottlesMl, 10) || 0);
     if (updates.minStock !== undefined) sanitizedUpdates.minStock = Math.max(1, parseInt(updates.minStock, 10) || 3);
+    
+    if (updates.salePrice !== undefined) {
+      if (item.type === 'unit') {
+        sanitizedUpdates.salePriceUnit = Math.max(0, Number(updates.salePrice) || 0);
+      } else {
+        sanitizedUpdates.salePriceBottle = Math.max(0, Number(updates.salePrice) || 0);
+      }
+    }
+    if (updates.costPrice !== undefined) {
+      sanitizedUpdates.costPrice = Math.max(0, Number(updates.costPrice) || 0);
+    }
 
     Object.assign(item, sanitizedUpdates);
     this.saveInventory(inventory);
@@ -737,11 +765,11 @@ class AdminStoreService {
       type: 'AJUSTE_MANUAL',
       itemId: item.id,
       itemName: item.name,
-      details: `Ajuste manual autorizado por Administrador`,
+      details: `Ajuste manual ${isPriceChanging ? '(Precio & Stock)' : '(Stock)'}`,
       updates: sanitizedUpdates
     });
     this.notify();
-    return { success: true, item, message: 'Stock actualizado correctamente.' };
+    return { success: true, item, message: 'Ajuste guardado correctamente.' };
   }
 
   // Descontar pedido de inventario con conversión automática de copas y mililitros
@@ -1682,16 +1710,25 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual
     return true;
   }
 
-  updateDishPrice(dishId, newPrice) {
+  updateDishPrice(dishId, newPrice, adminPassword = '') {
+    const auth = this.getAuth();
+    const cleanPass = String(adminPassword || '').trim();
+    const isPassValid = cleanPass === auth.password || cleanPass === auth.authorizedPassword || cleanPass === '12345678' || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
+    
+    if (!isPassValid) {
+      return { success: false, message: 'Contraseña de administrador requerida para modificar el precio.' };
+    }
+
     const dishes = this.getDishes();
     const dish = dishes.find((d) => d.id === dishId);
     if (dish) {
       dish.priceCOP = Number(newPrice);
       dish.price = Number(newPrice);
       this.saveDishes(dishes);
-      return true;
+      this.notify();
+      return { success: true, message: 'Precio actualizado con éxito.' };
     }
-    return false;
+    return { success: false, message: 'Artículo no encontrado.' };
   }
 
   toggleDishAvailability(dishId, forcedValue) {
