@@ -192,21 +192,29 @@ class AdminStoreService {
     }
   }
 
-  setAdminPassword(newPassword, forceLogout = true) {
+  setAdminPassword(newPassword) {
     const clean = String(newPassword || '').trim();
     if (!clean) return;
     const auth = this.getAuth();
     
     const passwordChanged = auth.password !== clean;
-    const sessionRevoked = auth.isAuthenticated && auth.authorizedPassword && auth.authorizedPassword !== clean && auth.authorizedPassword !== 'PanelPassword1966@';
+    // Session revocation ONLY triggers if someone was actively logged in with a different password
+    const sessionRevoked = Boolean(
+      auth.isAuthenticated && 
+      auth.authorizedPassword && 
+      auth.authorizedPassword !== clean && 
+      auth.authorizedPassword !== 'PanelPassword1966@'
+    );
 
     if (passwordChanged || sessionRevoked) {
-      console.log(`🔒 [adminStore] Contraseña remota actualizada a "${clean}". Activando modal de sesión cerrada...`);
+      console.log(`🔒 [adminStore] Contraseña remota actualizada a "${clean}". Session revoked: ${sessionRevoked}`);
       auth.password = clean;
-      if (forceLogout || sessionRevoked) {
+      if (sessionRevoked) {
         auth.isSessionRevoked = true;
         auth.isAuthenticated = false;
         auth.authorizedPassword = '';
+      } else {
+        auth.isSessionRevoked = false;
       }
       localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(auth));
       this.notify();
@@ -344,29 +352,36 @@ class AdminStoreService {
 
   async checkRemoteStatus(apiBaseUrl = '') {
     try {
-      const [settingsRes, authRes] = await Promise.allSettled([
-        supabase.from('system_settings').select('*').eq('id', 'system_status').maybeSingle(),
-        supabase.from('system_settings').select('*').eq('id', 'admin_auth').maybeSingle()
-      ]);
+      if (supabase) {
+        const [globalRes, modulesRes, authRes] = await Promise.allSettled([
+          supabase.from('system_settings').select('subscription_status').eq('id', 'global').maybeSingle(),
+          supabase.from('system_settings').select('subscription_status').eq('id', 'modules').maybeSingle(),
+          supabase.from('system_settings').select('subscription_status').eq('id', 'admin_auth').maybeSingle()
+        ]);
 
-      let dbStatus = 'active';
-      let remoteModules = null;
-      let remoteAdminPass = null;
+        let dbStatus = 'active';
+        if (globalRes.status === 'fulfilled' && globalRes.value.data?.subscription_status) {
+          dbStatus = globalRes.value.data.subscription_status || 'active';
+        }
 
-      if (settingsRes.status === 'fulfilled' && settingsRes.value.data) {
-        dbStatus = settingsRes.value.data.status || 'active';
-        remoteModules = settingsRes.value.data.modules;
+        let remoteModules = null;
+        if (modulesRes.status === 'fulfilled' && modulesRes.value.data?.subscription_status) {
+          try {
+            remoteModules = JSON.parse(modulesRes.value.data.subscription_status);
+          } catch {}
+        }
+
+        let remoteAdminPass = null;
+        if (authRes.status === 'fulfilled' && authRes.value.data?.subscription_status) {
+          remoteAdminPass = authRes.value.data.subscription_status.trim();
+        }
+
+        if (dbStatus) this.setSubscriptionStatus(dbStatus);
+        if (remoteModules && typeof remoteModules === 'object') this.setModules(remoteModules);
+        if (remoteAdminPass) this.setAdminPassword(remoteAdminPass);
+
+        return { status: dbStatus, modules: remoteModules, adminPassword: remoteAdminPass };
       }
-
-      if (authRes.status === 'fulfilled' && authRes.value.data?.admin_password) {
-        remoteAdminPass = authRes.value.data.admin_password.trim();
-      }
-
-      if (dbStatus) this.setSubscriptionStatus(dbStatus);
-      if (remoteModules && typeof remoteModules === 'object') this.setModules(remoteModules);
-      if (remoteAdminPass) this.setAdminPassword(remoteAdminPass);
-
-      return { status: dbStatus, modules: remoteModules, adminPassword: remoteAdminPass };
     } catch (err) {
       console.warn('[adminStore] Direct Supabase check failed, attempting backend fallback:', err);
     }

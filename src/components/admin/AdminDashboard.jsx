@@ -42,16 +42,16 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     
-    // Sincronización en vivo con backend cada 1.5s
-    const checkLive = async () => {
-      await adminStore.checkRemoteStatus();
+    // Verificar validez de sesión local
+    const verifySession = () => {
       const currentAuth = adminStore.getAuth();
       if (!currentAuth.isAuthenticated || currentAuth.isSessionRevoked) {
         setIsSessionValid(false);
+      } else {
+        setIsSessionValid(true);
       }
     };
-    checkLive();
-    const pollInterval = setInterval(checkLive, 1500);
+    verifySession();
 
     const unsubscribe = adminStore.subscribe(() => {
       const currentAuth = adminStore.getAuth();
@@ -67,7 +67,6 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
 
     return () => {
       clearInterval(timer);
-      clearInterval(pollInterval);
       unsubscribe();
     };
   }, []);

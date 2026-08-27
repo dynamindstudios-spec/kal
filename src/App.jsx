@@ -243,7 +243,6 @@ export default function App() {
     if (waiterSession) {
       return (
         <WaiterApp
-          key={`waiter-app-${authVersion}`}
           waiterSession={waiterSession}
           onLogout={() => {
             setAuthVersion((v) => v + 1);
@@ -257,7 +256,6 @@ export default function App() {
 
     return (
       <WaiterLogin
-        key={`waiter-login-${authVersion}`}
         onLoginSuccess={() => {
           setAuthVersion((v) => v + 1);
         }}
@@ -283,7 +281,6 @@ export default function App() {
     if (auth.isAuthenticated || auth.isSessionRevoked) {
       return (
         <AdminDashboard
-          key={`admin-dashboard-${authVersion}`}
           onLogout={() => {
             const a = adminStore.getAuth();
             a.isSessionRevoked = false;
