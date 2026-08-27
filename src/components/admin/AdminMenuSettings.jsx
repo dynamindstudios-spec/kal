@@ -460,8 +460,21 @@ export default function AdminMenuSettings() {
                     )}
                   </div>
 
-                  {/* Action Buttons */}
+                  {/* Action Buttons & Availability Toggle */}
                   <div className="col-span-12 sm:col-span-2 flex items-center justify-end gap-1.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => adminStore.toggleDishAvailability(dish.id)}
+                      className={`px-2 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer border ${
+                        dish.isAvailable !== false && dish.available !== false
+                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25'
+                          : 'bg-red-500/15 border-red-500/30 text-red-400 hover:bg-red-500/25'
+                      }`}
+                      title={dish.isAvailable !== false && dish.available !== false ? 'Marcar como Agotado' : 'Marcar como Disponible'}
+                    >
+                      {dish.isAvailable !== false && dish.available !== false ? 'Activo' : 'Agotado'}
+                    </button>
+
                     <button
                       onClick={() => handleOpenEditDish(dish)}
                       className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-gray-300 hover:text-white transition-all cursor-pointer"

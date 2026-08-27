@@ -1216,6 +1216,54 @@ class AdminStoreService {
     this.notify();
   }
 
+  saveDish(dishPayload) {
+    const dishes = this.getDishes();
+    const idx = dishes.findIndex((d) => d.id === dishPayload.id);
+    if (idx >= 0) {
+      dishes[idx] = { ...dishes[idx], ...dishPayload };
+    } else {
+      dishes.unshift({
+        ...dishPayload,
+        isAvailable: dishPayload.isAvailable !== false
+      });
+    }
+    this.saveDishes(dishes);
+    return dishPayload;
+  }
+
+  deleteDish(dishId) {
+    const dishes = this.getDishes();
+    const filtered = dishes.filter((d) => d.id !== dishId);
+    this.saveDishes(filtered);
+    return true;
+  }
+
+  updateDishPrice(dishId, newPrice) {
+    const dishes = this.getDishes();
+    const dish = dishes.find((d) => d.id === dishId);
+    if (dish) {
+      dish.priceCOP = Number(newPrice);
+      dish.price = Number(newPrice);
+      this.saveDishes(dishes);
+      return true;
+    }
+    return false;
+  }
+
+  toggleDishAvailability(dishId, forcedValue) {
+    const dishes = this.getDishes();
+    const dish = dishes.find((d) => d.id === dishId);
+    if (dish) {
+      const current = dish.isAvailable !== false && dish.available !== false;
+      const nextVal = typeof forcedValue === 'boolean' ? forcedValue : !current;
+      dish.isAvailable = nextVal;
+      dish.available = nextVal;
+      this.saveDishes(dishes);
+      return nextVal;
+    }
+    return false;
+  }
+
   getCategories() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.CATEGORIES)) || MENU_CATEGORIES;

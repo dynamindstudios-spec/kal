@@ -6,6 +6,33 @@ import {
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 
+const getDishName = (dish) => {
+  if (!dish) return '';
+  if (typeof dish.name === 'object' && dish.name) return dish.name.es || dish.name.en || '';
+  if (typeof dish.name === 'string') return dish.name;
+  if (dish.title) return typeof dish.title === 'object' ? dish.title.es || dish.title.en || '' : dish.title;
+  return 'Producto';
+};
+
+const getDishPrice = (dish) => {
+  if (!dish) return 0;
+  return Number(dish.priceCOP || dish.price || 0);
+};
+
+const getDishDesc = (dish) => {
+  if (!dish) return '';
+  if (typeof dish.desc === 'object' && dish.desc) return dish.desc.es || dish.desc.en || '';
+  if (typeof dish.description === 'object' && dish.description) return dish.description.es || dish.description.en || '';
+  if (typeof dish.desc === 'string') return dish.desc;
+  if (typeof dish.description === 'string') return dish.description;
+  return '';
+};
+
+const getDishCategory = (dish) => {
+  if (!dish) return 'otros';
+  return String(dish.category || 'otros').toLowerCase();
+};
+
 export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
   const [selectedTable, setSelectedTable] = useState(null);
   const [activeTab, setActiveTab] = useState('ALL');
@@ -13,26 +40,67 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
   const [cart, setCart] = useState([]);
   const [notes, setNotes] = useState('');
   const [step, setStep] = useState('select_table');
-  const [orders, setOrders] = useState(() => adminStore.getOrders());
+  
   const [dishes, setDishes] = useState(() => adminStore.getDishes());
+  const [categories, setCategories] = useState(() => adminStore.getCategories());
+  const [inventory, setInventory] = useState(() => adminStore.getInventory());
+  const [orders, setOrders] = useState(() => adminStore.getOrders());
 
   useEffect(() => {
     const unsubscribe = adminStore.subscribe(() => {
-      setOrders(adminStore.getOrders());
       setDishes(adminStore.getDishes());
+      setCategories(adminStore.getCategories());
+      setInventory(adminStore.getInventory());
+      setOrders(adminStore.getOrders());
     });
     return () => unsubscribe();
   }, []);
 
-  const categories = ['ALL', ...new Set(dishes.map((d) => d.category || 'Otros'))];
+  const categoryList = [
+    { id: 'ALL', label: 'Todos' },
+    ...categories.map((c) => ({
+      id: c.id,
+      label: typeof c.name === 'object' ? c.name.es : (c.name || c.label?.es || c.label || c.id)
+    }))
+  ];
 
   const filteredDishes = dishes.filter((dish) => {
-    const name = (dish.name || dish.title || '').toLowerCase();
-    const cat = (dish.category || '').toLowerCase();
-    const matchesSearch = name.includes(searchTerm.toLowerCase()) || cat.includes(searchTerm.toLowerCase());
-    const matchesCat = activeTab === 'ALL' || dish.category === activeTab;
+    const name = getDishName(dish).toLowerCase();
+    const cat = getDishCategory(dish);
+    const desc = getDishDesc(dish).toLowerCase();
+    const search = searchTerm.toLowerCase().trim();
+
+    const matchesSearch = !search || name.includes(search) || cat.includes(search) || desc.includes(search);
+    const matchesCat = activeTab === 'ALL' || cat === activeTab.toLowerCase();
+
     return matchesSearch && matchesCat;
   });
+
+  const getDishStockInfo = (dish) => {
+    const dName = getDishName(dish).toLowerCase();
+    const dId = String(dish.id || '').toLowerCase();
+
+    const invItem = inventory.find((inv) => {
+      if (inv.menuBindingIds && Array.isArray(inv.menuBindingIds)) {
+        if (inv.menuBindingIds.some((bId) => bId.toLowerCase() === dId || dName.includes(bId.toLowerCase()))) {
+          return true;
+        }
+      }
+      return inv.name.toLowerCase() === dName || dName.includes(inv.name.toLowerCase().split(' ')[0]);
+    });
+
+    if (!invItem) return null;
+
+    if (invItem.type === 'unit') {
+      const units = invItem.stockUnits || 0;
+      return { inStock: units > 0, label: units > 0 ? units + ' un.' : 'Agotado' };
+    }
+
+    const bottles = invItem.stockBottles || 0;
+    const openedMl = invItem.openedBottlesMl || 0;
+    const hasLiquid = bottles > 0 || openedMl > 0;
+    return { inStock: hasLiquid, label: bottles > 0 ? bottles + ' bot.' : (openedMl > 0 ? openedMl + 'ml' : 'Agotado') };
+  };
 
   const handleSelectTable = (tableNum) => {
     setSelectedTable(tableNum);
@@ -47,12 +115,26 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
   };
 
   const handleAddToCart = (dish) => {
+    const isAvail = dish.isAvailable !== false && dish.available !== false;
+    if (!isAvail) return;
+
+    const dishName = getDishName(dish);
+    const dishPrice = getDishPrice(dish);
+
     setCart((prev) => {
       const existing = prev.find((item) => item.id === dish.id);
       if (existing) {
         return prev.map((item) => (item.id === dish.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item));
       }
-      return [...prev, { ...dish, quantity: 1 }];
+      return [...prev, {
+        id: dish.id,
+        name: dishName,
+        price: dishPrice,
+        priceCOP: dishPrice,
+        image: dish.image || '',
+        category: dish.category || 'licores',
+        quantity: 1
+      }];
     });
   };
 
@@ -72,7 +154,7 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
     setCart((prev) => prev.filter((it) => it.id !== dishId));
   };
 
-  const cartTotal = cart.reduce((sum, it) => sum + (it.price || 0) * (it.quantity || 1), 0);
+  const cartTotal = cart.reduce((sum, it) => sum + (it.price || it.priceCOP || 0) * (it.quantity || 1), 0);
   const cartItemCount = cart.reduce((sum, it) => sum + (it.quantity || 1), 0);
 
   const handleSendOrder = () => {
@@ -218,14 +300,14 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
               </div>
 
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                {categories.map((cat) => (
+                {categoryList.map((cat) => (
                   <button
-                    key={cat}
+                    key={cat.id}
                     type="button"
-                    onClick={() => setActiveTab(cat)}
-                    className={'px-3 py-1.5 rounded-xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer ' + (activeTab === cat ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20' : 'bg-[#111420] text-gray-400 border border-white/10 hover:text-white')}
+                    onClick={() => setActiveTab(cat.id)}
+                    className={'px-3 py-1.5 rounded-xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer ' + (activeTab.toLowerCase() === cat.id.toLowerCase() ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20' : 'bg-[#111420] text-gray-400 border border-white/10 hover:text-white')}
                   >
-                    {cat === 'ALL' ? 'Todos' : cat}
+                    {cat.label}
                   </button>
                 ))}
               </div>
@@ -233,21 +315,44 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {filteredDishes.map((dish) => {
+                const dishName = getDishName(dish);
+                const dishPrice = getDishPrice(dish);
+                const isAvailable = dish.isAvailable !== false && dish.available !== false;
+                const stockInfo = getDishStockInfo(dish);
                 const inCartItem = cart.find((it) => it.id === dish.id);
                 const qty = inCartItem?.quantity || 0;
 
                 return (
                   <div
                     key={dish.id}
-                    className="p-3.5 rounded-2xl bg-[#111420] border border-white/10 flex items-center justify-between gap-3 hover:border-amber-500/40 transition-all"
+                    className={'p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ' + (!isAvailable ? 'bg-[#0e1017] border-red-500/20 opacity-60' : 'bg-[#111420] border-white/10 hover:border-amber-500/40')}
                   >
                     <div className="space-y-1 flex-1 min-w-0">
-                      <p className="font-bold text-white text-xs truncate">{dish.name || dish.title}</p>
-                      <p className="text-[11px] font-black text-amber-400">${(dish.price || 0).toLocaleString('es-CO')}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-bold text-white text-xs truncate">{dishName}</p>
+                        {!isAvailable && (
+                          <span className="px-1.5 py-0.2 rounded bg-red-500/20 text-red-300 text-[9px] font-black uppercase">
+                            Agotado
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <p className="text-[11px] font-black text-amber-400">
+                          ${dishPrice.toLocaleString('es-CO')}
+                        </p>
+                        {stockInfo && (
+                          <span className={'text-[9px] font-bold ' + (stockInfo.inStock ? 'text-gray-400' : 'text-red-400')}>
+                            • {stockInfo.label}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {qty > 0 ? (
+                      {!isAvailable ? (
+                        <span className="text-[10px] text-gray-500 italic px-2 py-1">No disponible</span>
+                      ) : qty > 0 ? (
                         <div className="flex items-center gap-1.5 bg-[#181b28] p-1 rounded-xl border border-white/10">
                           <button
                             type="button"
@@ -302,46 +407,49 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
             </div>
 
             <div className="space-y-2 divide-y divide-white/5">
-              {cart.map((item) => (
-                <div key={item.id} className="pt-2 flex items-center justify-between gap-3 text-xs">
-                  <div className="space-y-0.5 flex-1 min-w-0">
-                    <p className="font-bold text-white truncate">{item.name || item.title}</p>
-                    <p className="text-[10px] text-gray-400">${(item.price || 0).toLocaleString('es-CO')} c/u</p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 bg-[#181b28] p-1 rounded-xl border border-white/10">
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQty(item.id, -1)}
-                        className="w-6 h-6 rounded-lg bg-white/5 text-gray-300 flex items-center justify-center cursor-pointer"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="text-xs font-black text-white w-4 text-center">{item.quantity}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateQty(item.id, 1)}
-                        className="w-6 h-6 rounded-lg bg-amber-500 text-black flex items-center justify-center cursor-pointer font-bold"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
+              {cart.map((item) => {
+                const itemPrice = item.price || item.priceCOP || 0;
+                return (
+                  <div key={item.id} className="pt-2 flex items-center justify-between gap-3 text-xs">
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <p className="font-bold text-white truncate">{item.name || item.title}</p>
+                      <p className="text-[10px] text-gray-400">${itemPrice.toLocaleString('es-CO')} c/u</p>
                     </div>
 
-                    <span className="font-black text-amber-400 w-20 text-right">
-                      ${((item.price || 0) * (item.quantity || 1)).toLocaleString('es-CO')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 bg-[#181b28] p-1 rounded-xl border border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQty(item.id, -1)}
+                          className="w-6 h-6 rounded-lg bg-white/5 text-gray-300 flex items-center justify-center cursor-pointer"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-xs font-black text-white w-4 text-center">{item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQty(item.id, 1)}
+                          className="w-6 h-6 rounded-lg bg-amber-500 text-black flex items-center justify-center cursor-pointer font-bold"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="p-1 text-gray-500 hover:text-red-400 cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      <span className="font-black text-amber-400 w-20 text-right">
+                        ${(itemPrice * (item.quantity || 1)).toLocaleString('es-CO')}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="p-1 text-gray-500 hover:text-red-400 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="space-y-1.5 pt-2">
