@@ -648,7 +648,21 @@ class AdminStoreService {
   // ----------------------------------------------------
   getInventory() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.INVENTORY)) || INITIAL_INVENTORY;
+      const stored = localStorage.getItem(STORAGE_KEYS.INVENTORY);
+      if (!stored) return INITIAL_INVENTORY;
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length < INITIAL_INVENTORY.length) {
+        const existingIds = new Set(parsed.map((p) => p.id));
+        const merged = [...parsed];
+        for (const item of INITIAL_INVENTORY) {
+          if (!existingIds.has(item.id)) {
+            merged.push(item);
+          }
+        }
+        localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(merged));
+        return merged;
+      }
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_INVENTORY;
     } catch {
       return INITIAL_INVENTORY;
     }

@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   DollarSign, Plus, Trash2, Edit2, Check, X, ShieldCheck, 
   Layers, Lock, Sparkles, Image, CheckCircle2, AlertCircle, Video, Globe, Play, Phone, Share2,
-  Flame, LayoutGrid, List, Sliders, ToggleLeft, ToggleRight
+  Flame, LayoutGrid, List, Sliders, ToggleLeft, ToggleRight,
+  QrCode, Printer, Copy, ExternalLink, Unlock, Key, Save
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 
@@ -104,6 +105,114 @@ export default function AdminMenuSettings() {
     });
     return unsubscribe;
   }, []);
+
+  // Cerrar cualquier modal abierto con la tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showDiscountModal) setShowDiscountModal(false);
+        if (showDishModal) setShowDishModal(false);
+        if (showFilterModal) setShowFilterModal(false);
+        if (showVideoModal) setShowVideoModal(false);
+        if (priceAuthModal.show) setPriceAuthModal({ show: false, dishId: null, dishName: '', oldPrice: 0, newPrice: 0, password: '', error: '' });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showDiscountModal, showDishModal, showFilterModal, showVideoModal, priceAuthModal.show]);
+
+  const [copiedTableNum, setCopiedTableNum] = useState(null);
+  const [tableLocksVersion, setTableLocksVersion] = useState(0);
+
+  const handleCopyTableUrl = (num, url) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedTableNum(num);
+      setTimeout(() => setCopiedTableNum(null), 2500);
+    });
+  };
+
+  const handleToggleTableLock = (num) => {
+    adminStore.toggleTableLock(num);
+    setTableLocksVersion((v) => v + 1);
+  };
+
+  const handleToggleAllTablesLock = (lockAll) => {
+    adminStore.setAllTablesLocked(lockAll);
+    setTableLocksVersion((v) => v + 1);
+  };
+
+  const handleSaveSingleTableCode = (tableNum, newPin) => {
+    if (!newPin || !newPin.trim()) return;
+    const clean = newPin.trim().toUpperCase();
+    adminStore.updateTableSecurityCode(tableNum, clean);
+    setTableCodes(adminStore.getTableCodes());
+    setLocalCodes(adminStore.getTableCodes());
+    setSavedCodeMsg(`¡PIN de Mesa #${tableNum} guardado como "${clean}"!`);
+    setTimeout(() => setSavedCodeMsg(''), 3000);
+  };
+
+  const handlePrintAllTableQRs = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Permite ventanas emergentes para imprimir los habladores QR.');
+      return;
+    }
+    const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://kaldiscobar.com';
+    const tablesData = Array.from({ length: 15 }, (_, i) => i + 1).map((num) => {
+      const url = `${currentHost}/?table=${num}`;
+      const pinCode = (tableCodes[num] || `KAL${num}`).toUpperCase();
+      const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}&color=000000&bgcolor=ffffff`;
+      return { num, url, pinCode, qrImgUrl };
+    });
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Habladores QR - KAL Discobar</title>
+        <meta charset="utf-8">
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;900&display=swap');
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff; color: #000; padding: 20px; }
+          .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+          .card { border: 3px solid #000; border-radius: 20px; padding: 24px; text-align: center; page-break-inside: avoid; display: flex; flex-direction: column; align-items: center; justify-content: space-between; min-height: 480px; background: #fff; }
+          .brand { font-size: 22px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: #000; }
+          .subbrand { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #666; margin-bottom: 12px; }
+          .table-title { font-size: 32px; font-weight: 900; margin-bottom: 6px; background: #000; color: #fff; padding: 4px 20px; border-radius: 12px; display: inline-block; }
+          .qr-box { margin: 14px 0; padding: 10px; border: 2px dashed #000; border-radius: 16px; display: inline-block; }
+          .qr-img { width: 200px; height: 200px; display: block; }
+          .instructions { font-size: 12px; font-weight: 700; line-height: 1.4; max-width: 280px; margin-top: 8px; }
+          .pin-box { margin-top: 10px; font-size: 12px; font-family: monospace; font-weight: 900; color: #000; background: #f0f0f0; padding: 6px 16px; border-radius: 8px; border: 1px solid #ccc; }
+          @media print { body { padding: 0; } .grid { gap: 15px; } .card { min-height: 440px; border-width: 2px; } }
+        </style>
+      </head>
+      <body>
+        <div class="grid">
+          ${tablesData.map(t => `
+            <div class="card">
+              <div>
+                <div class="brand">KAL DISCOBAR</div>
+                <div class="subbrand">VIP NIGHTCLUB & LOUNGE</div>
+                <div class="table-title">MESA #${t.num}</div>
+              </div>
+              <div class="qr-box"><img src="${t.qrImgUrl}" class="qr-img" alt="QR Mesa ${t.num}" /></div>
+              <div>
+                <div class="instructions">📱 <strong>Escanea con tu cámara</strong> para abrir la carta digital y ordenar directo a tu mesa.</div>
+                <div class="pin-box">PIN / CLAVE DE MESA: ${t.pinCode}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <script>
+          window.onload = function() { setTimeout(function() { window.print(); }, 800); };
+        </script>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
 
   const handleOpenAddDish = () => {
     setEditingDish(null);
@@ -1245,16 +1354,49 @@ export default function AdminMenuSettings() {
       )}
 
       {/* ---------------------------------------------------- */}
-      {/* TAB 6: TABLE SECURITY CODES                         */}
+      {/* TAB 6: TABLE SECURITY CODES & PERMANENT QR CODES     */}
       {/* ---------------------------------------------------- */}
       {activeTab === 'table-codes' && (
-        <div className="p-6 rounded-3xl bg-[#11131c] border border-[#232738] space-y-4">
-          <div className="flex items-center justify-between border-b border-[#232738] pb-3">
-            <div>
-              <h3 className="text-base font-black text-white">Claves de Seguridad para Mesas (1 al 15)</h3>
-              <span className="text-xs text-gray-400">Códigos de 5 caracteres que validan la comanda en la mesa física</span>
+        <div className="p-6 rounded-3xl bg-[#11131c] border border-[#232738] space-y-5">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#232738] pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                <QrCode size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white uppercase tracking-wider">
+                  Habladores QR & Claves de Mesas (1 al 15)
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Imprime una sola vez para acrílicos o madera • Bloquea pedidos o cambia contraseñas cuando quieras
+                </p>
+              </div>
             </div>
-            <span className="text-xs text-amber-400 font-bold">15 Mesas Asignadas</span>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  const anyUnlocked = Array.from({ length: 15 }, (_, i) => i + 1).some(n => !adminStore.isTableLocked(n));
+                  handleToggleAllTablesLock(anyUnlocked);
+                }}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+              >
+                <Lock size={13} />
+                <span>Bloquear / Desbloquear Todas</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrintAllTableQRs}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 text-black text-xs font-black flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 hover:brightness-110 cursor-pointer"
+                title="Imprimir todos los habladores QR permanentes"
+              >
+                <Printer size={15} />
+                <span>Imprimir Habladores</span>
+              </button>
+            </div>
           </div>
 
           {savedCodeMsg && (
@@ -1268,39 +1410,107 @@ export default function AdminMenuSettings() {
             </motion.div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* Grid de Mesas 1 al 15 con QR y Controles */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {Array.from({ length: 15 }, (_, i) => i + 1).map((tableNum) => {
-              const currentVal = localCodes[tableNum] || '';
+              const currentPin = (localCodes[tableNum] || tableCodes[tableNum] || `KAL${tableNum}`).toUpperCase();
+              const isLocked = adminStore.isTableLocked(tableNum);
+              const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://kaldiscobar.com';
+              const tableUrl = `${currentHost}/?table=${tableNum}`;
+              const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tableUrl)}&color=000000&bgcolor=ffffff`;
+
               return (
                 <div
                   key={tableNum}
-                  className="p-3.5 rounded-2xl bg-[#161924] border border-[#262a3c] space-y-2 text-xs"
+                  className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-3 ${
+                    isLocked
+                      ? 'bg-red-950/20 border-red-500/30 text-gray-400'
+                      : 'bg-[#161924] border-[#262a3c] hover:border-amber-500/40 shadow-lg'
+                  }`}
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-white">Mesa #{tableNum}</span>
-                    <span className="text-[10px] text-gray-500 font-mono">5 Caracteres</span>
-                  </div>
+                  {/* Top: Mesa # y Botón Bloqueo */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-xl font-black text-xs flex items-center justify-center ${
+                        isLocked ? 'bg-red-500/20 text-red-400' : 'bg-amber-500 text-black'
+                      }`}>
+                        #{tableNum}
+                      </div>
+                      <span className="font-bold text-xs text-white">Mesa #{tableNum}</span>
+                    </div>
 
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      maxLength={5}
-                      value={currentVal}
-                      onChange={(e) => {
-                        setLocalCodes({
-                          ...localCodes,
-                          [tableNum]: e.target.value.toUpperCase()
-                        });
-                      }}
-                      className="w-full px-2.5 py-1.5 rounded-xl bg-[#0a0c12] border border-[#262a3c] text-amber-400 font-mono uppercase font-black text-center text-xs focus:outline-none focus:border-amber-400"
-                    />
                     <button
-                      onClick={() => handleSaveTableCode(tableNum)}
-                      className="px-2.5 py-1.5 rounded-xl bg-amber-500 text-black font-black text-xs hover:bg-amber-400 transition-all cursor-pointer shrink-0"
+                      type="button"
+                      onClick={() => handleToggleTableLock(tableNum)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 transition-all cursor-pointer ${
+                        isLocked
+                          ? 'bg-red-500 text-white hover:bg-red-400'
+                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black'
+                      }`}
+                      title={isLocked ? 'Mesa Bloqueada (clic para habilitar)' : 'Mesa Activa (clic para bloquear)'}
                     >
-                      Guardar
+                      {isLocked ? <Lock size={10} /> : <Unlock size={10} />}
+                      <span>{isLocked ? 'Bloqueada' : 'Activa'}</span>
                     </button>
                   </div>
+
+                  {/* QR Image Preview */}
+                  <div className="flex items-center justify-center p-2 bg-white rounded-xl">
+                    <img
+                      src={qrImgUrl}
+                      alt={`QR Mesa ${tableNum}`}
+                      className="w-24 h-24 object-contain"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  {/* PIN / Clave Editable */}
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-gray-400 font-bold block">
+                      PIN / Clave de Mesa:
+                    </label>
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        maxLength={8}
+                        value={currentPin}
+                        onChange={(e) => {
+                          setLocalCodes({
+                            ...localCodes,
+                            [tableNum]: e.target.value.toUpperCase()
+                          });
+                        }}
+                        className="w-full px-2 py-1 rounded-lg bg-[#0a0c12] border border-[#262a3c] text-amber-400 font-mono uppercase font-black text-center text-xs focus:outline-none focus:border-amber-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSingleTableCode(tableNum, currentPin)}
+                        className="px-2 py-1 rounded-lg bg-amber-500 text-black font-black text-xs hover:bg-amber-400 transition-all cursor-pointer shrink-0"
+                        title="Guardar PIN"
+                      >
+                        <Save size={12} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Copy Link */}
+                  <button
+                    type="button"
+                    onClick={() => handleCopyTableUrl(tableNum, tableUrl)}
+                    className="w-full py-1.5 px-2 rounded-xl bg-white/5 hover:bg-amber-500 hover:text-black border border-white/10 text-[10px] font-bold flex items-center justify-center gap-1 transition-all cursor-pointer"
+                  >
+                    {copiedTableNum === tableNum ? (
+                      <>
+                        <Check size={11} className="text-emerald-400" />
+                        <span>¡Copiado!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={11} />
+                        <span>Copiar Enlace QR</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               );
             })}

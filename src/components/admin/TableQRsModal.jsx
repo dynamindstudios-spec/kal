@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, QrCode, Printer, Copy, Check, Lock, Unlock, ExternalLink, ShieldCheck, RefreshCw, Key, Save } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { X, QrCode, Printer, Copy, Check, Lock, Unlock, ExternalLink, Key, Save } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 
 export default function TableQRsModal({ isOpen, onClose }) {
@@ -9,6 +9,17 @@ export default function TableQRsModal({ isOpen, onClose }) {
   const [editingCodeTable, setEditingCodeTable] = useState(null);
   const [tempCodeValue, setTempCodeValue] = useState('');
   const [saveCodeMsg, setSaveCodeMsg] = useState('');
+
+  // Close modal on ESC key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -71,7 +82,7 @@ export default function TableQRsModal({ isOpen, onClose }) {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Habladores Permanentes QR - KAL Discobar</title>
+        <title>Habladores QR - KAL Discobar</title>
         <meta charset="utf-8">
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;900&display=swap');
@@ -207,18 +218,15 @@ export default function TableQRsModal({ isOpen, onClose }) {
         exit={{ opacity: 0, scale: 0.94, y: 15 }}
         className="w-full max-w-4xl max-h-[90vh] bg-[#0d0f18] border border-amber-500/40 rounded-3xl flex flex-col overflow-hidden shadow-2xl"
       >
-        {/* Modal Header */}
+        {/* Modal Header (Clean without extra tags) */}
         <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#141824] to-[#0d0f18] flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
               <QrCode size={22} />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <span>Habladores QR & Claves de Mesas (1 al 15)</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
-                  ✨ Opción 1: Impresión Permanente
-                </span>
+              <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider">
+                Habladores QR & Claves de Mesas (1 al 15)
               </h2>
               <p className="text-xs text-gray-400">
                 Imprime una sola vez para acrílicos o madera • Bloquea o cambia contraseñas cuando quieras
@@ -255,26 +263,19 @@ export default function TableQRsModal({ isOpen, onClose }) {
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white transition-all cursor-pointer"
+              title="Cerrar (Esc)"
             >
               <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Security Banner & Success Feedback */}
-        <div className="px-6 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-xs text-amber-300 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={16} className="text-amber-400 shrink-0" />
-            <span>
-              <strong>Control Total en Vivo:</strong> Puedes desactivar mesas con 1 clic para que no hagan pedidos y editar la contraseña/PIN de cada mesa abajo.
-            </span>
+        {/* Feedback Message if any */}
+        {saveCodeMsg && (
+          <div className="px-6 py-2 bg-emerald-500/20 border-b border-emerald-500/30 text-emerald-300 text-xs font-black text-center animate-bounce">
+            {saveCodeMsg}
           </div>
-          {saveCodeMsg && (
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500 text-black font-black text-[11px] animate-bounce">
-              {saveCodeMsg}
-            </span>
-          )}
-        </div>
+        )}
 
         {/* Tables Grid */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -414,7 +415,7 @@ export default function TableQRsModal({ isOpen, onClose }) {
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10 flex items-center justify-between bg-[#0a0c14] text-xs text-gray-400">
-          <span>💡 Habladores permanentes: imprímelos una vez y adminístralos desde este panel.</span>
+          <span>Presiona <kbd className="px-1.5 py-0.5 bg-white/10 rounded font-mono text-white">ESC</kbd> o el botón Cerrar para salir.</span>
           <button
             type="button"
             onClick={onClose}
