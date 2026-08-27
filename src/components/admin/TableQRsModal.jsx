@@ -1,23 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, QrCode, Printer, Copy, Check, Lock, Unlock, ExternalLink, ShieldCheck, RefreshCw } from 'lucide-react';
+import { X, QrCode, Printer, Copy, Check, Lock, Unlock, ExternalLink, ShieldCheck, RefreshCw, Key, Save } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 
 export default function TableQRsModal({ isOpen, onClose }) {
   const [copiedTable, setCopiedTable] = useState(null);
-  const [selectedTable, setSelectedTable] = useState(null);
+  const [tableCodes, setTableCodes] = useState(() => adminStore.getTableCodes());
+  const [editingCodeTable, setEditingCodeTable] = useState(null);
+  const [tempCodeValue, setTempCodeValue] = useState('');
+  const [saveCodeMsg, setSaveCodeMsg] = useState('');
+
+  useEffect(() => {
+    if (isOpen) {
+      setTableCodes(adminStore.getTableCodes());
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://kaldiscobar.com';
-  const todayStr = new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const tablesData = Array.from({ length: 15 }, (_, i) => i + 1).map((num) => {
-    const token = adminStore.getDailyTableToken(num);
-    const url = `${currentHost}/?table=${num}&token=${token}`;
+    const url = `${currentHost}/?table=${num}`;
     const isLocked = adminStore.isTableLocked(num);
+    const pinCode = (tableCodes[num] || `KAL${num}`).toUpperCase();
     const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}&color=000000&bgcolor=ffffff`;
-    return { num, token, url, isLocked, qrImgUrl };
+    return { num, url, isLocked, pinCode, qrImgUrl };
   });
 
   const handleCopy = (num, url) => {
@@ -25,6 +33,31 @@ export default function TableQRsModal({ isOpen, onClose }) {
       setCopiedTable(num);
       setTimeout(() => setCopiedTable(null), 2500);
     });
+  };
+
+  const handleToggleLock = (num) => {
+    adminStore.toggleTableLock(num);
+    setTableCodes({ ...adminStore.getTableCodes() });
+  };
+
+  const handleToggleAll = (lockAll) => {
+    adminStore.setAllTablesLocked(lockAll);
+    setTableCodes({ ...adminStore.getTableCodes() });
+  };
+
+  const handleStartEditCode = (num, currentPin) => {
+    setEditingCodeTable(num);
+    setTempCodeValue(currentPin);
+  };
+
+  const handleSavePinCode = (num) => {
+    if (!tempCodeValue.trim()) return;
+    const clean = tempCodeValue.trim().toUpperCase();
+    adminStore.updateTableSecurityCode(num, clean);
+    setTableCodes(adminStore.getTableCodes());
+    setEditingCodeTable(null);
+    setSaveCodeMsg(`¡PIN de Mesa #${num} actualizado a "${clean}"!`);
+    setTimeout(() => setSaveCodeMsg(''), 3000);
   };
 
   const handlePrintAll = () => {
@@ -38,7 +71,7 @@ export default function TableQRsModal({ isOpen, onClose }) {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Habladores QR - KAL Discobar</title>
+        <title>Habladores Permanentes QR - KAL Discobar</title>
         <meta charset="utf-8">
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;900&display=swap');
@@ -110,15 +143,16 @@ export default function TableQRsModal({ isOpen, onClose }) {
             max-width: 280px;
             margin-top: 8px;
           }
-          .token-box {
+          .pin-box {
             margin-top: 10px;
-            font-size: 11px;
+            font-size: 12px;
             font-family: monospace;
-            font-weight: bold;
-            color: #444;
+            font-weight: 900;
+            color: #000;
             background: #f0f0f0;
-            padding: 4px 12px;
-            border-radius: 6px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
           }
           @media print {
             body { padding: 0; }
@@ -143,9 +177,9 @@ export default function TableQRsModal({ isOpen, onClose }) {
 
               <div>
                 <div class="instructions">
-                  📱 <strong>Escanea con tu cámara</strong> para acceder a la carta VIP y realizar tus pedidos directo a tu mesa.
+                  📱 <strong>Escanea con tu cámara</strong> para abrir la carta digital y ordenar directo a tu mesa.
                 </div>
-                <div class="token-box">TOKEN DEL DÍA: ${t.token}</div>
+                <div class="pin-box">PIN / CLAVE DE MESA: ${t.pinCode}</div>
               </div>
             </div>
           `).join('')}
@@ -163,6 +197,8 @@ export default function TableQRsModal({ isOpen, onClose }) {
     printWindow.document.close();
   };
 
+  const allLocked = tablesData.every(t => t.isLocked);
+
   return (
     <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 font-sans">
       <motion.div
@@ -172,33 +208,46 @@ export default function TableQRsModal({ isOpen, onClose }) {
         className="w-full max-w-4xl max-h-[90vh] bg-[#0d0f18] border border-amber-500/40 rounded-3xl flex flex-col overflow-hidden shadow-2xl"
       >
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#141824] to-[#0d0f18]">
+        <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-[#141824] to-[#0d0f18] flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
               <QrCode size={22} />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
-                <span>Códigos QR Dinámicos (Mesas 1 a 15)</span>
+                <span>Habladores QR & Claves de Mesas (1 al 15)</span>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
-                  🛡️ Opción A Activa
+                  ✨ Opción 1: Impresión Permanente
                 </span>
               </h2>
               <p className="text-xs text-gray-400">
-                Tokens de seguridad rotativos automáticos de 24 horas • {todayStr}
+                Imprime una sola vez para acrílicos o madera • Bloquea o cambia contraseñas cuando quieras
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleToggleAll(!allLocked)}
+              className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+                allLocked
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500 hover:text-black'
+                  : 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500 hover:text-white'
+              }`}
+            >
+              {allLocked ? <Unlock size={13} /> : <Lock size={13} />}
+              <span>{allLocked ? 'Habilitar Todas' : 'Bloquear Todas'}</span>
+            </button>
+
             <button
               type="button"
               onClick={handlePrintAll}
               className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-              title="Imprimir todos los habladores para mesas"
+              title="Imprimir todos los habladores permanentes"
             >
               <Printer size={15} />
-              <span className="hidden sm:inline">Imprimir Todos los Habladores</span>
+              <span className="hidden sm:inline">Imprimir Habladores</span>
               <span className="sm:hidden">Imprimir</span>
             </button>
 
@@ -212,14 +261,19 @@ export default function TableQRsModal({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Security Banner */}
+        {/* Security Banner & Success Feedback */}
         <div className="px-6 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between text-xs text-amber-300 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-amber-400 shrink-0" />
             <span>
-              <strong>Autenticación Cero Fricción:</strong> El cliente que escanea el QR en la mesa entra validado automáticamente. Quien intente pedir desde fuera sin QR no podrá ingresar.
+              <strong>Control Total en Vivo:</strong> Puedes desactivar mesas con 1 clic para que no hagan pedidos y editar la contraseña/PIN de cada mesa abajo.
             </span>
           </div>
+          {saveCodeMsg && (
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500 text-black font-black text-[11px] animate-bounce">
+              {saveCodeMsg}
+            </span>
+          )}
         </div>
 
         {/* Tables Grid */}
@@ -233,7 +287,7 @@ export default function TableQRsModal({ isOpen, onClose }) {
                   : 'bg-[#121522] border-white/10 hover:border-amber-500/40 shadow-lg'
               }`}
             >
-              {/* Top: Mesa # & Token */}
+              {/* Top: Mesa # & Lock Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center ${
@@ -243,23 +297,24 @@ export default function TableQRsModal({ isOpen, onClose }) {
                   </div>
                   <div>
                     <span className="font-bold text-xs text-white block">Mesa #{t.num}</span>
-                    <span className="text-[10px] font-mono text-gray-400 block">
-                      Token: <strong className="text-amber-400">{t.token}</strong>
+                    <span className={`text-[10px] font-bold ${t.isLocked ? 'text-red-400' : 'text-emerald-400'}`}>
+                      {t.isLocked ? '🔴 Desactivada / Bloqueada' : '🟢 Activa para Pedidos'}
                     </span>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => adminStore.toggleTableLock(t.num)}
-                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                  onClick={() => handleToggleLock(t.num)}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 transition-all cursor-pointer ${
                     t.isLocked
-                      ? 'bg-red-500 text-white hover:bg-red-400'
-                      : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                      ? 'bg-red-500 text-white hover:bg-red-400 shadow-md'
+                      : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500 hover:text-black border border-emerald-500/40'
                   }`}
-                  title={t.isLocked ? 'Desbloquear Mesa' : 'Bloquear Mesa'}
+                  title={t.isLocked ? 'Habilitar Mesa para Pedidos' : 'Desactivar / Bloquear Mesa'}
                 >
-                  {t.isLocked ? <Lock size={13} /> : <Unlock size={13} />}
+                  {t.isLocked ? <Lock size={12} /> : <Unlock size={12} />}
+                  <span>{t.isLocked ? 'Bloqueada' : 'Activa'}</span>
                 </button>
               </div>
 
@@ -268,9 +323,57 @@ export default function TableQRsModal({ isOpen, onClose }) {
                 <img
                   src={t.qrImgUrl}
                   alt={`QR Mesa ${t.num}`}
-                  className="w-36 h-36 object-contain"
+                  className="w-32 h-32 object-contain"
                   loading="lazy"
                 />
+              </div>
+
+              {/* Customizable PIN / Contraseña of this table */}
+              <div className="p-2 rounded-xl bg-black/40 border border-white/5 space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-gray-400 flex items-center gap-1">
+                    <Key size={11} className="text-amber-400" />
+                    <span>PIN / Clave:</span>
+                  </span>
+
+                  {editingCodeTable === t.num ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={tempCodeValue}
+                        onChange={(e) => setTempCodeValue(e.target.value.toUpperCase())}
+                        maxLength={8}
+                        className="w-20 px-1.5 py-0.5 bg-[#181a24] border border-amber-400 rounded text-[11px] font-mono font-black text-amber-400 text-center uppercase focus:outline-none"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSavePinCode(t.num)}
+                        className="p-1 rounded bg-amber-500 text-black hover:bg-amber-400 cursor-pointer"
+                        title="Guardar PIN"
+                      >
+                        <Save size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingCodeTable(null)}
+                        className="p-1 rounded bg-white/10 text-gray-400 hover:text-white cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleStartEditCode(t.num, t.pinCode)}
+                      className="text-amber-400 font-mono font-black hover:underline cursor-pointer flex items-center gap-1"
+                      title="Haz clic para cambiar la contraseña de esta mesa"
+                    >
+                      <span>{t.pinCode}</span>
+                      <span className="text-[9px] text-gray-500 font-sans font-normal">(Editar)</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* URL & Copy Actions */}
@@ -289,7 +392,7 @@ export default function TableQRsModal({ isOpen, onClose }) {
                     ) : (
                       <>
                         <Copy size={12} />
-                        <span>Copiar Enlace</span>
+                        <span>Copiar Enlace QR</span>
                       </>
                     )}
                   </button>
@@ -299,7 +402,7 @@ export default function TableQRsModal({ isOpen, onClose }) {
                     target="_blank"
                     rel="noreferrer"
                     className="p-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-gray-300 transition-all"
-                    title="Abrir enlace en nueva pestaña"
+                    title="Probar enlace"
                   >
                     <ExternalLink size={13} />
                   </a>
@@ -311,7 +414,7 @@ export default function TableQRsModal({ isOpen, onClose }) {
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10 flex items-center justify-between bg-[#0a0c14] text-xs text-gray-400">
-          <span>💡 Los tokens se renuevan diariamente a las 00:00 para máxima seguridad.</span>
+          <span>💡 Habladores permanentes: imprímelos una vez y adminístralos desde este panel.</span>
           <button
             type="button"
             onClick={onClose}

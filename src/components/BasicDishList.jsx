@@ -38,6 +38,11 @@ export default function BasicDishList({
                   { maximumFractionDigits: currentCurrency === 'COP' || currentCurrency === 'CLP' || currentCurrency === 'ARS' ? 0 : 2 }
                 );
 
+                const formattedOriginalPrice = dish.originalPriceCOP && dish.originalPriceCOP > dish.priceCOP ? Number(dish.originalPriceCOP * currencyObj.rate).toLocaleString(
+                  currentCurrency === 'COP' || currentCurrency === 'CLP' || currentCurrency === 'ARS' ? 'es-CO' : 'en-US',
+                  { maximumFractionDigits: currentCurrency === 'COP' || currentCurrency === 'CLP' || currentCurrency === 'ARS' ? 0 : 2 }
+                ) : null;
+
                 return (
                   <motion.div
                     key={dish.id}
@@ -48,19 +53,29 @@ export default function BasicDishList({
                   >
                     <div className="flex items-center justify-between gap-3">
                       
-                      {/* Name & Dotted Leader Line */}
-                      <div className="flex-1 min-w-0 flex items-baseline gap-2">
+                      {/* Name & Dotted Leader Line & Discount Badge */}
+                      <div className="flex-1 min-w-0 flex items-baseline gap-2 flex-wrap">
                         <h3 className="text-sm md:text-base font-extrabold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--accent-color)] transition-colors">
                           {dish.name[currentLang] || dish.name.es}
                         </h3>
+                        {dish.discountPercentage && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-red-600 text-white font-black text-[9px] uppercase">
+                            -{dish.discountPercentage}% OFF
+                          </span>
+                        )}
                         <div className="flex-1 border-b border-dotted border-[var(--surface-border)] opacity-60 hidden sm:block" />
                       </div>
 
                       {/* Price Tag */}
-                      <div className="flex items-center gap-3 shrink-0">
+                      <div className="flex items-baseline gap-2 shrink-0">
                         <span className="text-sm md:text-base font-black text-[var(--accent-color)] font-mono">
                           {currencyObj.symbol}{formattedPrice}
                         </span>
+                        {formattedOriginalPrice && (
+                          <span className="text-xs text-gray-400 line-through font-mono font-bold">
+                            {currencyObj.symbol}{formattedOriginalPrice}
+                          </span>
+                        )}
                       </div>
 
                     </div>

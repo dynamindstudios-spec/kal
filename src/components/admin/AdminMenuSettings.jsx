@@ -20,6 +20,18 @@ export default function AdminMenuSettings() {
   const [scenesSettings, setScenesSettings] = useState(adminStore.getScenesSettings());
   const [loadingScreenEnabled, setLoadingScreenEnabled] = useState(() => adminStore.getLoadingScreenEnabled());
 
+  // Promotion / Discount Strategy State
+  const [promotion, setPromotion] = useState(() => adminStore.getPromotion());
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [promoForm, setPromoForm] = useState({
+    active: false,
+    percentage: 20,
+    title: '🔥 ¡HAPPY HOUR VIP - 20% OFF!',
+    bannerText: 'Descuento especial por tiempo limitado en toda la carta.',
+    category: 'all'
+  });
+  const [promoSuccessMsg, setPromoSuccessMsg] = useState('');
+
   // Edit / Add Dish Modal State
   const [showDishModal, setShowDishModal] = useState(false);
   const [editingDish, setEditingDish] = useState(null);
@@ -250,6 +262,32 @@ export default function AdminMenuSettings() {
     setTimeout(() => setSocialSavedMsg(''), 3000);
   };
 
+  // Promotion / Discount Strategy Handlers
+  const handleOpenDiscountModal = () => {
+    const current = adminStore.getPromotion();
+    setPromoForm({ ...current });
+    setShowDiscountModal(true);
+    setPromoSuccessMsg('');
+  };
+
+  const handleSavePromotion = (e) => {
+    e.preventDefault();
+    const updated = adminStore.savePromotion({
+      active: promoForm.active,
+      percentage: Number(promoForm.percentage) || 10,
+      title: promoForm.title.trim() || '🔥 ¡DESCUENTO ESPECIAL VIP!',
+      bannerText: promoForm.bannerText.trim() || 'Precios promocionales por tiempo limitado.',
+      category: promoForm.category || 'all'
+    });
+    setPromotion(updated);
+    setDishes(adminStore.getDishes());
+    setPromoSuccessMsg(updated.active ? '¡Estrategia de descuento activada con éxito!' : '¡Descuento desactivado! Precios restaurados.');
+    setTimeout(() => {
+      setPromoSuccessMsg('');
+      setShowDiscountModal(false);
+    }, 1200);
+  };
+
   // Open Edit Filter Modal
   const handleOpenEditFilter = (type, item) => {
     setFilterType(type);
@@ -428,21 +466,47 @@ export default function AdminMenuSettings() {
       {activeTab === 'prices' && (
         <div className="space-y-4">
           
-          {/* Filter & Search Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-3xl bg-[#11131c] border border-[#232738]">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar producto por nombre..."
-              className="w-full sm:w-72 px-4 py-2 rounded-xl bg-[#0a0c12] border border-[#232738] text-white text-xs focus:outline-none focus:border-amber-400"
-            />
+          {/* Filter & Search Bar with Promotional Strategy Button */}
+          <div className="flex flex-col gap-3 p-4 rounded-3xl bg-[#11131c] border border-[#232738]">
+            {/* Top Row: Search on Left, Discount Strategy Button on Right */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar producto por nombre..."
+                className="w-full sm:w-80 px-4 py-2.5 rounded-xl bg-[#0a0c12] border border-[#232738] text-white text-xs focus:outline-none focus:border-amber-400"
+              />
 
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto py-1">
+              {/* Botón Días de Descuento / Estrategias Promocionales */}
               <button
+                type="button"
+                onClick={handleOpenDiscountModal}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer shadow-lg shrink-0 ${
+                  promotion?.active
+                    ? 'bg-gradient-to-r from-red-600 via-amber-500 to-yellow-500 text-black border border-amber-300 shadow-amber-500/30 animate-pulse'
+                    : 'bg-white/5 hover:bg-white/10 text-amber-300 border border-amber-500/30 hover:border-amber-400'
+                }`}
+                title="Configurar promociones, días de descuento y Happy Hour"
+              >
+                <Sparkles size={15} className={promotion?.active ? 'text-black' : 'text-amber-400'} />
+                <span>
+                  {promotion?.active 
+                    ? `🔥 ${promotion.percentage}% OFF ACTIVO (Estrategia)` 
+                    : '🏷️ Días de Descuento & Promociones'}
+                </span>
+              </button>
+            </div>
+
+            {/* Bottom Row: Category Filter Pills (ABAJO de la barra de búsqueda) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto w-full pt-2 border-t border-white/5 scrollbar-none">
+              <button
+                type="button"
                 onClick={() => setSelectedCatFilter('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  selectedCatFilter === 'all' ? 'bg-white/20 text-white' : 'text-gray-400 hover:text-white'
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                  selectedCatFilter === 'all' 
+                    ? 'bg-white/20 text-white font-black shadow-sm' 
+                    : 'text-gray-400 hover:text-white bg-white/5 border border-white/5'
                 }`}
               >
                 Todos ({dishes.length})
@@ -450,9 +514,12 @@ export default function AdminMenuSettings() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
+                  type="button"
                   onClick={() => setSelectedCatFilter(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                    selectedCatFilter === cat.id ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'text-gray-400 hover:text-white'
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    selectedCatFilter === cat.id 
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-black' 
+                      : 'text-gray-400 hover:text-white bg-white/5 border border-white/5'
                   }`}
                 >
                   {cat.name?.es || cat.label?.es || cat.label || cat.id}
@@ -1672,6 +1739,203 @@ export default function AdminMenuSettings() {
                     className="px-5 py-2.5 rounded-xl bg-amber-500 text-black font-black hover:bg-amber-400 shadow cursor-pointer"
                   >
                     Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ---------------------------------------------------- */}
+      {/* MODAL: DÍAS DE DESCUENTO & ESTRATEGIAS PROMOCIONALES */}
+      {/* ---------------------------------------------------- */}
+      <AnimatePresence>
+        {showDiscountModal && (
+          <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.93, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.93, y: 15 }}
+              className="w-full max-w-lg bg-[#11131e] border border-amber-500/40 rounded-3xl p-6 text-white shadow-2xl space-y-5"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-[#232738] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white uppercase tracking-wider">
+                      Días de Descuento & Estrategias
+                    </h3>
+                    <p className="text-xs text-gray-400">
+                      Aplica descuento a todos los precios de la carta y activa la alerta visual en el front
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDiscountModal(false)}
+                  className="p-2 text-gray-400 hover:text-white rounded-xl bg-white/5 cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {promoSuccessMsg && (
+                <div className="p-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-black text-center animate-bounce">
+                  {promoSuccessMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleSavePromotion} className="space-y-4 text-xs">
+                {/* Switch: Activar / Desactivar */}
+                <div className="p-4 rounded-2xl bg-[#171a26] border border-[#282d42] flex items-center justify-between">
+                  <div>
+                    <span className="text-sm font-black text-white block">
+                      {promoForm.active ? '🟢 Descuento Promocional ACTIVO' : '⚪ Descuento Promocional DESACTIVADO'}
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      {promoForm.active 
+                        ? 'Los clientes verán los precios rebajados y el banner de promo.' 
+                        : 'Los clientes verán los precios normales estándar.'}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setPromoForm(prev => ({ ...prev, active: !prev.active }))}
+                    className={`px-4 py-2 rounded-xl font-black uppercase text-xs transition-all cursor-pointer ${
+                      promoForm.active
+                        ? 'bg-gradient-to-r from-red-600 to-amber-500 text-black shadow-lg shadow-amber-500/20'
+                        : 'bg-white/10 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {promoForm.active ? 'DESACTIVAR' : 'ACTIVAR'}
+                  </button>
+                </div>
+
+                {/* Porcentaje de Descuento */}
+                <div className="space-y-2">
+                  <label className="text-gray-300 font-bold uppercase tracking-wider block">
+                    Porcentaje de Descuento (%) *
+                  </label>
+                  
+                  {/* Preset Buttons */}
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {[10, 15, 20, 25, 30, 50].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setPromoForm(prev => ({ ...prev, percentage: pct }))}
+                        className={`py-2 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                          Number(promoForm.percentage) === pct
+                            ? 'bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-400/20'
+                            : 'bg-[#181b28] text-gray-300 border-white/5 hover:border-white/20'
+                        }`}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Input Personalizado */}
+                  <div className="relative mt-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="90"
+                      value={promoForm.percentage}
+                      onChange={(e) => setPromoForm(prev => ({ ...prev, percentage: Number(e.target.value) }))}
+                      placeholder="O ingresa porcentaje personalizado..."
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#0a0c12] border border-[#282d42] text-amber-400 font-mono font-black text-sm focus:outline-none focus:border-amber-400"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-black">% OFF</span>
+                  </div>
+                </div>
+
+                {/* Título de la Promoción */}
+                <div className="space-y-1.5">
+                  <label className="text-gray-300 font-bold uppercase tracking-wider block">
+                    Título de la Estrategia / Banner *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={promoForm.title}
+                    onChange={(e) => setPromoForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Ej: 🔥 ¡HAPPY HOUR VIP - 20% OFF EN TODA LA CARTA!"
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#0a0c12] border border-[#282d42] text-white focus:outline-none focus:border-amber-400 font-bold"
+                  />
+                </div>
+
+                {/* Mensaje Secundario / Alerta */}
+                <div className="space-y-1.5">
+                  <label className="text-gray-300 font-bold uppercase tracking-wider block">
+                    Mensaje de la Alerta en Menú
+                  </label>
+                  <input
+                    type="text"
+                    value={promoForm.bannerText}
+                    onChange={(e) => setPromoForm(prev => ({ ...prev, bannerText: e.target.value }))}
+                    placeholder="Ej: Aprovecha precios especiales en botellas y cócteles por tiempo limitado."
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#0a0c12] border border-[#282d42] text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                {/* Categorías que Aplica */}
+                <div className="space-y-1.5">
+                  <label className="text-gray-300 font-bold uppercase tracking-wider block">
+                    Aplicar Descuento A:
+                  </label>
+                  <select
+                    value={promoForm.category || 'all'}
+                    onChange={(e) => setPromoForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl bg-[#0a0c12] border border-[#282d42] text-white focus:outline-none focus:border-amber-400 font-bold"
+                  >
+                    <option value="all">🌟 Toda la Carta (Todas las Categorías)</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name?.es || c.label?.es || c.label || c.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Vista Previa de Precios */}
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-1.5">
+                  <span className="text-[11px] font-bold text-amber-300 uppercase tracking-wider block">
+                    👁️ Vista Previa en la Carta:
+                  </span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-300">Ejemplo Botella ($120.000):</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 line-through font-mono font-bold">$120.000</span>
+                      <span className="text-amber-400 font-mono font-black text-sm">
+                        ${Math.round(120000 * ((100 - (Number(promoForm.percentage) || 0)) / 100)).toLocaleString('es-CO')} COP
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded bg-red-600 text-white font-black text-[10px]">
+                        -{promoForm.percentage}% OFF
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex items-center gap-3 pt-3 border-t border-[#232738]">
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscountModal(false)}
+                    className="flex-1 py-3 rounded-xl bg-[#171a26] text-gray-400 text-xs font-bold uppercase cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-400 hover:brightness-110 text-black text-xs font-black uppercase tracking-wider shadow-lg shadow-amber-500/20 cursor-pointer"
+                  >
+                    Guardar y Aplicar
                   </button>
                 </div>
               </form>

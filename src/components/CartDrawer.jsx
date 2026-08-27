@@ -97,7 +97,8 @@ export default function CartDrawer({
   const isSelectedTableLocked = adminStore.isTableLocked(selectedTable);
   const tableAccessResult = adminStore.validateTableAccess(selectedTable, tableCodeInput);
   const isTableCodeValid = Boolean(tableAccessResult && tableAccessResult.valid && !isSelectedTableLocked);
-  const expectedCode = TABLE_SECURITY_CODES[selectedTable] || '';
+  const tableCodes = adminStore.getTableCodes();
+  const expectedCode = tableCodes[selectedTable] || TABLE_SECURITY_CODES[selectedTable] || '';
 
   // Reset errors when changing table or code
   const handleTableSelect = (num) => {

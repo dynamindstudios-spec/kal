@@ -14,6 +14,11 @@ export default function DishCard({
     { maximumFractionDigits: currentCurrency === 'COP' || currentCurrency === 'CLP' || currentCurrency === 'ARS' ? 0 : 2 }
   );
 
+  const convertedOriginalPrice = dish.originalPriceCOP && dish.originalPriceCOP > dish.priceCOP ? Number(dish.originalPriceCOP * currencyObj.rate).toLocaleString(
+    currentCurrency === 'COP' || currentCurrency === 'CLP' || currentCurrency === 'ARS' ? 'es-CO' : 'en-US',
+    { maximumFractionDigits: currentCurrency === 'COP' || currentCurrency === 'CLP' || currentCurrency === 'ARS' ? 0 : 2 }
+  ) : null;
+
   const isTransparentBottle = dish.image && dish.image.includes('/licores_sin_fondo/');
 
   const handleOpenModal = () => {
@@ -71,9 +76,9 @@ export default function DishCard({
         />
       )}
 
-      {/* TOP ROW: Left Badges (Alcohol Intensity & Drink Flavor Style) */}
+      {/* TOP ROW: Left Badges & Right Discount Badge */}
       <div className="relative z-20 p-2.5 sm:p-4 flex items-start justify-between gap-1.5 pointer-events-none">
-        <div className="flex flex-wrap gap-1 max-w-[85%]">
+        <div className="flex flex-wrap gap-1 max-w-[70%]">
           {dish.tags?.map((tagId) => {
             const opt = ALCOHOL_INTENSITY_FILTERS.find((o) => o.id === tagId);
             if (!opt) return null;
@@ -102,6 +107,12 @@ export default function DishCard({
             );
           })}
         </div>
+
+        {dish.discountPercentage && (
+          <span className="px-2 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-amber-500 text-black font-black text-[10px] sm:text-xs shadow-lg uppercase tracking-wider animate-pulse shrink-0">
+            -{dish.discountPercentage}% OFF
+          </span>
+        )}
       </div>
 
       {/* BOTTOM BOX: Title & Price */}
@@ -111,10 +122,15 @@ export default function DishCard({
             {dish.name[currentLang] || dish.name.es}
           </h3>
 
-          <div className="mt-0.5 flex items-center gap-1">
+          <div className="mt-0.5 flex items-baseline gap-1.5 flex-wrap">
             <span className="text-xs sm:text-base font-black text-[var(--accent-color)] font-mono">
               {currencyObj.symbol}{convertedPrice}
             </span>
+            {convertedOriginalPrice && (
+              <span className="text-[10px] sm:text-xs text-gray-400 line-through font-mono font-bold">
+                {currencyObj.symbol}{convertedOriginalPrice}
+              </span>
+            )}
           </div>
         </div>
       </div>

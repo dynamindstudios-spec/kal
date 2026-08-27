@@ -29,7 +29,8 @@ const STORAGE_KEYS = {
   REFUNDS: 'kal_admin_refunds',
   ELECTRONIC_INVOICES: 'kal_admin_electronic_invoices',
   WAITERS: 'kal_admin_waiters',
-  WAITER_AUTH: 'kal_waiter_auth'
+  WAITER_AUTH: 'kal_waiter_auth',
+  PROMOTION: 'kal_admin_menu_promotion'
 };
 
 export const ADMIN_COLOR_THEMES = [
@@ -1762,14 +1763,60 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
   }
 
   // ----------------------------------------------------
-  // MENU DISHES & CATEGORIES
+  // MENU DISHES & CATEGORIES (WITH PROMO SUPPORT)
   // ----------------------------------------------------
-  getDishes() {
+  getPromotion() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.PROMOTION);
+      if (!stored) return { active: false, percentage: 20, title: '🔥 ¡HAPPY HOUR / PROMO VIP!', bannerText: 'Descuento especial en la carta por tiempo limitado.', category: 'all' };
+      return JSON.parse(stored);
+    } catch {
+      return { active: false, percentage: 20, title: '🔥 ¡HAPPY HOUR / PROMO VIP!', bannerText: 'Descuento especial en la carta por tiempo limitado.', category: 'all' };
+    }
+  }
+
+  savePromotion(promoData) {
+    localStorage.setItem(STORAGE_KEYS.PROMOTION, JSON.stringify(promoData));
+    this.notify();
+    try {
+      window.dispatchEvent(new CustomEvent('kal_promotion_change', { detail: promoData }));
+    } catch (e) {}
+    return promoData;
+  }
+
+  getRawDishes() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.DISHES)) || DISHES;
     } catch {
       return DISHES;
     }
+  }
+
+  getDishes() {
+    const rawDishes = this.getRawDishes();
+    const promo = this.getPromotion();
+
+    if (!promo || !promo.active || !promo.percentage || promo.percentage <= 0) {
+      return rawDishes;
+    }
+
+    const discountRate = (100 - promo.percentage) / 100;
+    return rawDishes.map((dish) => {
+      const originalPrice = Number(dish.priceCOP || dish.price || 0);
+      const matchesCategory = promo.category === 'all' || !promo.category || dish.category === promo.category;
+      
+      if (matchesCategory && originalPrice > 0) {
+        const discounted = Math.round(originalPrice * discountRate);
+        return {
+          ...dish,
+          originalPriceCOP: originalPrice,
+          priceCOP: discounted,
+          discountPercentage: promo.percentage,
+          discountTitle: promo.title
+        };
+      }
+      return dish;
+    });
   }
 
   saveDishes(dishes) {
@@ -1778,7 +1825,7 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
   }
 
   saveDish(dishPayload) {
-    const dishes = this.getDishes();
+    const dishes = this.getRawDishes();
     const idx = dishes.findIndex((d) => d.id === dishPayload.id);
     if (idx >= 0) {
       dishes[idx] = { ...dishes[idx], ...dishPayload };
@@ -1793,7 +1840,7 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
   }
 
   deleteDish(dishId) {
-    const dishes = this.getDishes();
+    const dishes = this.getRawDishes();
     const filtered = dishes.filter((d) => d.id !== dishId);
     this.saveDishes(filtered);
     return true;
@@ -1808,7 +1855,7 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
       return { success: false, message: 'Contraseña de administrador requerida para modificar el precio.' };
     }
 
-    const dishes = this.getDishes();
+    const dishes = this.getRawDishes();
     const dish = dishes.find((d) => d.id === dishId);
     if (dish) {
       dish.priceCOP = Number(newPrice);
@@ -1821,7 +1868,7 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
   }
 
   toggleDishAvailability(dishId, forcedValue) {
-    const dishes = this.getDishes();
+    const dishes = this.getRawDishes();
     const dish = dishes.find((d) => d.id === dishId);
     if (dish) {
       const current = dish.isAvailable !== false && dish.available !== false;
@@ -1955,6 +2002,18 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
     codes[tableNum] = String(newCode || '').trim();
     this.saveTableCodes(codes);
     return codes;
+  }
+
+  setAllTablesLocked(lockedState = true) {
+    const lockedMap = {};
+    if (lockedState) {
+      for (let i = 1; i <= 15; i++) {
+        lockedMap[i] = true;
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.TABLE_LOCKS, JSON.stringify(lockedMap));
+    this.notify();
+    return lockedMap;
   }
 
   // ----------------------------------------------------

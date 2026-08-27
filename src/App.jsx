@@ -38,6 +38,7 @@ export default function App() {
   // Store Sync State for dynamic dishes & categories
   const [liveDishes, setLiveDishes] = useState(() => adminStore.getDishes());
   const [liveCategories, setLiveCategories] = useState(() => adminStore.getCategories());
+  const [promotion, setPromotion] = useState(() => adminStore.getPromotion());
 
   const isInitiallyAdmin = (window.location.hash || '').toLowerCase().includes('dsb') || 
                            (window.location.hash || '').toLowerCase().includes('admin') ||
@@ -125,6 +126,7 @@ export default function App() {
       setAuthVersion((v) => v + 1);
       setLiveDishes(adminStore.getDishes());
       setLiveCategories(adminStore.getCategories());
+      setPromotion(adminStore.getPromotion());
       if (!adminStore.getLoadingScreenEnabled()) {
         setIsLoading(false);
       }
@@ -372,6 +374,42 @@ export default function App() {
         
         {/* Video Header with Dynamic Scene Video & KAL DISCOBAR Logo */}
         <HeroSection currentLang={lang} backgroundScene={backgroundScene} />
+
+        {/* PROMOTIONAL STRATEGY DISCOUNT BANNER */}
+        {promotion?.active && Number(promotion?.percentage) > 0 && (
+          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 -mt-3 mb-4">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-3xl p-4 sm:p-5 bg-gradient-to-r from-red-950/90 via-[#1c0f18] to-amber-950/80 border-2 border-amber-400/60 shadow-2xl shadow-amber-500/20 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left"
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-400 text-black flex items-center justify-center font-black text-2xl shadow-lg shrink-0 animate-pulse">
+                  🔥
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                    <span className="text-sm sm:text-base font-black text-amber-300 uppercase tracking-wider">
+                      {promotion.title || '¡DESCUENTO ESPECIAL VIP EN CARTA!'}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-red-600 text-white font-black text-xs uppercase tracking-wider animate-bounce shadow-md">
+                      -{promotion.percentage}% OFF
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300 font-semibold mt-0.5">
+                    {promotion.bannerText || 'Todos los precios ya tienen aplicado el descuento por tiempo limitado.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="px-3.5 py-1.5 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/40 text-xs font-black uppercase tracking-wider">
+                  ⚡ Precios Rebajados en Vivo
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* Main Content Layout */}
         <main className="w-full max-w-7xl mx-auto px-4 md:px-6 my-8">
