@@ -38,13 +38,20 @@ export default function App() {
   const [liveDishes, setLiveDishes] = useState(() => adminStore.getDishes());
   const [liveCategories, setLiveCategories] = useState(() => adminStore.getCategories());
 
-  const isInitiallyAdmin = (window.location.hash || '').toLowerCase().includes('dsb') || (window.location.hash || '').toLowerCase().includes('admin');
+  const isInitiallyAdmin = (window.location.hash || '').toLowerCase().includes('dsb') || 
+                           (window.location.hash || '').toLowerCase().includes('admin') ||
+                           (window.location.pathname || '').toLowerCase().includes('dsb') ||
+                           (window.location.pathname || '').toLowerCase().includes('admin');
+  const isInitiallyWaiter = (window.location.hash || '').toLowerCase().includes('mesero') || 
+                            (window.location.hash || '').toLowerCase().includes('waiter') ||
+                            (window.location.pathname || '').toLowerCase().includes('mesero') ||
+                            (window.location.pathname || '').toLowerCase().includes('waiter');
   const initialSubStatus = adminStore.getSubscriptionStatus();
   const initialModules = adminStore.getModules();
   const initialLocked = initialSubStatus === 'unpaid' || initialModules.menu === false || initialModules.catalog === false;
 
   const [isSiteLocked, setIsSiteLocked] = useState(initialLocked);
-  const [isLoading, setIsLoading] = useState(() => !isInitiallyAdmin && !initialLocked && adminStore.getLoadingScreenEnabled());
+  const [isLoading, setIsLoading] = useState(() => !isInitiallyAdmin && !isInitiallyWaiter && !initialLocked && adminStore.getLoadingScreenEnabled());
   const [theme, setTheme] = useState('kall-dark'); // 'kall-dark' | 'kall-neon' | ...
   const [currency, setCurrency] = useState('COP');
   const [lang, setLang] = useState('es');
@@ -74,9 +81,10 @@ export default function App() {
   // Listen to Hash Changes & Admin Store Updates
   useEffect(() => {
     const handleHash = () => {
-      const h = window.location.hash || '';
-      setCurrentHash(h);
-      if (h.toLowerCase().includes('dsb') || h.toLowerCase().includes('admin')) {
+      const h = (window.location.hash || '').toLowerCase().trim();
+      const p = (window.location.pathname || '').toLowerCase().trim();
+      setCurrentHash(h || p || '');
+      if (h.includes('dsb') || h.includes('admin') || p.includes('dsb') || p.includes('admin') || h.includes('mesero') || p.includes('mesero')) {
         setIsLoading(false);
       }
     };
@@ -102,7 +110,7 @@ export default function App() {
           adminStore.setModules(res.modules);
         }
         if (res && res.adminPassword) {
-          adminStore.setAdminPassword(res.adminPassword, true);
+          adminStore.setAdminPassword(res.adminPassword);
         }
       } catch (err) {
         console.warn('[KALL MONITOR] Error verificando estado remoto:', err);
@@ -131,7 +139,8 @@ export default function App() {
 
   // Sync HTML body class with active theme and scene
   useEffect(() => {
-    if (currentHash === '#/dsb' || currentHash === '#/admin') {
+    const rawH = (currentHash || window.location.hash || window.location.pathname || '').toLowerCase();
+    if (rawH.includes('dsb') || rawH.includes('admin') || rawH.includes('mesero') || rawH.includes('waiter')) {
       document.body.className = 'theme-kall-dark bg-[#08090d]';
     } else {
       document.body.className = `theme-${theme} scene-${backgroundScene}`;
@@ -215,28 +224,16 @@ export default function App() {
   const categoryTitle = activeCategoryObj ? (activeCategoryObj.name?.[lang] || activeCategoryObj.label?.es || activeCategoryObj.name?.es) : t.allDishes;
 
   // ----------------------------------------------------
-  // ROUTING: IF HASH IS #/dsb OR #/admin
+  // ROUTING: IF HASH OR PATH IS /#/dsb, /dsb, #/admin, etc.
   // ----------------------------------------------------
-  const normHash = (currentHash || '').toLowerCase().trim();
+  const normRoute = (currentHash || window.location.hash || window.location.pathname || '').toLowerCase().trim();
   const isAdminRoute = 
-    normHash === '#/dsb' || 
-    normHash === '#dsb' || 
-    normHash === '#/admin' || 
-    normHash === '#admin' || 
-    normHash.startsWith('#/dsb') || 
-    normHash.startsWith('#dsb') || 
-    normHash.startsWith('#/admin') || 
-    normHash.startsWith('#admin');
+    normRoute.includes('dsb') || 
+    normRoute.includes('admin');
 
   const isWaiterRoute = 
-    normHash === '#/mesero' || 
-    normHash === '#mesero' || 
-    normHash === '#/waiter' || 
-    normHash === '#waiter' || 
-    normHash.startsWith('#/mesero') || 
-    normHash.startsWith('#mesero') || 
-    normHash.startsWith('#/waiter') || 
-    normHash.startsWith('#waiter');
+    normRoute.includes('mesero') || 
+    normRoute.includes('waiter');
 
   if (isWaiterRoute) {
     const waiterSession = adminStore.getWaiterAuth();
