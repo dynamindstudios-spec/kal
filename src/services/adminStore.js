@@ -1174,12 +1174,133 @@ class AdminStoreService {
     return { success: true, closedRecord };
   }
 
+  reopenCashClose(recordId) {
+    const history = this.getCashHistory();
+    const updated = history.filter((rec) => rec.id !== recordId && rec.closedAt !== recordId);
+    localStorage.setItem(STORAGE_KEYS.CASH_HISTORY, JSON.stringify(updated));
+    const register = this.getCashRegister();
+    register.isClosed = false;
+    register.status = 'open';
+    register.closedAt = null;
+    localStorage.setItem(STORAGE_KEYS.CASH_REGISTER, JSON.stringify(register));
+    this.notify();
+    return { success: true, message: 'Arqueo de caja reabierto con éxito' };
+  }
+
+  updateCashCloseNotes(recordId, notes) {
+    const history = this.getCashHistory();
+    const updated = history.map((rec) => {
+      if (rec.id === recordId || rec.closedAt === recordId) {
+        return { ...rec, notes, closingNotes: notes };
+      }
+      return rec;
+    });
+    localStorage.setItem(STORAGE_KEYS.CASH_HISTORY, JSON.stringify(updated));
+    this.notify();
+    return updated;
+  }
+
   getCashHistory() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.CASH_HISTORY)) || [];
     } catch {
       return [];
     }
+  }
+
+  getMetricsForDate(targetDate) {
+    const orders = this.getOrders();
+    const cleanDate = targetDate ? String(targetDate).split('T')[0] : new Date().toISOString().split('T')[0];
+    
+    const dayOrders = orders.filter((o) => {
+      const orderDate = (o.billedAt || o.createdAt || '').split('T')[0];
+      return orderDate === cleanDate && (o.status === 'billed' || o.isPaid || o.status === 'delivered' || o.totalCOP > 0);
+    });
+
+    const totalRevenue = dayOrders.reduce((sum, o) => sum + (Number(o.totalCOP) || 0), 0);
+    const tableOrders = dayOrders.filter((o) => o.type !== 'pickup' && o.table !== 'barra');
+    const barOrders = dayOrders.filter((o) => o.type === 'pickup' || o.table === 'barra');
+    
+    const tableRevenue = tableOrders.reduce((sum, o) => sum + (Number(o.totalCOP) || 0), 0);
+    const barRevenue = barOrders.reduce((sum, o) => sum + (Number(o.totalCOP) || 0), 0);
+    const orderCount = dayOrders.length;
+    const avgTicket = orderCount > 0 ? Math.round(totalRevenue / orderCount) : 0;
+
+    let cashRevenue = 0;
+    let bancolombiaRevenue = 0;
+    let nequiRevenue = 0;
+    let daviplataRevenue = 0;
+    let datafonoRevenue = 0;
+    let wompiRevenue = 0;
+
+    const productSales = {};
+
+    dayOrders.forEach((o) => {
+      const meth = (o.paymentMethod || '').toLowerCase();
+      const tot = Number(o.totalCOP) || 0;
+      if (o.wompiTransactionId || meth.includes('wompi')) wompiRevenue += tot;
+      else if (meth.includes('efectivo') || meth.includes('cash')) cashRevenue += tot;
+      else if (meth.includes('bancolombia')) bancolombiaRevenue += tot;
+      else if (meth.includes('nequi')) nequiRevenue += tot;
+      else if (meth.includes('daviplata')) daviplataRevenue += tot;
+      else if (meth.includes('datafono') || meth.includes('tarjeta')) datafonoRevenue += tot;
+      else cashRevenue += tot;
+
+      (o.items || []).forEach((it) => {
+        const pName = it.name || it.title || 'Producto';
+        const qty = Number(it.quantity) || 1;
+        const sub = Number(it.price || it.priceCOP || 0) * qty;
+        if (!productSales[pName]) productSales[pName] = { name: pName, quantity: 0, revenue: 0 };
+        productSales[pName].quantity += qty;
+        productSales[pName].revenue += sub;
+      });
+    });
+
+    const topProducts = Object.values(productSales)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
+    const hourlyMap = Array.from({ length: 24 }, (_, i) => ({
+      hour: i,
+      label: `${String(i).padStart(2, '0')}:00`,
+      total: 0,
+      count: 0
+    }));
+
+    dayOrders.forEach((o) => {
+      const d = new Date(o.billedAt || o.createdAt || Date.now());
+      const h = d.getHours();
+      if (hourlyMap[h]) {
+        hourlyMap[h].total += Number(o.totalCOP) || 0;
+        hourlyMap[h].count += 1;
+      }
+    });
+
+    return {
+      date: cleanDate,
+      totalRevenue,
+      tableRevenue,
+      barRevenue,
+      orderCount,
+      avgTicket,
+      cashRevenue,
+      bancolombiaRevenue,
+      nequiRevenue,
+      daviplataRevenue,
+      datafonoRevenue,
+      wompiRevenue,
+      paymentBreakdown: {
+        efectivo: cashRevenue,
+        bancolombia: bancolombiaRevenue,
+        nequi: nequiRevenue,
+        daviplata: daviplataRevenue,
+        datafono: datafonoRevenue,
+        wompi: wompiRevenue
+      },
+      topProducts,
+      hourlyBreakdown: hourlyMap,
+      orders: dayOrders
+    };
   }
 
   // ----------------------------------------------------
@@ -1218,6 +1339,14 @@ class AdminStoreService {
     const updated = reservations.map((r) => (r.id === resId ? { ...r, status: 'completed', releasedAt: new Date().toISOString() } : r));
     localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify(updated));
     this.notify();
+  }
+
+  deleteReservation(resId) {
+    let reservations = this.getReservations();
+    reservations = reservations.filter((r) => r.id !== resId);
+    localStorage.setItem(STORAGE_KEYS.RESERVATIONS, JSON.stringify(reservations));
+    this.notify();
+    return reservations;
   }
 
   // ----------------------------------------------------
@@ -1305,9 +1434,20 @@ class AdminStoreService {
     }
   }
 
+  getTableSecurityCodes() {
+    return this.getTableCodes();
+  }
+
   saveTableCodes(codes) {
     localStorage.setItem(STORAGE_KEYS.TABLE_CODES, JSON.stringify(codes));
     this.notify();
+  }
+
+  updateTableSecurityCode(tableNum, newCode) {
+    const codes = this.getTableCodes();
+    codes[tableNum] = String(newCode || '').trim();
+    this.saveTableCodes(codes);
+    return codes;
   }
 
   // ----------------------------------------------------
@@ -1324,6 +1464,28 @@ class AdminStoreService {
   saveHeroVideos(videos) {
     localStorage.setItem(STORAGE_KEYS.HERO_VIDEOS, JSON.stringify(videos));
     this.notify();
+  }
+
+  saveHeroVideo(videoData) {
+    const videos = this.getHeroVideos();
+    const idx = videos.findIndex((v) => v.id === videoData.id);
+    if (idx >= 0) {
+      videos[idx] = { ...videos[idx], ...videoData };
+    } else {
+      videos.push({
+        id: videoData.id || `video-${Date.now()}`,
+        ...videoData
+      });
+    }
+    this.saveHeroVideos(videos);
+    return videos;
+  }
+
+  deleteHeroVideo(videoId) {
+    let videos = this.getHeroVideos();
+    videos = videos.filter((v) => v.id !== videoId);
+    this.saveHeroVideos(videos);
+    return videos;
   }
 
   getSocialLinks() {

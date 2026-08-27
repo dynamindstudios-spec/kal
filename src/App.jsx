@@ -28,6 +28,7 @@ import WaiterApp from './components/waiter/WaiterApp';
 import WaiterLogin from './components/waiter/WaiterLogin';
 import FloatingSocialButton from './components/FloatingSocialButton';
 import PublicLockoutScreen from './components/PublicLockoutScreen';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
   // Hash Routing State (e.g. #/dsb)
@@ -239,27 +240,31 @@ export default function App() {
     const waiterSession = adminStore.getWaiterAuth();
     if (waiterSession) {
       return (
-        <WaiterApp
-          waiterSession={waiterSession}
-          onLogout={() => {
+        <ErrorBoundary>
+          <WaiterApp
+            waiterSession={waiterSession}
+            onLogout={() => {
+              setAuthVersion((v) => v + 1);
+            }}
+            onReturnToMenu={() => {
+              window.location.hash = '';
+            }}
+          />
+        </ErrorBoundary>
+      );
+    }
+
+    return (
+      <ErrorBoundary>
+        <WaiterLogin
+          onLoginSuccess={() => {
             setAuthVersion((v) => v + 1);
           }}
           onReturnToMenu={() => {
             window.location.hash = '';
           }}
         />
-      );
-    }
-
-    return (
-      <WaiterLogin
-        onLoginSuccess={() => {
-          setAuthVersion((v) => v + 1);
-        }}
-        onReturnToMenu={() => {
-          window.location.hash = '';
-        }}
-      />
+      </ErrorBoundary>
     );
   }
 
@@ -277,37 +282,41 @@ export default function App() {
     const auth = adminStore.getAuth();
     if (auth.isAuthenticated || auth.isSessionRevoked) {
       return (
-        <AdminDashboard
-          onLogout={() => {
-            const a = adminStore.getAuth();
-            a.isSessionRevoked = false;
-            a.isAuthenticated = false;
-            localStorage.setItem('kal_admin_auth', JSON.stringify(a));
-            adminStore.logout();
-            setAuthVersion((v) => v + 1);
-          }}
-          onReturnToMenu={() => {
-            const a = adminStore.getAuth();
-            a.isSessionRevoked = false;
-            a.isAuthenticated = false;
-            localStorage.setItem('kal_admin_auth', JSON.stringify(a));
-            adminStore.logout();
-            window.location.hash = '';
-            setAuthVersion((v) => v + 1);
-          }}
-        />
+        <ErrorBoundary>
+          <AdminDashboard
+            onLogout={() => {
+              const a = adminStore.getAuth();
+              a.isSessionRevoked = false;
+              a.isAuthenticated = false;
+              localStorage.setItem('kal_admin_auth', JSON.stringify(a));
+              adminStore.logout();
+              setAuthVersion((v) => v + 1);
+            }}
+            onReturnToMenu={() => {
+              const a = adminStore.getAuth();
+              a.isSessionRevoked = false;
+              a.isAuthenticated = false;
+              localStorage.setItem('kal_admin_auth', JSON.stringify(a));
+              adminStore.logout();
+              window.location.hash = '';
+              setAuthVersion((v) => v + 1);
+            }}
+          />
+        </ErrorBoundary>
       );
     }
 
     return (
-      <AdminLogin
-        onLoginSuccess={() => {
-          setAuthVersion((v) => v + 1);
-        }}
-        onReturnToMenu={() => {
-          window.location.hash = '';
-        }}
-      />
+      <ErrorBoundary>
+        <AdminLogin
+          onLoginSuccess={() => {
+            setAuthVersion((v) => v + 1);
+          }}
+          onReturnToMenu={() => {
+            window.location.hash = '';
+          }}
+        />
+      </ErrorBoundary>
     );
   }
 
