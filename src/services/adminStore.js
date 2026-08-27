@@ -1015,6 +1015,11 @@ class AdminStoreService {
       this.recordPayment(invoice.totalCOP, invoice.paymentMethod);
     }
 
+    // Descontar del inventario inteligente si incluye artículos vendidos
+    if (Array.isArray(items) && items.length > 0) {
+      this.deductOrderFromInventory(items, `Factura Contingencia #${invoice.invoiceNumber}`);
+    }
+
     this.notify();
     return { success: true, invoice };
   }
@@ -1061,6 +1066,7 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual
                 paymentMethod: item.paymentMethod || item.medioPago || item.metodo || 'Efectivo',
                 tableNumber: item.tableNumber || item.mesa || 'Barra',
                 cashierName: item.cashierName || 'Administrador (Importado)',
+                items: item.items || [],
                 notes: item.notes || item.motivo || 'Importado desde archivo',
                 date: item.createdAt || item.fecha || dateToUse
               });
@@ -1756,6 +1762,92 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual
   saveCategories(categories) {
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
     this.notify();
+  }
+
+  // ----------------------------------------------------
+  // GESTIÓN DE MESAS BLOQUEADAS & SEGURIDAD QR 24H
+  // ----------------------------------------------------
+  getLockedTables() {
+    try {
+      return JSON.parse(localStorage.getItem('kal_locked_tables')) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  isTableLocked(tableNum) {
+    const locked = this.getLockedTables();
+    return locked.includes(Number(tableNum)) || locked.includes(String(tableNum));
+  }
+
+  toggleTableLock(tableNum) {
+    let locked = this.getLockedTables();
+    const num = Number(tableNum);
+    if (locked.includes(num)) {
+      locked = locked.filter((t) => t !== num);
+    } else {
+      locked.push(num);
+    }
+    localStorage.setItem('kal_locked_tables', JSON.stringify(locked));
+    this.notify();
+    return locked.includes(num);
+  }
+
+  setTableLocked(tableNum, isLocked) {
+    let locked = this.getLockedTables();
+    const num = Number(tableNum);
+    if (isLocked && !locked.includes(num)) {
+      locked.push(num);
+    } else if (!isLocked) {
+      locked = locked.filter((t) => t !== num);
+    }
+    localStorage.setItem('kal_locked_tables', JSON.stringify(locked));
+    this.notify();
+    return isLocked;
+  }
+
+  // Genera un token rotativo de 24h para el QR de la mesa
+  getDailyTableToken(tableNum, dateStr = null) {
+    const today = dateStr || new Date().toISOString().split('T')[0];
+    const base = `KAL_T${tableNum}_${today}_DISCOBAR`;
+    let hash = 0;
+    for (let i = 0; i < base.length; i++) {
+      hash = ((hash << 5) - hash) + base.charCodeAt(i);
+      hash |= 0;
+    }
+    const hex = Math.abs(hash).toString(16).toUpperCase().padStart(6, '0').slice(0, 6);
+    return `QR-${hex}`;
+  }
+
+  // Valida si un código o token es válido para la mesa
+  validateTableAccess(tableNum, codeOrToken) {
+    if (!codeOrToken) return false;
+    const clean = String(codeOrToken).trim().toUpperCase();
+    
+    // 1. Verificar si la mesa está bloqueada
+    if (this.isTableLocked(tableNum)) {
+      return { valid: false, reason: 'locked', message: `La Mesa #${tableNum} se encuentra bloqueada por administración.` };
+    }
+
+    // 2. Clave maestra admin / bypass
+    if (clean === '1234' || clean === '1966' || clean === 'VIP') {
+      return { valid: true, type: 'master' };
+    }
+
+    // 3. Token diario del QR
+    const dailyToken = this.getDailyTableToken(tableNum);
+    if (clean === dailyToken || clean === dailyToken.replace('QR-', '')) {
+      return { valid: true, type: 'qr_daily' };
+    }
+
+    // 4. Clave estática de la mesa
+    const codes = this.getTableCodes();
+    const expected = (codes[tableNum] || '').toUpperCase();
+    if (expected && clean === expected) {
+      return { valid: true, type: 'pin' };
+    }
+
+    return { valid: false, reason: 'invalid_code', message: 'Código de seguridad de mesa incorrecto.' };
   }
 
   getTableCodes() {

@@ -70,9 +70,33 @@ export default function CartDrawer({
     { maximumFractionDigits: currentCurrency === 'COP' || currentCurrency === 'CLP' || currentCurrency === 'ARS' ? 0 : 2 }
   );
 
-  // Check if current table security code matches
+  // Leer parámetros de URL si el cliente escaneó el QR físico
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlTable = params.get('table') || params.get('t') || params.get('mesa');
+      const urlToken = params.get('token') || params.get('k') || params.get('pin');
+      if (urlTable) {
+        const tNum = parseInt(urlTable, 10);
+        if (tNum >= 1 && tNum <= 15) {
+          setSelectedTable(tNum);
+          if (urlToken) {
+            setTableCodeInput(urlToken);
+            const val = adminStore.validateTableAccess(tNum, urlToken);
+            if (val && val.valid) {
+              setTableValidatedSuccess(true);
+            }
+          }
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Verificar si la mesa seleccionada está bloqueada en el bar
+  const isSelectedTableLocked = adminStore.isTableLocked(selectedTable);
+  const tableAccessResult = adminStore.validateTableAccess(selectedTable, tableCodeInput);
+  const isTableCodeValid = Boolean(tableAccessResult && tableAccessResult.valid && !isSelectedTableLocked);
   const expectedCode = TABLE_SECURITY_CODES[selectedTable] || '';
-  const isTableCodeValid = tableCodeInput.trim().toUpperCase() === expectedCode.toUpperCase();
 
   // Reset errors when changing table or code
   const handleTableSelect = (num) => {
@@ -80,13 +104,16 @@ export default function CartDrawer({
     setTableCodeError(false);
     setFormValidationError('');
     setTableValidatedSuccess(false);
-    // If the input was for previous table and doesn't match new one, clear it
-    if (tableCodeInput && tableCodeInput.trim().toUpperCase() !== (TABLE_SECURITY_CODES[num] || '').toUpperCase()) {
-      setTableCodeInput('');
-    }
+    setTableCodeInput('');
   };
 
   const handleConfirmTableModal = () => {
+    if (isSelectedTableLocked) {
+      setTableCodeError(true);
+      setFormValidationError(`🚫 La Mesa #${selectedTable} está bloqueada para pedidos digitales.`);
+      return;
+    }
+
     if (isTableCodeValid) {
       setTableCodeError(false);
       setFormValidationError('');
@@ -915,90 +942,58 @@ export default function CartDrawer({
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
                       <Lock size={14} className="text-amber-400" />
-                      <span>2. Clave de Seguridad de Mesa #{selectedTable} *</span>
+                      <span>2. Clave o Token de Mesa #{selectedTable} *</span>
                     </label>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowTableCodesInModal(!showTableCodesInModal)}
-                      className="text-[10px] font-bold text-[var(--accent-color)] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <HelpCircle size={12} />
-                      <span>{showTableCodesInModal ? 'Ocultar Claves' : 'Ver Claves'}</span>
-                    </button>
                   </div>
 
-                  {/* Optional expandable list of test codes */}
-                  <AnimatePresence>
-                    {showTableCodesInModal && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="p-2.5 rounded-xl bg-black/40 border border-white/10 space-y-1.5 overflow-hidden"
-                      >
-                        <span className="text-[10px] font-bold text-[var(--accent-color)] block">
-                          Claves asignadas (Toca una para autocompletar):
-                        </span>
-                        <div className="grid grid-cols-3 gap-1 max-h-28 overflow-y-auto p-0.5">
-                          {Object.entries(TABLE_SECURITY_CODES).map(([tbl, code]) => (
-                            <button
-                              key={tbl}
-                              type="button"
-                              onClick={() => {
-                                setSelectedTable(Number(tbl));
-                                setTableCodeInput(code);
-                                setTableCodeError(false);
-                              }}
-                              className="p-1 rounded bg-[var(--pill-bg)] text-[10px] font-mono text-center hover:bg-[var(--accent-color)] hover:text-[var(--accent-on)] transition-all cursor-pointer border border-white/5"
-                            >
-                              M#{tbl}: <strong>{code}</strong>
-                            </button>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className="relative flex items-center">
-                    <Key size={15} className="absolute left-3 text-[var(--text-muted)]" />
-                    <input
-                      type="text"
-                      maxLength={5}
-                      value={tableCodeInput}
-                      onChange={(e) => {
-                        setTableCodeInput(e.target.value);
-                        setTableCodeError(false);
-                        setFormValidationError('');
-                      }}
-                      placeholder={`Ej: ${expectedCode}`}
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[var(--pill-bg)] text-[var(--text-primary)] text-xs border border-[var(--surface-border)] focus:outline-none focus:border-[var(--accent-color)] font-mono uppercase font-bold tracking-widest placeholder:text-gray-500 placeholder:normal-case placeholder:tracking-normal"
-                    />
-                  </div>
-
-                  {/* Realtime Badges */}
-                  {isTableCodeValid ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: -2 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 shadow-sm"
-                    >
-                      <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
-                      <span>✅ Clave correcta para Mesa #{selectedTable}.</span>
-                    </motion.div>
-                  ) : tableCodeError ? (
-                    <motion.div
-                      initial={{ opacity: 0, x: -4 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold flex items-center gap-2 shadow-sm"
-                    >
-                      <XCircle size={16} className="shrink-0 text-red-400" />
-                      <span>Clave incorrecta. La clave de prueba para Mesa #{selectedTable} es: <strong className="font-mono">{expectedCode}</strong></span>
-                    </motion.div>
+                  {isSelectedTableLocked ? (
+                    <div className="p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-bold flex items-center gap-2">
+                      <Lock size={16} className="shrink-0 text-red-400" />
+                      <span>🚫 Esta mesa está bloqueada para pedidos digitales. Consulta con un mesero.</span>
+                    </div>
                   ) : (
-                    <span className="text-[10px] text-[var(--text-muted)] block italic">
-                      Revisa el hablador en tu mesa física para ver tu clave de 5 caracteres.
-                    </span>
+                    <>
+                      <div className="relative flex items-center">
+                        <Key size={15} className="absolute left-3 text-[var(--text-muted)]" />
+                        <input
+                          type="text"
+                          maxLength={10}
+                          value={tableCodeInput}
+                          onChange={(e) => {
+                            setTableCodeInput(e.target.value);
+                            setTableCodeError(false);
+                            setFormValidationError('');
+                          }}
+                          placeholder="Ingresa clave del hablador o token QR"
+                          className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[var(--pill-bg)] text-[var(--text-primary)] text-xs border border-[var(--surface-border)] focus:outline-none focus:border-[var(--accent-color)] font-mono uppercase font-bold tracking-widest placeholder:text-gray-500 placeholder:normal-case placeholder:tracking-normal"
+                        />
+                      </div>
+
+                      {/* Realtime Badges */}
+                      {isTableCodeValid ? (
+                        <motion.div
+                          initial={{ opacity: 0, y: -2 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 shadow-sm"
+                        >
+                          <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+                          <span>✅ Mesa #{selectedTable} verificada correctamente.</span>
+                        </motion.div>
+                      ) : tableCodeError ? (
+                        <motion.div
+                          initial={{ opacity: 0, x: -4 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold flex items-center gap-2 shadow-sm"
+                        >
+                          <XCircle size={16} className="shrink-0 text-red-400" />
+                          <span>Código o token incorrecto para Mesa #{selectedTable}. Consulta el hablador físico.</span>
+                        </motion.div>
+                      ) : (
+                        <span className="text-[10px] text-[var(--text-muted)] block italic">
+                          💡 Revisa el hablador en tu mesa física o escanea el QR con tu cámara.
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
 

@@ -64,6 +64,10 @@ DESGLOSE DE VENTAS POR MEDIO DE PAGO:
   • Datáfono / Tarjeta   : $${Number(record.totalDatafono || 0).toLocaleString('es-CO')} COP
   • Wompi Pasarela Barra : $${Number(record.totalWompi || 0).toLocaleString('es-CO')} COP
 
+DESGLOSE OPERATIVO:
+  • Facturas de Contingencia (Offline): ${record.contingencyCount || 0} facturas ($${Number(record.contingencyRevenue || 0).toLocaleString('es-CO')} COP)
+  • Comandas de Sistema               : ${record.orderCount || 0} pedidos
+
 ------------------------------------------------------------
 TOTAL VENTAS DEL TURNO   : $${Number(record.totalSales || 0).toLocaleString('es-CO')} COP
 GRAN TOTAL CON BASE      : $${Number(record.grandTotalWithFloat || ((record.totalSales || 0) + (record.initialFloat || 0))).toLocaleString('es-CO')} COP
@@ -912,6 +916,16 @@ export default function AdminMetrics() {
                     <span className="font-bold">${Number(cashRegister.initialFloat || 200000).toLocaleString('es-CO')}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-gray-400">Ventas Comandas de Sistema:</span>
+                    <span className="font-bold text-white">${Number(metrics.normalRevenue || (metrics.totalRevenue - (metrics.contingencyRevenue || 0))).toLocaleString('es-CO')}</span>
+                  </div>
+                  {Number(metrics.contingencyCount || 0) > 0 && (
+                    <div className="flex justify-between text-amber-300 font-bold bg-amber-500/10 p-2 rounded-xl border border-amber-500/20">
+                      <span>Facturas Contingencia ({metrics.contingencyCount} recibos):</span>
+                      <span className="font-mono font-black">+${Number(metrics.contingencyRevenue || 0).toLocaleString('es-CO')} COP</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
                     <span className="text-gray-400">Total Ventas Registradas:</span>
                     <span className="font-black text-amber-400">${Number(metrics.totalRevenue).toLocaleString('es-CO')}</span>
                   </div>
@@ -1008,6 +1022,12 @@ export default function AdminMetrics() {
                     <span className="text-gray-600">Total Ventas Turno:</span>
                     <span className="font-black text-black">${Number(closedReceipt.totalSales || 0).toLocaleString('es-CO')}</span>
                   </div>
+                  {Number(closedReceipt.contingencyCount || 0) > 0 && (
+                    <div className="flex justify-between text-amber-700 font-bold">
+                      <span>Facturas Contingencia ({closedReceipt.contingencyCount}):</span>
+                      <span>${Number(closedReceipt.contingencyRevenue || 0).toLocaleString('es-CO')}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-black text-sm pt-1 border-t border-gray-200">
                     <span>Total con Base:</span>
                     <span>${Number(closedReceipt.grandTotalWithFloat || ((closedReceipt.totalSales || 0) + (closedReceipt.initialFloat || 0))).toLocaleString('es-CO')} COP</span>
@@ -1042,10 +1062,10 @@ export default function AdminMetrics() {
                 <button
                   type="button"
                   onClick={() => downloadCashCloseTxt(closedReceipt)}
-                  className="py-2.5 rounded-xl bg-amber-500 text-black font-black text-xs hover:bg-amber-400 transition-all flex items-center justify-center gap-1.5 shadow cursor-pointer"
+                  className="py-2.5 rounded-xl border border-gray-300 text-black text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-gray-100 transition-all cursor-pointer"
                 >
                   <Download size={14} />
-                  <span>Guardar (.txt)</span>
+                  <span>Descargar .TXT</span>
                 </button>
 
                 <button
@@ -1121,41 +1141,40 @@ export default function AdminMetrics() {
                 </button>
               </div>
 
+              {reopenError && (
+                <div className="p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs">
+                  {reopenError}
+                </div>
+              )}
+
+              {reopenSuccessMsg && (
+                <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+                  {reopenSuccessMsg}
+                </div>
+              )}
+
               <form onSubmit={handleConfirmReopen} className="space-y-4">
-                {reopenError && (
-                  <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-bold flex items-center gap-2">
-                    <AlertCircle size={16} className="shrink-0 text-red-400" />
-                    <span>{reopenError}</span>
-                  </div>
-                )}
-
-                {reopenSuccessMsg && (
-                  <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-2">
-                    <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
-                    <span>{reopenSuccessMsg}</span>
-                  </div>
-                )}
-
-                <div className="p-3.5 rounded-2xl bg-[#1c1216] border border-red-500/20 flex items-start gap-2.5 text-xs text-gray-300">
-                  <ShieldAlert size={18} className="text-red-400 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    Se cancelará el arqueo de cierre del día de hoy y se reabrirá la caja activa con las ventas y comandas acumuladas para que el turno pueda continuar.
+                <div className="p-3 rounded-2xl bg-white/5 space-y-1 text-xs">
+                  <p className="text-gray-300">
+                    Estás a punto de reabrir el turno del día <strong className="text-white font-mono">{selectedReopenRecord.date}</strong>.
+                  </p>
+                  <p className="text-gray-400 text-[11px]">
+                    El registro de cierre actual será archivado y el turno quedará activo nuevamente para seguir facturando.
                   </p>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-gray-300 flex items-center gap-1.5">
-                    <Key size={14} className="text-amber-400" />
-                    <span>Contraseña de Administrador *</span>
+                    <Key size={14} className="text-red-400" />
+                    <span>Contraseña de Administrador (Obligatoria)</span>
                   </label>
                   <input
                     type="password"
                     required
-                    autoFocus
                     value={reopenPasswordInput}
                     onChange={(e) => setReopenPasswordInput(e.target.value)}
-                    placeholder="Ingresa la contraseña de admin"
-                    className="w-full p-3 rounded-xl bg-[#0b080a] border border-red-500/30 text-white text-xs font-mono focus:outline-none focus:border-red-400"
+                    placeholder="Ingresa clave del panel"
+                    className="w-full p-3 rounded-xl bg-[#0b0d13] border border-red-500/40 text-white text-xs font-mono focus:outline-none focus:border-red-400"
                   />
                 </div>
 
@@ -1163,16 +1182,15 @@ export default function AdminMetrics() {
                   <button
                     type="button"
                     onClick={() => setShowReopenModal(false)}
-                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl bg-[#171b26] text-gray-400 text-xs font-bold hover:text-white"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 cursor-pointer transition-all"
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black shadow-lg shadow-red-600/30 cursor-pointer"
                   >
-                    <RotateCcw size={14} />
-                    <span>Confirmar y Reabrir Turno</span>
+                    Confirmar Reapertura
                   </button>
                 </div>
               </form>
@@ -1189,12 +1207,12 @@ export default function AdminMetrics() {
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
-              className="w-full max-w-md bg-[#12141c] border border-[#2a2e3f] text-white rounded-3xl p-6 shadow-2xl space-y-4"
+              className="w-full max-w-md bg-[#12141c] border border-amber-500/40 text-white rounded-3xl p-6 shadow-2xl space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-[#2a2e3f] pb-3">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2.5 text-amber-400">
                   <Edit3 size={18} />
-                  <h3 className="text-base font-black text-white">Editar Observaciones del Cierre</h3>
+                  <h3 className="text-base font-black text-white">Editar Observaciones de Cierre</h3>
                 </div>
                 <button
                   onClick={() => setShowEditNotesModal(false)}
@@ -1268,8 +1286,12 @@ export default function AdminMetrics() {
                     <span className="font-black">${Number(metrics.totalRevenue).toLocaleString('es-CO')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Comandas:</span>
-                    <span>{metrics.orderCount}</span>
+                    <span>Comandas de Sistema:</span>
+                    <span>{metrics.orderCount - (metrics.contingencyCount || 0)} pedidos</span>
+                  </div>
+                  <div className="flex justify-between text-amber-700 font-bold">
+                    <span>Facturas Contingencia (Offline):</span>
+                    <span>{metrics.contingencyCount || 0} facturas (${Number(metrics.contingencyRevenue || 0).toLocaleString('es-CO')})</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Ticket Promedio:</span>

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingBag, UtensilsCrossed, Store, Check, Plus, X, Printer, 
   DollarSign, Clock, User, Phone, CheckCircle2, AlertCircle, 
-  CreditCard, Smartphone, Building2, Calendar, Users, RotateCcw, FileSpreadsheet, ShieldAlert, Trash2, FileText, Sparkles, RefreshCw, History, Search, ArrowUpRight
+  CreditCard, Smartphone, Building2, Calendar, Users, RotateCcw, FileSpreadsheet, ShieldAlert, Trash2, FileText, Sparkles, RefreshCw, History, Search, ArrowUpRight, Lock
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import ReceiptModal from './ReceiptModal';
@@ -260,25 +260,27 @@ export default function AdminOrdersAndTables() {
                 <span>📍</span>
                 <span>Estado de Mesas en Vivo (1 a 15)</span>
               </h3>
-              <span className="text-xs text-gray-500">Toca cualquier mesa para ver la información y comanda</span>
+              <span className="text-xs text-gray-500">Toca cualquier mesa para ver comanda o bloquear</span>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
               {Array.from({ length: 15 }, (_, i) => i + 1).map((tableNum) => {
                 const session = adminStore.getTableSession(tableNum);
-                const hasActiveOrders = session.isActive;
+                const hasActiveOrders = session.isActive && session.items.length > 0;
+                const isLocked = adminStore.isTableLocked(tableNum);
 
                 return (
                   <motion.div
                     key={tableNum}
-                    whileHover={{ scale: 1.02 }}
+                    layout
                     onClick={() => {
                       if (hasActiveOrders) {
                         setSelectedDetailItem({ type: 'table', tableNum, session });
                       }
                     }}
                     className={`p-4 rounded-3xl border transition-all flex flex-col justify-between space-y-3 cursor-pointer ${
-                      hasActiveOrders
+                      isLocked
+                        ? 'bg-[#150f14] border-red-500/40 text-gray-400'
+                        : hasActiveOrders
                         ? 'bg-gradient-to-b from-[#181c2b] to-[#121520] border-amber-500/50 shadow-lg shadow-amber-500/10'
                         : 'bg-[#11131c] border-[#232738] text-gray-400'
                     }`}
@@ -287,20 +289,45 @@ export default function AdminOrdersAndTables() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className={`w-8 h-8 rounded-xl font-black text-xs flex items-center justify-center ${
-                          hasActiveOrders ? 'bg-amber-500 text-black' : 'bg-white/5 text-gray-400'
+                          isLocked
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/40'
+                            : (hasActiveOrders ? 'bg-amber-500 text-black' : 'bg-white/5 text-gray-400')
                         }`}>
                           #{tableNum}
                         </div>
-                        <span className="font-bold text-xs text-white">Mesa #{tableNum}</span>
+                        <div>
+                          <span className="font-bold text-xs text-white block">Mesa #{tableNum}</span>
+                          {isLocked && (
+                            <span className="text-[9px] font-black uppercase text-red-400 block tracking-wider">
+                              🔒 Bloqueada
+                            </span>
+                          )}
+                        </div>
                       </div>
 
-                      {hasActiveOrders && (
-                        <span className="font-mono text-xs font-black text-amber-400">
-                          ${Number(session.totalCOP).toLocaleString('es-CO')}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {hasActiveOrders && (
+                          <span className="font-mono text-xs font-black text-amber-400">
+                            ${Number(session.totalCOP).toLocaleString('es-CO')}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            adminStore.toggleTableLock(tableNum);
+                          }}
+                          className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                            isLocked 
+                              ? 'bg-red-500 text-white hover:bg-red-400 shadow-sm shadow-red-500/20' 
+                              : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
+                          }`}
+                          title={isLocked ? 'Desbloquear Mesa para Clientes' : 'Bloquear Mesa para Clientes'}
+                        >
+                          <Lock size={12} />
+                        </button>
+                      </div>
                     </div>
-
 
                     {/* Middle: Customer / Summary info */}
                     <div className="space-y-0.5">
@@ -636,11 +663,22 @@ export default function AdminOrdersAndTables() {
                           </div>
                         </div>
 
-                        {/* Customer & Time */}
+                        {/* Customer, Waiter & Time */}
                         <div className="col-span-4 sm:col-span-3 min-w-0">
                           <span className="font-extrabold text-white block truncate">
                             {ord.customerName || 'Cliente VIP'}
                           </span>
+                          <div className="flex items-center gap-1.5 my-0.5 flex-wrap">
+                            {ord.waiterName ? (
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                                👨‍🍳 Mesero: {ord.waiterName}
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                                🌐 Página Web (Cliente)
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[10px] text-gray-400 flex items-center gap-1 font-mono">
                             <Clock size={11} className="text-amber-400" />
                             <span>{dateFormatted}</span>
@@ -1045,6 +1083,30 @@ export default function AdminOrdersAndTables() {
                           <span className="text-gray-300 italic">{notes}</span>
                         </div>
                       )}
+                      <div className="col-span-2 pt-1.5 border-t border-white/5 flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-gray-400">Origen del Pedido:</span>
+                        {isBar ? (
+                          selectedDetailItem.order.waiterName ? (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                              👨‍🍳 Mesero: {selectedDetailItem.order.waiterName}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                              🍸 Barra Express (Página Web)
+                            </span>
+                          )
+                        ) : (
+                          selectedDetailItem.session?.waiterName ? (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                              👨‍🍳 Mesero: {selectedDetailItem.session.waiterName}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                              🌐 Pedido Web Auto-servicio
+                            </span>
+                          )
+                        )}
+                      </div>
                       {isBar && selectedDetailItem.order.wompiTransactionId && (
                         <div className="col-span-2 pt-1.5 border-t border-white/5 flex items-center justify-between">
                           <span className="text-[10px] uppercase font-bold text-emerald-400">Verificación Wompi Demo</span>

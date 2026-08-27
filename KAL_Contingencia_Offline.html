@@ -33,7 +33,7 @@
     }
     .container {
       width: 100%;
-      max-width: 900px;
+      max-width: 980px;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -85,32 +85,30 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.15fr 0.85fr;
       gap: 20px;
     }
-    @media (max-width: 768px) {
+    @media (max-width: 860px) {
       .grid { grid-template-columns: 1fr; }
     }
     .panel {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 24px;
-      padding: 24px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
     .panel-title {
       font-size: 14px;
-      font-weight: 900;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #fff;
+      color: var(--gold);
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
+      gap: 8px;
     }
     .form-group {
       display: flex;
@@ -120,99 +118,186 @@
     label {
       font-size: 11px;
       font-weight: 700;
+      color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--text-dim);
     }
-    input, select {
-      width: 100%;
+    input, select, textarea {
       background: var(--card-alt);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px 14px;
       color: #fff;
+      padding: 11px 14px;
+      border-radius: 14px;
       font-family: var(--font);
       font-size: 13px;
       outline: none;
       transition: all 0.2s;
     }
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: var(--gold);
-      box-shadow: 0 0 10px var(--gold-glow);
+      box-shadow: 0 0 0 2px var(--gold-glow);
     }
     .mono-input {
       font-family: var(--mono);
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
     }
     .row-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-    .btn {
-      padding: 12px 18px;
-      border-radius: 16px;
-      font-family: var(--font);
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      border: none;
+    .quick-amounts {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }
-    .btn-gold {
-      background: linear-gradient(135deg, #ffcc00, #e6b800);
-      color: #000;
-      box-shadow: 0 4px 15px rgba(255, 204, 0, 0.25);
-    }
-    .btn-gold:hover {
-      filter: brightness(1.1);
-      transform: translateY(-1px);
-    }
-    .btn-dark {
-      background: var(--card-alt);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-dark:hover {
-      border-color: var(--gold);
-      color: #fff;
-    }
-    .btn-red {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.35);
-      color: #fca5a5;
-    }
-    .btn-red:hover {
-      background: rgba(239, 68, 68, 0.3);
-    }
-    .presets {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
       gap: 6px;
+      flex-wrap: wrap;
     }
-    .preset-btn {
+    .chip {
       background: var(--card-alt);
       border: 1px solid var(--border);
       color: var(--text-dim);
+      padding: 5px 10px;
       border-radius: 10px;
-      padding: 6px 4px;
-      font-size: 10px;
-      font-family: var(--mono);
+      font-size: 11px;
       font-weight: 700;
+      font-family: var(--mono);
       cursor: pointer;
-      text-align: center;
+      transition: all 0.15s;
     }
-    .preset-btn:hover {
+    .chip:hover {
       border-color: var(--gold);
       color: var(--gold);
     }
-    .invoices-list {
+
+    /* Product catalog grid */
+    .catalog-box {
+      background: #0d0f18;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .catalog-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .prod-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 6px;
+      max-height: 170px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .prod-btn {
+      background: var(--card-alt);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 7px 8px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .prod-btn:hover {
+      border-color: var(--gold);
+      background: rgba(255, 204, 0, 0.08);
+    }
+    .prod-name {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .prod-price {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--gold);
+      font-weight: 800;
+    }
+    .selected-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+    .item-tag {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+    }
+    .item-tag-qty {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-submit {
+      background: linear-gradient(135deg, #ffcc00, #e5b842);
+      color: #000;
+      border: none;
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 13px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(255, 204, 0, 0.2);
+    }
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 204, 0, 0.3);
+    }
+    .counter-card {
+      background: linear-gradient(135deg, #131726, #181d33);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .counter-val {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold);
+    }
+    .list {
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -220,404 +305,522 @@
       overflow-y: auto;
       padding-right: 4px;
     }
-    .invoice-card {
+    .item-card {
       background: var(--card-alt);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 12px 14px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       gap: 10px;
     }
-    .invoice-info {
+    .item-info {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
+      min-width: 0;
     }
-    .invoice-top {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .tag {
-      background: rgba(255, 204, 0, 0.15);
-      color: var(--gold);
+    .item-num {
       font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
-    .location {
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
       color: #fff;
     }
-    .invoice-detail {
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    .invoice-price {
-      text-align: right;
-    }
-    .price-num {
-      font-family: var(--mono);
-      font-size: 14px;
-      font-weight: 900;
-      color: var(--gold);
-    }
-    .price-method {
+    .item-meta {
       font-size: 10px;
       color: var(--text-dim);
     }
-    .total-box {
-      background: var(--card-alt);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px 18px;
+    .item-items-text {
+      font-size: 10px;
+      color: #a78bfa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .item-amount {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--green);
+      white-space: nowrap;
+    }
+    .btn-del {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--red);
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
+      font-weight: bold;
     }
-    .actions-bar {
+    .actions {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: auto;
     }
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: #10b981;
-      color: #000;
-      padding: 12px 20px;
-      border-radius: 14px;
+    .btn-sync {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: var(--green);
       font-size: 12px;
-      font-weight: 900;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      display: none;
-      animation: fadeIn 0.3s;
-      z-index: 9999;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .btn-sync:hover {
+      background: rgba(16, 185, 129, 0.25);
+    }
+    .btn-secondary {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-secondary:hover {
+      border-color: #fff;
+    }
+    .alert-box {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      display: none;
+    }
   </style>
 </head>
 <body>
-
-<div class="container">
-  
-  <!-- Header -->
-  <div class="header">
-    <div class="header-title">
-      <div class="icon-box">🍸</div>
-      <div>
-        <h1>KAL DISCOBAR • Terminal Offline</h1>
-        <p style="font-size: 11px; color: var(--text-dim);">Emisión y registro de facturas físicas de talonario sin internet</p>
-      </div>
-    </div>
-    <div class="badge">Modo Offline Activo</div>
-  </div>
-
-  <!-- Grid -->
-  <div class="grid">
+  <div class="container">
     
-    <!-- Formulario de Emisión -->
-    <div class="panel">
-      <div class="panel-title">
-        <span>+ Nueva Factura Manual</span>
-        <span style="font-size: 11px; color: var(--gold);">Talonario Físico</span>
-      </div>
-
-      <form id="invoiceForm" onsubmit="handleAddInvoice(event)">
-        <div class="row-2">
-          <div class="form-group">
-            <label>N° Talonario *</label>
-            <input type="text" id="invNum" class="mono-input" required placeholder="TAL-1001">
-          </div>
-          <div class="form-group">
-            <label>Monto COP *</label>
-            <input type="number" id="invTotal" class="mono-input" required placeholder="180000">
-          </div>
-        </div>
-
-        <!-- Presets -->
-        <div class="form-group">
-          <label>Montos Rápidos:</label>
-          <div class="presets">
-            <button type="button" class="preset-btn" onclick="setTotal(50000)">$50k</button>
-            <button type="button" class="preset-btn" onclick="setTotal(100000)">$100k</button>
-            <button type="button" class="preset-btn" onclick="setTotal(200000)">$200k</button>
-            <button type="button" class="preset-btn" onclick="setTotal(350000)">$350k</button>
-          </div>
-        </div>
-
-        <div class="row-2">
-          <div class="form-group">
-            <label>Medio de Pago</label>
-            <select id="invMethod">
-              <option value="Efectivo">💵 Efectivo</option>
-              <option value="Transferencia Bancolombia">🏦 Bancolombia</option>
-              <option value="Nequi">📱 Nequi</option>
-              <option value="Daviplata">📲 Daviplata</option>
-              <option value="Datáfono / Tarjeta">💳 Datáfono / Tarjeta</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Mesa o Barra</label>
-            <select id="invTable">
-              <option value="Barra">🍸 Barra Mostrador</option>
-              <option value="Mesa 1">🛎️ Mesa 1</option>
-              <option value="Mesa 2">🛎️ Mesa 2</option>
-              <option value="Mesa 3">🛎️ Mesa 3</option>
-              <option value="Mesa 4">🛎️ Mesa 4</option>
-              <option value="Mesa 5">🛎️ Mesa 5</option>
-              <option value="Mesa 6">🛎️ Mesa 6</option>
-              <option value="Mesa 7">🛎️ Mesa 7</option>
-              <option value="Mesa 8">🛎️ Mesa 8</option>
-              <option value="Mesa 9">🛎️ Mesa 9</option>
-              <option value="Mesa 10">🛎️ Mesa 10</option>
-              <option value="Mesa 11">🛎️ Mesa 11</option>
-              <option value="Mesa 12">🛎️ Mesa 12</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Motivo / Observación</label>
-          <input type="text" id="invNotes" placeholder="Falla temporal de red wifi / Corte de luz">
-        </div>
-
-        <button type="submit" class="btn btn-gold" style="width: 100%; margin-top: 6px;">
-          💾 Guardar Factura Local
-        </button>
-      </form>
-    </div>
-
-    <!-- Registro & Acciones de Sincronización -->
-    <div class="panel">
-      <div class="panel-title">
-        <span>Facturas Pendientes de Subir</span>
-        <span id="countBadge" style="font-family: var(--mono); color: var(--gold);">0 facturas</span>
-      </div>
-
-      <div class="total-box">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-title">
+        <div class="icon-box">⚡</div>
         <div>
-          <span style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Total Acumulado Offline:</span>
-          <div id="totalCOPDisplay" class="price-num" style="font-size: 20px;">$0 COP</div>
-        </div>
-        <button type="button" onclick="clearQueue()" class="btn btn-red" style="padding: 6px 12px; font-size: 10px;">
-          Vaciar
-        </button>
-      </div>
-
-      <!-- Lista -->
-      <div id="invoicesList" class="invoices-list">
-        <div style="text-align: center; color: var(--text-dim); font-size: 12px; padding: 40px 0;">
-          No hay facturas offline registradas.
+          <h1>KAL DISCOBAR • Modo Contingencia Offline</h1>
+          <p style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">
+            Terminal de Caja Autónoma • Funciona 100% sin internet en el Escritorio
+          </p>
         </div>
       </div>
-
-      <!-- Sincronización -->
-      <div class="actions-bar">
-        <button type="button" onclick="exportData()" class="btn btn-dark" style="flex: 1;">
-          📥 Exportar Archivo
-        </button>
-        <button type="button" onclick="copySyncCode()" class="btn btn-dark" style="flex: 1;">
-          📋 Copiar Código
-        </button>
-      </div>
-
-      <button type="button" onclick="pushToServer()" class="btn btn-gold" style="width: 100%;">
-        ⚡ Sincronizar con el Dashboard
-      </button>
+      <div class="badge">🔴 MODO OFFLINE ACTIVO</div>
     </div>
 
+    <!-- MAIN GRID -->
+    <div class="grid">
+      
+      <!-- FORM PANEL -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>📝 Registrar Factura / Talonario Físico</span>
+        </div>
+
+        <form id="invoiceForm" onsubmit="handleSaveInvoice(event)" style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="row-2">
+            <div class="form-group">
+              <label>N° Talonario / Factura *</label>
+              <input type="text" id="invNum" placeholder="Ej: TAL-0450" required style="font-weight: 700; font-family: var(--mono);">
+            </div>
+            <div class="form-group">
+              <label>Monto Total COP *</label>
+              <input type="number" id="invTotal" class="mono-input" placeholder="0" required>
+            </div>
+          </div>
+
+          <div class="quick-amounts">
+            <span class="chip" onclick="setAmount(50000)">$50.000</span>
+            <span class="chip" onclick="setAmount(100000)">$100.000</span>
+            <span class="chip" onclick="setAmount(180000)">$180.000</span>
+            <span class="chip" onclick="setAmount(200000)">$200.000</span>
+            <span class="chip" onclick="setAmount(350000)">$350.000</span>
+          </div>
+
+          <!-- PRODUCT SELECTION CATALOG (For Automatic Inventory Deduction) -->
+          <div class="catalog-box">
+            <div class="catalog-title">
+              <span>🍾 Artículos Vendidos (Resta Inventario)</span>
+              <span id="selectedCountBadge" style="color: var(--gold); font-mono;">0 agregados</span>
+            </div>
+
+            <!-- Pre-defined fast bar items -->
+            <div class="prod-grid">
+              <button type="button" class="prod-btn" onclick="addItem('lic_amarillo', 'Aguardiente Amarillo', 180000, 'bottle')">
+                <span class="prod-name">🟡 Aguardiente Amarillo</span>
+                <span class="prod-price">$180.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('lic_ron8', 'Ron Medellín 8 Años', 190000, 'bottle')">
+                <span class="prod-name">🥃 Ron Medellín 8A</span>
+                <span class="prod-price">$190.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('lic_buchanans', 'Buchanan\'s Deluxe', 320000, 'bottle')">
+                <span class="prod-name">🥃 Buchanan\'s Deluxe</span>
+                <span class="prod-price">$320.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('lic_oldparr', 'Old Parr 12 Años', 340000, 'bottle')">
+                <span class="prod-name">🥃 Old Parr 12A</span>
+                <span class="prod-price">$340.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('lic_donjulio', 'Tequila Don Julio Blanco', 420000, 'bottle')">
+                <span class="prod-name">🌵 Tequila Don Julio</span>
+                <span class="prod-price">$420.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('cer_corona', 'Cerveza Corona', 18000, 'unit')">
+                <span class="prod-name">🍺 Corona</span>
+                <span class="prod-price">$18.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('cer_club', 'Cerveza Club Colombia', 15000, 'unit')">
+                <span class="prod-name">🍺 Club Colombia</span>
+                <span class="prod-price">$15.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('cer_stella', 'Cerveza Stella Artois', 18000, 'unit')">
+                <span class="prod-name">🍺 Stella Artois</span>
+                <span class="prod-price">$18.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('coct_gintonic', 'Gin Tonic Premium', 42000, 'cocktail')">
+                <span class="prod-name">🍸 Gin Tonic VIP</span>
+                <span class="prod-price">$42.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('copa_vino', 'Copa Vino Tinto Malbec', 28000, 'glass')">
+                <span class="prod-name">🍷 Copa Vino Tinto</span>
+                <span class="prod-price">$28.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('shot_aguardiente', 'Shot Aguardiente Amarillo', 15000, 'shot')">
+                <span class="prod-name">🥃 Shot Aguardiente</span>
+                <span class="prod-price">$15.000</span>
+              </button>
+              <button type="button" class="prod-btn" onclick="addItem('shot_tequila', 'Shot Tequila', 25000, 'shot')">
+                <span class="prod-name">🌵 Shot Tequila</span>
+                <span class="prod-price">$25.000</span>
+              </button>
+            </div>
+
+            <!-- List of added items for current invoice -->
+            <div id="selectedItemsContainer" class="selected-items-list" style="display: none;"></div>
+          </div>
+
+          <div class="row-2">
+            <div class="form-group">
+              <label>Medio de Pago</label>
+              <select id="invPayment">
+                <option value="Efectivo">💵 Efectivo</option>
+                <option value="Transferencia Bancolombia">🏦 Bancolombia</option>
+                <option value="Nequi">📱 Nequi</option>
+                <option value="Daviplata">📲 Daviplata</option>
+                <option value="Datáfono / Tarjeta">💳 Datáfono / Tarjeta</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Mesa o Barra</label>
+              <select id="invTable">
+                <option value="Barra">🍸 Mostrador Barra</option>
+                <option value="Mesa #1">🛎️ Mesa #1</option>
+                <option value="Mesa #2">🛎️ Mesa #2</option>
+                <option value="Mesa #3">🛎️ Mesa #3</option>
+                <option value="Mesa #4">🛎️ Mesa #4</option>
+                <option value="Mesa #5">🛎️ Mesa #5</option>
+                <option value="Mesa #6">🛎️ Mesa #6</option>
+                <option value="Mesa #7">🛎️ Mesa #7</option>
+                <option value="Mesa #8">🛎️ Mesa #8</option>
+                <option value="Mesa #9">🛎️ Mesa #9</option>
+                <option value="Mesa #10">🛎️ Mesa #10</option>
+                <option value="Mesa #11">🛎️ Mesa #11</option>
+                <option value="Mesa #12">🛎️ Mesa #12</option>
+                <option value="Mesa #13">🛎️ Mesa #13</option>
+                <option value="Mesa #14">🛎️ Mesa #14</option>
+                <option value="Mesa #15">🛎️ Mesa #15</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Observaciones / Motivo</label>
+            <input type="text" id="invNotes" value="Falla de conexión offline">
+          </div>
+
+          <button type="submit" class="btn-submit">💾 Guardar Factura Físico</button>
+        </form>
+      </div>
+
+      <!-- QUEUE & SYNC PANEL -->
+      <div class="panel">
+        <div class="panel-title">
+          <span>📦 Facturas Guardadas Localmente</span>
+        </div>
+
+        <div class="counter-card">
+          <div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Total Acumulado</div>
+            <div class="counter-val" id="totalCopDisplay">$0 COP</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Recibos</div>
+            <div class="counter-val" id="countDisplay" style="color: #fff;">0</div>
+          </div>
+        </div>
+
+        <div id="alertMsg" class="alert-box"></div>
+
+        <div class="list" id="invoicesList">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn-sync" onclick="handleSyncDashboard()">
+            <span>⚡ Sincronizar con el Dashboard de KAL</span>
+          </button>
+          <div class="row-2">
+            <button type="button" class="btn-secondary" onclick="handleExportTxt()">
+              <span>📥 Exportar Archivo</span>
+            </button>
+            <button type="button" class="btn-secondary" onclick="handleCopyPayload()">
+              <span>📋 Copiar Código</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<div id="toast" class="toast">¡Mensaje!</div>
+  <script>
+    const STORAGE_KEY = 'kal_contingency_offline_queue';
+    let currentSelectedItems = [];
 
-<script>
-  const STORAGE_KEY = 'kal_contingency_offline_queue';
-
-  function getQueue() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveQueue(queue) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-    render();
-  }
-
-  function setTotal(amount) {
-    document.getElementById('invTotal').value = amount;
-  }
-
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.innerText = msg;
-    t.style.display = 'block';
-    setTimeout(() => { t.style.display = 'none'; }, 3000);
-  }
-
-  function handleAddInvoice(e) {
-    e.preventDefault();
-    const num = document.getElementById('invNum').value.trim();
-    const tot = parseFloat(document.getElementById('invTotal').value) || 0;
-    const method = document.getElementById('invMethod').value;
-    const table = document.getElementById('invTable').value;
-    const notes = document.getElementById('invNotes').value.trim() || 'Contingencia Offline';
-
-    if (!num || tot <= 0) return;
-
-    const queue = getQueue();
-    queue.unshift({
-      id: 'offline-' + Date.now(),
-      invoiceNumber: num,
-      totalCOP: tot,
-      paymentMethod: method,
-      tableNumber: table,
-      notes: notes,
-      createdAt: new Date().toISOString()
-    });
-
-    saveQueue(queue);
-    showToast(`✅ Factura ${num} guardada correctamente`);
-
-    // Siguiente número de talonario sugerido
-    const match = num.match(/\d+/);
-    if (match) {
-      const nextNum = parseInt(match[0], 10) + 1;
-      document.getElementById('invNum').value = num.replace(/\d+/, String(nextNum));
-    }
-    document.getElementById('invTotal').value = '';
-    document.getElementById('invNotes').value = '';
-  }
-
-  function deleteInvoice(id) {
-    const queue = getQueue().filter(i => i.id !== id);
-    saveQueue(queue);
-  }
-
-  function clearQueue() {
-    if (confirm('¿Deseas vaciar todas las facturas guardadas en este equipo?')) {
-      saveQueue([]);
-      showToast('🗑️ Cola vaciada');
-    }
-  }
-
-  function exportData() {
-    const queue = getQueue();
-    if (queue.length === 0) {
-      alert('No hay facturas offline para exportar.');
-      return;
-    }
-    
-    // Generar formato compatible con el Dashboard
-    let text = `# FACTURAS DE CONTINGENCIA KAL DISCOBAR - EXPORTADO EL ${new Date().toLocaleString()}\n`;
-    text += `# NroFactura | MontoCOP | MedioPago | MesaOBarra | Motivo\n\n`;
-    queue.forEach(i => {
-      text += `${i.invoiceNumber} | ${i.totalCOP} | ${i.paymentMethod} | ${i.tableNumber} | ${i.notes}\n`;
-    });
-
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Facturas_Offline_KAL_${Date.now()}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast('💾 Archivo descargado para subir al Dashboard');
-  }
-
-  function copySyncCode() {
-    const queue = getQueue();
-    if (queue.length === 0) {
-      alert('No hay facturas offline para copiar.');
-      return;
-    }
-    let text = '';
-    queue.forEach(i => {
-      text += `${i.invoiceNumber} | ${i.totalCOP} | ${i.paymentMethod} | ${i.tableNumber} | ${i.notes}\n`;
-    });
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('📋 Código copiado. Puedes pegarlo en el Dashboard');
-    });
-  }
-
-  function pushToServer() {
-    const queue = getQueue();
-    if (queue.length === 0) {
-      alert('No hay facturas offline para sincronizar.');
-      return;
+    function getQueue() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch (e) {
+        return [];
+      }
     }
 
-    // Intentar sincronización directa mediante localStorage compartido del navegador o archivo
-    try {
-      const existing = JSON.parse(localStorage.getItem('kal_admin_contingency_invoices')) || [];
+    function saveQueue(queue) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+      renderList();
+    }
+
+    function setAmount(val) {
+      document.getElementById('invTotal').value = val;
+    }
+
+    function addItem(id, name, priceCOP, type) {
+      const existing = currentSelectedItems.find(i => i.id === id);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        currentSelectedItems.push({ id, name, priceCOP, quantity: 1, type });
+      }
+      renderSelectedItems();
+      recalcTotalFromItems();
+    }
+
+    function updateItemQty(id, delta) {
+      const idx = currentSelectedItems.findIndex(i => i.id === id);
+      if (idx >= 0) {
+        currentSelectedItems[idx].quantity += delta;
+        if (currentSelectedItems[idx].quantity <= 0) {
+          currentSelectedItems.splice(idx, 1);
+        }
+      }
+      renderSelectedItems();
+      recalcTotalFromItems();
+    }
+
+    function renderSelectedItems() {
+      const container = document.getElementById('selectedItemsContainer');
+      const badge = document.getElementById('selectedCountBadge');
+      const totalCount = currentSelectedItems.reduce((s, i) => s + i.quantity, 0);
+
+      badge.innerText = `${totalCount} item(s)`;
+      if (currentSelectedItems.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+      }
+
+      container.style.display = 'flex';
+      container.innerHTML = currentSelectedItems.map(it => `
+        <div class="item-tag">
+          <span style="font-weight: 700;">${it.name} ($${it.priceCOP.toLocaleString('es-CO')})</span>
+          <div class="item-tag-qty">
+            <button type="button" class="btn-circle" onclick="updateItemQty('${it.id}', -1)">-</button>
+            <span style="font-family: var(--mono); font-weight: 800; color: var(--gold);">${it.quantity}</span>
+            <button type="button" class="btn-circle" onclick="updateItemQty('${it.id}', 1)">+</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function recalcTotalFromItems() {
+      if (currentSelectedItems.length > 0) {
+        const sum = currentSelectedItems.reduce((s, i) => s + (i.priceCOP * i.quantity), 0);
+        document.getElementById('invTotal').value = sum;
+      }
+    }
+
+    function generateNextInvoiceNum() {
+      const queue = getQueue();
+      let highest = 1000;
       queue.forEach(q => {
-        if (!existing.some(e => e.invoiceNumber === q.invoiceNumber)) {
-          existing.unshift(q);
+        const match = (q.invoiceNumber || '').match(/\d+/);
+        if (match) {
+          const num = parseInt(match[0], 10);
+          if (num > highest) highest = num;
         }
       });
-      localStorage.setItem('kal_admin_contingency_invoices', JSON.stringify(existing));
-      showToast(`⚡ ¡${queue.length} facturas sincronizadas con el panel!`);
-      setTimeout(() => {
-        if (confirm('Facturas registradas en el panel. ¿Deseas vaciar la cola offline?')) {
-          saveQueue([]);
-        }
-      }, 500);
-    } catch (e) {
-      exportData();
-    }
-  }
-
-  function render() {
-    const queue = getQueue();
-    const list = document.getElementById('invoicesList');
-    const badge = document.getElementById('countBadge');
-    const totalDisplay = document.getElementById('totalCOPDisplay');
-
-    badge.innerText = `${queue.length} facturas`;
-    const total = queue.reduce((sum, i) => sum + (Number(i.totalCOP) || 0), 0);
-    totalDisplay.innerText = `$${total.toLocaleString('es-CO')} COP`;
-
-    if (queue.length === 0) {
-      list.innerHTML = `<div style="text-align: center; color: var(--text-dim); font-size: 12px; padding: 40px 0;">No hay facturas offline registradas.</div>`;
-      return;
+      document.getElementById('invNum').value = 'TAL-' + (highest + 1);
     }
 
-    list.innerHTML = queue.map(i => `
-      <div class="invoice-card">
-        <div class="invoice-info">
-          <div class="invoice-top">
-            <span class="tag">${i.invoiceNumber}</span>
-            <span class="location">${i.tableNumber}</span>
-          </div>
-          <span class="invoice-detail">${i.notes}</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div class="invoice-price">
-            <div class="price-num">$${Number(i.totalCOP).toLocaleString('es-CO')}</div>
-            <div class="price-method">${i.paymentMethod}</div>
-          </div>
-          <button onclick="deleteInvoice('${i.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px;">✕</button>
-        </div>
-      </div>
-    `).join('');
-  }
+    function handleSaveInvoice(e) {
+      e.preventDefault();
+      const num = document.getElementById('invNum').value.trim();
+      const total = parseFloat(document.getElementById('invTotal').value) || 0;
+      const payment = document.getElementById('invPayment').value;
+      const table = document.getElementById('invTable').value;
+      const notes = document.getElementById('invNotes').value.trim();
 
-  // Init
-  document.getElementById('invNum').value = 'TAL-' + Math.floor(1000 + Math.random() * 9000);
-  render();
-</script>
+      if (!num || total <= 0) return;
 
+      const queue = getQueue();
+      queue.unshift({
+        id: 'off-' + Date.now(),
+        invoiceNumber: num,
+        totalCOP: total,
+        paymentMethod: payment,
+        tableNumber: table,
+        notes: notes,
+        items: [...currentSelectedItems],
+        createdAt: new Date().toISOString()
+      });
+
+      saveQueue(queue);
+
+      // Reset form
+      currentSelectedItems = [];
+      renderSelectedItems();
+      document.getElementById('invTotal').value = '';
+      document.getElementById('invNotes').value = 'Falla de conexión offline';
+      generateNextInvoiceNum();
+      showAlert(`✅ Factura ${num} guardada en almacenamiento local.`);
+    }
+
+    function deleteInvoice(id) {
+      let queue = getQueue();
+      queue = queue.filter(q => q.id !== id);
+      saveQueue(queue);
+    }
+
+    function renderList() {
+      const queue = getQueue();
+      const listEl = document.getElementById('invoicesList');
+      const countEl = document.getElementById('countDisplay');
+      const totalEl = document.getElementById('totalCopDisplay');
+
+      countEl.innerText = queue.length;
+      const totalSum = queue.reduce((sum, item) => sum + (parseFloat(item.totalCOP) || 0), 0);
+      totalEl.innerText = '$' + totalSum.toLocaleString('es-CO') + ' COP';
+
+      if (queue.length === 0) {
+        listEl.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 12px;">No hay facturas guardadas. Las que agregues se guardarán aquí automáticamente.</div>';
+        return;
+      }
+
+      listEl.innerHTML = queue.map(item => {
+        const time = new Date(item.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+        const itemsSummary = (item.items && item.items.length > 0)
+          ? item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')
+          : '';
+
+        return `
+          <div class="item-card">
+            <div class="item-info">
+              <div class="item-num">${item.invoiceNumber} • <span style="color: var(--gold);">${item.tableNumber}</span></div>
+              <div class="item-meta">${time} • ${item.paymentMethod}</div>
+              ${itemsSummary ? `<div class="item-items-text" title="${itemsSummary}">📦 ${itemsSummary}</div>` : ''}
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="item-amount">$${Number(item.totalCOP).toLocaleString('es-CO')}</span>
+              <button class="btn-del" onclick="deleteInvoice('${item.id}')" title="Eliminar">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function showAlert(msg) {
+      const el = document.getElementById('alertMsg');
+      el.innerText = msg;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    function handleExportTxt() {
+      const queue = getQueue();
+      if (queue.length === 0) {
+        alert('No hay facturas para exportar.');
+        return;
+      }
+
+      const jsonStr = JSON.stringify(queue, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Facturas_Contingencia_KAL_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function handleCopyPayload() {
+      const queue = getQueue();
+      if (queue.length === 0) {
+        alert('No hay facturas para copiar.');
+        return;
+      }
+      navigator.clipboard.writeText(JSON.stringify(queue, null, 2))
+        .then(() => showAlert('📋 ¡Código JSON de facturas copiado al portapapeles!'))
+        .catch(() => alert('Error al copiar.'));
+    }
+
+    function handleSyncDashboard() {
+      const queue = getQueue();
+      if (queue.length === 0) {
+        alert('No hay facturas pendientes para sincronizar.');
+        return;
+      }
+      showAlert('⚡ ¡Facturas listas en el equipo! Abre el Dashboard y haz clic en "Sincronizar App Local".');
+    }
+
+    // Initialize
+    generateNextInvoiceNum();
+    renderList();
+  </script>
 </body>
 </html>
