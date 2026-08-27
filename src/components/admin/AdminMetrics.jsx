@@ -456,17 +456,12 @@ export default function AdminMetrics() {
         setImportStatusMsg('No hay facturas pendientes en la Terminal Offline de este equipo.');
         return;
       }
-      let text = '';
-      offlineQueue.forEach((i) => {
-        text += `${i.invoiceNumber} | ${i.totalCOP} | ${i.paymentMethod} | ${i.tableNumber} | ${i.notes}\n`;
-      });
-      const res = adminStore.importContingencyFromText(text, selectedDate);
+      const res = adminStore.importContingencyFromText(JSON.stringify(offlineQueue), selectedDate);
       if (res.success) {
         setContingencyInvoices(adminStore.getContingencyInvoicesForDate(selectedDate));
         setMetrics(adminStore.getMetricsForDate(selectedDate));
         setCashRegister(adminStore.getCashRegister());
-        setImportStatusMsg(`⚡ ¡${res.message}! Sincronizadas desde la Terminal Offline.`);
-        localStorage.removeItem('kal_contingency_offline_queue');
+        setImportStatusMsg(`⚡ ${res.message}`);
       } else {
         setImportStatusMsg(res.message || 'Error al sincronizar.');
       }

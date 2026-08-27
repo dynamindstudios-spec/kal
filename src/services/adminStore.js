@@ -992,18 +992,39 @@ class AdminStoreService {
     return list.filter((inv) => (inv.createdAt || '').split('T')[0] === cleanDate);
   }
 
-  addContingencyInvoice({ invoiceNumber, totalCOP, paymentMethod, tableNumber = 'Barra', cashierName = 'Administrador', notes = '', items = [], date = null }) {
+  addContingencyInvoice({ invoiceNumber, totalCOP, paymentMethod, tableNumber = 'Barra', cashierName = 'Administrador', sellerName = '', notes = '', items = [], date = null }) {
     const list = this.getContingencyInvoices();
+    const cleanNum = String(invoiceNumber || 'TAL-' + Math.floor(1000 + Math.random() * 9000)).trim();
+    const invoiceDate = date || new Date().toISOString();
+    const dateOnly = invoiceDate.split('T')[0];
+
+    // Detección y prevención de duplicados
+    const existing = list.find((i) => 
+      String(i.invoiceNumber).trim().toLowerCase() === cleanNum.toLowerCase() && 
+      (i.createdAt || '').split('T')[0] === dateOnly
+    );
+
+    if (existing) {
+      return { 
+        success: false, 
+        duplicate: true, 
+        invoice: existing, 
+        message: `La factura #${cleanNum} ya fue registrada previamente en este turno/fecha.` 
+      };
+    }
+
+    const finalSeller = sellerName || cashierName || 'Administrador / Caja';
     const invoice = {
       id: 'cont-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-      invoiceNumber: String(invoiceNumber || 'TAL-' + Math.floor(1000 + Math.random() * 9000)).trim(),
+      invoiceNumber: cleanNum,
       totalCOP: parseFloat(totalCOP) || 0,
       paymentMethod: paymentMethod || 'Efectivo',
       tableNumber: tableNumber || 'Barra',
       cashierName: cashierName || 'Administrador',
+      sellerName: finalSeller,
       items: items || [],
       notes: notes || 'Factura de contingencia',
-      createdAt: date || new Date().toISOString(),
+      createdAt: invoiceDate,
       isContingency: true
     };
 
@@ -1020,6 +1041,52 @@ class AdminStoreService {
       this.deductOrderFromInventory(items, `Factura Contingencia #${invoice.invoiceNumber}`);
     }
 
+    // Registrar en el historial de pedidos de la comanda oficial
+    try {
+      const orders = this.getOrders();
+      const existingOrder = orders.find(o => o.orderNum === cleanNum || o.id === ('ord-cont-' + cleanNum));
+      if (!existingOrder) {
+        const contingencyOrder = {
+          id: 'ord-cont-' + cleanNum.replace(/[^a-zA-Z0-9]/g, '_') + '-' + Date.now(),
+          orderNum: cleanNum,
+          table: invoice.tableNumber,
+          type: 'contingency',
+          isContingency: true,
+          customerName: `Factura Talonario (${cleanNum})`,
+          cashierName: invoice.cashierName,
+          waiterName: finalSeller,
+          createdByType: 'contingency',
+          createdByName: `Talonario Contingencia • ${finalSeller}`,
+          items: Array.isArray(items) && items.length > 0
+            ? items.map(i => ({
+                id: i.id || ('item-' + Math.random()),
+                name: i.name || 'Artículo Contingencia',
+                priceCOP: i.priceCOP || 0,
+                quantity: i.quantity || 1,
+                dish: { name: { es: i.name, en: i.name }, priceCOP: i.priceCOP }
+              }))
+            : [{
+                id: 'item-generic-cont',
+                name: `Consumo Físico Talonario (${cleanNum})`,
+                priceCOP: invoice.totalCOP,
+                quantity: 1,
+                dish: { name: { es: `Consumo Físico Talonario (${cleanNum})`, en: `Contingency Invoice (${cleanNum})` }, priceCOP: invoice.totalCOP }
+              }],
+          totalCOP: invoice.totalCOP,
+          status: 'billed',
+          isPaid: true,
+          paymentMethod: invoice.paymentMethod,
+          createdAt: invoice.createdAt,
+          billedAt: invoice.createdAt,
+          notes: invoice.notes || 'Factura física de talonario por contingencia'
+        };
+        orders.unshift(contingencyOrder);
+        this.saveOrders(orders);
+      }
+    } catch (err) {
+      console.warn('No se pudo insertar comanda de contingencia en orders:', err);
+    }
+
     this.notify();
     return { success: true, invoice };
   }
@@ -1031,14 +1098,14 @@ class AdminStoreService {
 # ==============================================================================
 # INSTRUCCIONES:
 # 1. Rellena una linea por cada factura fisica emitida en el talonario durante contingencia.
-# 2. Formato: NroFactura | MontoCOP | MedioPago | MesaOBarra | Motivo / Detalle
+# 2. Formato: NroFactura | MontoCOP | MedioPago | MesaOBarra | Vendedor / Cajero | Motivo / Detalle
 # 3. Medios de pago aceptados: Efectivo, Bancolombia, Nequi, Daviplata, Datafono
 # 4. Guarda este archivo (.txt o .csv) y subelo directamente en el Dashboard de KAL.
 # ==============================================================================
 
-TAL-1001 | 150000 | Efectivo | Mesa 4 | Contingencia por corte de internet
-TAL-1002 | 85000  | Bancolombia | Barra | Falla de red wifi
-TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual
+TAL-1001 | 150000 | Efectivo | Mesa 4 | Carlos (Mesero) | Contingencia por corte de internet
+TAL-1002 | 85000  | Bancolombia | Barra | Camila (Caja) | Falla de red wifi
+TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
 `;
   }
 
@@ -1066,6 +1133,7 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual
                 paymentMethod: item.paymentMethod || item.medioPago || item.metodo || 'Efectivo',
                 tableNumber: item.tableNumber || item.mesa || 'Barra',
                 cashierName: item.cashierName || 'Administrador (Importado)',
+                sellerName: item.sellerName || item.vendedor || item.mesero || item.cashierName || '',
                 items: item.items || [],
                 notes: item.notes || item.motivo || 'Importado desde archivo',
                 date: item.createdAt || item.fecha || dateToUse
@@ -1110,14 +1178,16 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual
             else if (rawMethod.includes('dat') || rawMethod.includes('tarj')) finalMethod = 'Datáfono / Tarjeta';
 
             const rawTable = cleanParts[3] || 'Barra';
-            const notes = cleanParts[4] || 'Factura importada desde archivo';
+            const sellerOrCashier = cleanParts[4] || 'Administrador (Archivo)';
+            const notes = cleanParts[5] || cleanParts[4] || 'Factura importada desde archivo';
 
             importedInvoices.push({
               invoiceNumber: invNum,
               totalCOP: montoNum,
               paymentMethod: finalMethod,
               tableNumber: rawTable,
-              cashierName: 'Administrador (Archivo)',
+              cashierName: sellerOrCashier,
+              sellerName: sellerOrCashier,
               notes,
               date: dateToUse
             });
@@ -1130,19 +1200,30 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Talonario manual
       return { success: false, message: 'No se encontraron facturas válidas en el documento. Revisa el formato de la plantilla.' };
     }
 
+    let newlyImportedCount = 0;
+    let skippedCount = 0;
     let totalImportedCOP = 0;
+
     importedInvoices.forEach((inv) => {
-      this.addContingencyInvoice(inv);
-      totalImportedCOP += inv.totalCOP;
+      const res = this.addContingencyInvoice(inv);
+      if (res.success) {
+        newlyImportedCount++;
+        totalImportedCOP += inv.totalCOP;
+      } else if (res.duplicate) {
+        skippedCount++;
+      }
     });
 
     this.notify();
     return {
       success: true,
-      count: importedInvoices.length,
+      count: newlyImportedCount,
+      skippedCount,
       totalCOP: totalImportedCOP,
       invoices: importedInvoices,
-      message: `¡Éxito! Se importaron ${importedInvoices.length} facturas por un total de $${totalImportedCOP.toLocaleString('es-CO')} COP.`
+      message: newlyImportedCount > 0 
+        ? `¡Éxito! Se sincronizaron ${newlyImportedCount} facturas nuevas ($${totalImportedCOP.toLocaleString('es-CO')} COP)${skippedCount > 0 ? ` (${skippedCount} omitidas por ya existir)` : ''}.`
+        : `Todas las facturas (${skippedCount}) ya se encontraban sincronizadas previamente. No hubo duplicados.`
     };
   }
 

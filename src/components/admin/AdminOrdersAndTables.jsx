@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingBag, UtensilsCrossed, Store, Check, Plus, X, Printer, 
   DollarSign, Clock, User, Phone, CheckCircle2, AlertCircle, 
-  CreditCard, Smartphone, Building2, Calendar, Users, RotateCcw, FileSpreadsheet, ShieldAlert, Trash2, FileText, Sparkles, RefreshCw, History, Search, ArrowUpRight, Lock
+  CreditCard, Smartphone, Building2, Calendar, Users, RotateCcw, FileSpreadsheet, ShieldAlert, Trash2, FileText, Sparkles, RefreshCw, History, Search, ArrowUpRight, Lock, QrCode
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import ReceiptModal from './ReceiptModal';
 import ContingencyModal from './ContingencyModal';
 import RefundsAndDuplicatesModal from './RefundsAndDuplicatesModal';
 import ElectronicInvoiceModal from './ElectronicInvoiceModal';
+import TableQRsModal from './TableQRsModal';
 
 export default function AdminOrdersAndTables() {
   const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'reservations' | 'history'
@@ -17,6 +18,7 @@ export default function AdminOrdersAndTables() {
   const [reservations, setReservations] = useState(() => adminStore.getReservations());
   const [selectedTableForModal, setSelectedTableForModal] = useState(null);
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
+  const [showTableQRsModal, setShowTableQRsModal] = useState(false);
 
   // History Tab Filters State
   const [historyFilter, setHistoryFilter] = useState('all'); // 'all' | 'table' | 'bar'
@@ -148,16 +150,16 @@ export default function AdminOrdersAndTables() {
 
         </div>
 
-        {/* ACTION BUTTONS: Contingency & Refunds */}
+        {/* ACTION BUTTONS: Table QRs & Refunds */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            onClick={() => setShowContingencyModal(true)}
-            className="px-4 py-2.5 rounded-2xl bg-[#181c29] hover:bg-[#202537] border border-[#2c3247] hover:border-amber-400 text-gray-200 hover:text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md"
-            title="Registrar factura manual de talonario offline"
+            onClick={() => setShowTableQRsModal(true)}
+            className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md shadow-amber-500/10"
+            title="Ver, compartir e imprimir códigos QR dinámicos para las 15 mesas"
           >
-            <FileSpreadsheet size={15} className="text-amber-400" />
-            <span>Factura Contingencia</span>
+            <QrCode size={15} strokeWidth={2.5} />
+            <span>Códigos QR Mesas</span>
           </button>
 
           <button
@@ -1297,6 +1299,11 @@ export default function AdminOrdersAndTables() {
         />
       )}
 
+      {/* TABLE QRS MODAL (OPTION A) */}
+      <TableQRsModal
+        isOpen={showTableQRsModal}
+        onClose={() => setShowTableQRsModal(false)}
+      />
 
     </div>
   );

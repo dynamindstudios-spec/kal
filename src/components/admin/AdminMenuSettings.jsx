@@ -1341,24 +1341,30 @@ export default function AdminMenuSettings() {
                   />
                 </div>
 
-                {/* Clave de Administrador Obligatoria para Guardar Producto/Precio */}
-                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2">
-                  <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <Lock size={14} className="text-amber-400" />
-                    <span>Clave de Administrador para Autorizar Precio *</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={dishAdminPassword}
-                    onChange={(e) => setDishAdminPassword(e.target.value)}
-                    placeholder="Ingresa clave del panel"
-                    required
-                    className="w-full bg-[#0a0c12] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
-                  />
-                  <p className="text-[10px] text-gray-400">
-                    🔒 Los cambios de precio requieren autorización del administrador.
-                  </p>
-                </div>
+                {/* Clave de Administrador solo si se crea producto nuevo o se modifica el precio */}
+                {(!editingDish || Number(dishPriceCOP) !== Number(editingDish.priceCOP)) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2"
+                  >
+                    <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Lock size={14} className="text-amber-400" />
+                      <span>Clave de Administrador para Autorizar Precio *</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={dishAdminPassword}
+                      onChange={(e) => setDishAdminPassword(e.target.value)}
+                      placeholder="Ingresa clave del panel"
+                      required
+                      className="w-full bg-[#0a0c12] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
+                    />
+                    <p className="text-[10px] text-gray-400">
+                      🔒 Se detectó modificación o asignación de precio. Ingresa tu clave admin para autorizar.
+                    </p>
+                  </motion.div>
+                )}
 
                 <div className="pt-3 border-t border-[#2a2e3f] flex items-center justify-end gap-2">
                   <button

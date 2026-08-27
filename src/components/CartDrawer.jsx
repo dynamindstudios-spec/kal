@@ -10,6 +10,7 @@ import AnimatedPriceCounter from './AnimatedPriceCounter';
 import { CURRENCIES, UI_TEXT, TABLE_SECURITY_CODES } from '../data/menuData';
 import { adminStore } from '../services/adminStore';
 import WompiCheckoutModal from './admin/WompiCheckoutModal';
+import InteractiveTableMap from './common/InteractiveTableMap';
 
 // SVG Icon of a Table with Tablecloth
 function TableclothIcon({ size = 48, className = "" }) {
@@ -902,39 +903,13 @@ export default function CartDrawer({
                   Toca el número de tu mesa física (1 al 15) e ingresa el código de 5 caracteres que aparece en el hablador o tarjeta de tu mesa:
                 </p>
 
-                {/* 1. Grid of 15 Tables */}
+                {/* 1. Selector de Mesa Interactivo con Plano de KAL */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold text-[var(--text-primary)]">
-                    <span className="flex items-center gap-1.5">
-                      <span>📍</span>
-                      <span>1. Selecciona tu mesa:</span>
-                    </span>
-                    <span className="text-emerald-400 font-black bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 text-[11px]">
-                      Mesa #{selectedTable} Seleccionada
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-1.5 max-h-36 overflow-y-auto p-1">
-                    {Array.from({ length: 15 }, (_, i) => i + 1).map((tableNum) => {
-                      const isSelected = selectedTable === tableNum;
-                      return (
-                        <motion.button
-                          key={tableNum}
-                          type="button"
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => handleTableSelect(tableNum)}
-                          className={`py-2 px-1 rounded-xl font-black text-xs transition-all border flex items-center justify-center gap-1 cursor-pointer ${
-                            isSelected
-                              ? 'bg-[var(--accent-color)] text-[var(--accent-on)] border-transparent shadow-md scale-105 ring-2 ring-[var(--accent-color)]/50'
-                              : 'bg-[var(--pill-bg)] text-[var(--text-primary)] border-[var(--surface-border)] hover:border-[var(--accent-color)]'
-                          }`}
-                        >
-                          <span>#{tableNum}</span>
-                          {isSelected && <Check size={11} strokeWidth={3} />}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
+                  <InteractiveTableMap
+                    selectedTable={selectedTable}
+                    onSelectTable={handleTableSelect}
+                    isWaiter={false}
+                  />
                 </div>
 
                 {/* 2. Security Code Input */}

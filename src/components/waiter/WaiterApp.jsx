@@ -5,6 +5,7 @@ import {
   Trash2, Send, ShoppingBag
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
+import InteractiveTableMap from '../common/InteractiveTableMap';
 
 const getDishName = (dish) => {
   if (!dish) return '';
@@ -219,47 +220,23 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
       <div className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
 
         {step === 'select_table' && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div className="text-center space-y-1">
               <h2 className="text-xl font-black uppercase tracking-wider text-white">
-                Selecciona la Mesa para Tomar Comanda
+                Plano de Mesas & Comandas
               </h2>
               <p className="text-xs text-gray-400">
-                Toca cualquier mesa libre u ocupada para armar o modificar el pedido en vivo
+                Toca cualquier mesa en el mapa VIP para abrir comanda, ver consumos o añadir tragos
               </p>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4">
-              {Array.from({ length: 15 }, (_, i) => i + 1).map((tableNum) => {
-                const session = adminStore.getTableSession(tableNum);
-                const isOccupied = session.isActive;
-
-                return (
-                  <motion.button
-                    key={tableNum}
-                    type="button"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => handleSelectTable(tableNum)}
-                    className={'p-4 rounded-2xl border text-center transition-all cursor-pointer space-y-2 flex flex-col items-center justify-center ' + (isOccupied ? 'bg-amber-950/30 border-amber-500/60 shadow-lg shadow-amber-500/10 text-amber-300' : 'bg-[#111420] border-emerald-500/40 text-emerald-400 hover:border-emerald-400')}
-                  >
-                    <div className={'w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg ' + (isOccupied ? 'bg-amber-500 text-black' : 'bg-emerald-500/20 text-emerald-300')}>
-                      {tableNum}
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <p className="text-[11px] font-black uppercase">
-                        {isOccupied ? 'Ocupada' : 'Libre'}
-                      </p>
-                      {isOccupied && (
-                        <p className="text-[10px] text-amber-200 font-bold">
-                          ${session.totalCOP.toLocaleString('es-CO')}
-                        </p>
-                      )}
-                    </div>
-                  </motion.button>
-                );
-              })}
+            <div className="p-4 rounded-3xl bg-[#11131c] border border-amber-500/20 shadow-2xl">
+              <InteractiveTableMap
+                selectedTable={selectedTable}
+                onSelectTable={(tblNum) => handleSelectTable(tblNum)}
+                isWaiter={true}
+                allowLockedSelection={true}
+              />
             </div>
           </div>
         )}

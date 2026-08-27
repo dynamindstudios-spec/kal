@@ -98,14 +98,9 @@ export default function ContingencyModal({ onClose, onSuccess }) {
         setImportStatusMsg('No hay facturas pendientes en la App Offline de este equipo.');
         return;
       }
-      let text = '';
-      queue.forEach((i) => {
-        text += `${i.invoiceNumber} | ${i.totalCOP} | ${i.paymentMethod} | ${i.tableNumber} | ${i.notes}\n`;
-      });
-      const res = adminStore.importContingencyFromText(text);
+      const res = adminStore.importContingencyFromText(JSON.stringify(queue));
       if (res.success) {
-        setImportStatusMsg(`⚡ ¡${res.message}! Sincronizadas desde la App Offline.`);
-        localStorage.removeItem('kal_contingency_offline_queue');
+        setImportStatusMsg(`⚡ ${res.message}`);
         setTimeout(() => {
           onSuccess?.(res);
           onClose?.();

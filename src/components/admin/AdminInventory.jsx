@@ -219,8 +219,8 @@ export default function AdminInventory() {
     if (!editingItem) return;
 
     // Detectar si se modificó el precio de venta o costo
-    const isPriceModified = (editingItem.salePrice !== editingItem.initialSalePrice) || 
-                            (editingItem.costPrice !== editingItem.initialCostPrice);
+    const isPriceModified = (Number(editingItem.salePrice || 0) !== Number(editingItem.initialSalePrice || 0)) || 
+                            (Number(editingItem.costPrice || 0) !== Number(editingItem.initialCostPrice || 0));
 
     if (isPriceModified && !editingPassword.trim()) {
       setEditError('Se detectó modificación de precio: ingresa tu clave de administrador para autorizar.');
@@ -1115,7 +1115,7 @@ export default function AdminInventory() {
 
                 {/* AUTORIZACIÓN CON CONTRASEÑA SOLO SI SE MODIFICA EL PRECIO */}
                 {(() => {
-                  const isPriceModified = editingItem && ((editingItem.salePrice !== editingItem.initialSalePrice) || (editingItem.costPrice !== editingItem.initialCostPrice));
+                  const isPriceModified = editingItem && ((Number(editingItem.salePrice || 0) !== Number(editingItem.initialSalePrice || 0)) || (Number(editingItem.costPrice || 0) !== Number(editingItem.initialCostPrice || 0)));
                   if (!isPriceModified) return null;
                   return (
                     <motion.div

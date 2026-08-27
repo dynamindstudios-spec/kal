@@ -557,9 +557,26 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Observaciones / Motivo</label>
-            <input type="text" id="invNotes" value="Falla de conexión offline">
+          <div class="row-2">
+            <div class="form-group">
+              <label>Vendido / Atendido Por *</label>
+              <select id="invSeller" onchange="toggleCustomSeller(this.value)">
+                <option value="👑 Administrador / Caja">👑 Administrador / Caja</option>
+                <option value="👨‍🍳 Carlos (Mesero)">👨‍🍳 Carlos (Mesero)</option>
+                <option value="👨‍🍳 Andrés (Mesero)">👨‍🍳 Andrés (Mesero)</option>
+                <option value="👩‍🍳 Camila (Caja)">👩‍🍳 Camila (Caja)</option>
+                <option value="🍹 Bartender Principal">🍹 Bartender Principal</option>
+                <option value="OTRO">✍️ Otro (Escribir Nombre)</option>
+              </select>
+            </div>
+            <div class="form-group" id="customSellerBox" style="display: none;">
+              <label>Nombre del Vendedor *</label>
+              <input type="text" id="invCustomSeller" placeholder="Nombre completo">
+            </div>
+            <div class="form-group" id="notesBox">
+              <label>Observaciones / Motivo</label>
+              <input type="text" id="invNotes" value="Falla de conexión offline">
+            </div>
           </div>
 
           <button type="submit" class="btn-submit">💾 Guardar Factura Físico</button>
@@ -696,6 +713,18 @@
       document.getElementById('invNum').value = 'TAL-' + (highest + 1);
     }
 
+    function toggleCustomSeller(val) {
+      const box = document.getElementById('customSellerBox');
+      const input = document.getElementById('invCustomSeller');
+      if (val === 'OTRO') {
+        box.style.display = 'flex';
+        input.required = true;
+      } else {
+        box.style.display = 'none';
+        input.required = false;
+      }
+    }
+
     function handleSaveInvoice(e) {
       e.preventDefault();
       const num = document.getElementById('invNum').value.trim();
@@ -703,6 +732,10 @@
       const payment = document.getElementById('invPayment').value;
       const table = document.getElementById('invTable').value;
       const notes = document.getElementById('invNotes').value.trim();
+
+      const sellerSel = document.getElementById('invSeller').value;
+      const customSeller = document.getElementById('invCustomSeller').value.trim();
+      const seller = sellerSel === 'OTRO' ? (customSeller || 'Personalizado') : sellerSel;
 
       if (!num || total <= 0) return;
 
@@ -713,6 +746,8 @@
         totalCOP: total,
         paymentMethod: payment,
         tableNumber: table,
+        sellerName: seller,
+        cashierName: seller,
         notes: notes,
         items: [...currentSelectedItems],
         createdAt: new Date().toISOString()
@@ -726,7 +761,7 @@
       document.getElementById('invTotal').value = '';
       document.getElementById('invNotes').value = 'Falla de conexión offline';
       generateNextInvoiceNum();
-      showAlert(`✅ Factura ${num} guardada en almacenamiento local.`);
+      showAlert(`✅ Factura ${num} guardada (${seller}).`);
     }
 
     function deleteInvoice(id) {
@@ -759,7 +794,7 @@
         return `
           <div class="item-card">
             <div class="item-info">
-              <div class="item-num">${item.invoiceNumber} • <span style="color: var(--gold);">${item.tableNumber}</span></div>
+              <div class="item-num">${item.invoiceNumber} • <span style="color: var(--gold);">${item.tableNumber}</span> • <span style="color: #a78bfa; font-size: 10px;">${item.sellerName || 'Caja'}</span></div>
               <div class="item-meta">${time} • ${item.paymentMethod}</div>
               ${itemsSummary ? `<div class="item-items-text" title="${itemsSummary}">📦 ${itemsSummary}</div>` : ''}
             </div>
@@ -815,7 +850,16 @@
         alert('No hay facturas pendientes para sincronizar.');
         return;
       }
-      showAlert('⚡ ¡Facturas listas en el equipo! Abre el Dashboard y haz clic en "Sincronizar App Local".');
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+      try {
+        window.dispatchEvent(new Event('storage'));
+        if (window.opener && window.opener.adminStore) {
+          const res = window.opener.adminStore.importContingencyFromText(JSON.stringify(queue));
+          showAlert(`⚡ ¡Sincronizado directamente con el Dashboard! ${res.message}`);
+          return;
+        }
+      } catch (e) {}
+      showAlert('⚡ ¡Facturas listas en memoria local! Abre el Dashboard y haz clic en "Sincronizar App Local" o actualiza la pestaña.');
     }
 
     // Initialize
