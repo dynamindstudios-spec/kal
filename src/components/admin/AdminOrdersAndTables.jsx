@@ -3,10 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingBag, UtensilsCrossed, Store, Check, Plus, X, Printer, 
   DollarSign, Clock, User, Phone, CheckCircle2, AlertCircle, 
-  CreditCard, Smartphone, Building2, Calendar, Users, FileText, Sparkles, RefreshCw, History, Search, ArrowUpRight
+  CreditCard, Smartphone, Building2, Calendar, Users, RotateCcw, FileSpreadsheet, ShieldAlert, Trash2, FileText, Sparkles, RefreshCw, History, Search, ArrowUpRight
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import ReceiptModal from './ReceiptModal';
+import ContingencyModal from './ContingencyModal';
+import RefundsAndDuplicatesModal from './RefundsAndDuplicatesModal';
+import ElectronicInvoiceModal from './ElectronicInvoiceModal';
 
 export default function AdminOrdersAndTables() {
   const [activeSubTab, setActiveSubTab] = useState('live'); // 'live' | 'reservations' | 'history'
@@ -26,6 +29,11 @@ export default function AdminOrdersAndTables() {
   const [billNotes, setBillNotes] = useState('');
   const [lastBilledData, setLastBilledData] = useState(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showContingencyModal, setShowContingencyModal] = useState(false);
+  const [showRefundsModal, setShowRefundsModal] = useState(false);
+  const [showElectronicModal, setShowElectronicModal] = useState(false);
+  const [orderForElectronic, setOrderForElectronic] = useState(null);
+  const [doubleChargesCount, setDoubleChargesCount] = useState(() => adminStore.detectDoubleCharges().length);
 
   // New Reservation Modal State
   const [showNewResModal, setShowNewResModal] = useState(false);
@@ -138,6 +146,39 @@ export default function AdminOrdersAndTables() {
             <span>Historial de Pedidos ({orders.length})</span>
           </button>
 
+        </div>
+
+        
+        {/* ACTION BUTTONS: Contingency & Refunds */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowContingencyModal(true)}
+            className="px-3.5 py-2 rounded-xl bg-[#1a1e2d] hover:bg-[#22283c] border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+            title="Registrar factura manual de talonario offline"
+          >
+            <FileSpreadsheet size={14} className="text-amber-400" />
+            <span className="hidden sm:inline">Factura Contingencia</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowRefundsModal(true)}
+            className={`px-3.5 py-2 rounded-xl border font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md ${
+              doubleChargesCount > 0
+                ? 'bg-red-950/80 border-red-500 text-red-300 animate-pulse'
+                : 'bg-[#1a1e2d] hover:bg-[#22283c] border-white/10 text-gray-300'
+            }`}
+            title="Auditoría de cobros dobles y devoluciones"
+          >
+            <RotateCcw size={14} className={doubleChargesCount > 0 ? 'text-red-400' : 'text-gray-400'} />
+            <span className="hidden sm:inline">Devoluciones</span>
+            {doubleChargesCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[10px] font-black">
+                {doubleChargesCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {activeSubTab === 'reservations' && (
@@ -261,13 +302,21 @@ export default function AdminOrdersAndTables() {
                       )}
                     </div>
 
+
                     {/* Middle: Customer / Summary info */}
                     <div className="space-y-0.5">
                       {hasActiveOrders ? (
                         <>
-                          <span className="text-xs font-bold text-gray-200 truncate block">
-                            {session.customerName || 'Cliente VIP'}
-                          </span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-200 truncate block">
+                              {session.customerName || 'Cliente VIP'}
+                            </span>
+                            {session.waiterName && (
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                                👨‍🍳 {session.waiterName.split(' ')[0]}
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[10px] text-gray-400 block">
                             {session.orderCount} pedido(s) acumulado(s)
                           </span>
@@ -740,6 +789,28 @@ export default function AdminOrdersAndTables() {
                       </div>
                     </div>
 
+                    
+                      {/* Electronic Invoice Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const sess = adminStore.getTableSession(billingTable);
+                          setOrderForElectronic({
+                            id: `ORD-MESA-${billingTable}`,
+                            table: billingTable,
+                            customerName: sess.customerName || 'Cliente VIP',
+                            totalCOP: sess.totalCOP,
+                            paymentMethod: selectedPaymentMethod,
+                            items: sess.orders.flatMap((o) => o.items || [])
+                          });
+                          setShowElectronicModal(true);
+                        }}
+                        className="w-full py-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      >
+                        <FileText size={14} />
+                        <span>Generar Factura Electrónica (DIAN / CUFE)</span>
+                      </button>
+
                     {/* Notice */}
                     <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300">
                       💡 Al confirmar el cobro, la Mesa #{billingTable} se reseteará a $0 COP automáticamente y quedará libre para el próximo grupo.
@@ -1082,6 +1153,36 @@ export default function AdminOrdersAndTables() {
         onClose={() => setShowReceiptModal(false)}
         billData={lastBilledData}
       />
+
+      {/* CONTINGENCY INVOICE MODAL */}
+      {showContingencyModal && (
+        <ContingencyModal
+          onClose={() => setShowContingencyModal(false)}
+          onSuccess={() => {
+            setOrders(adminStore.getOrders());
+          }}
+        />
+      )}
+
+      {/* REFUNDS AND DUPLICATES MODAL */}
+      {showRefundsModal && (
+        <RefundsAndDuplicatesModal
+          onClose={() => setShowRefundsModal(false)}
+          onSuccess={() => {
+            setOrders(adminStore.getOrders());
+            setDoubleChargesCount(adminStore.detectDoubleCharges().length);
+          }}
+        />
+      )}
+
+      {/* ELECTRONIC INVOICE MODAL */}
+      {showElectronicModal && (
+        <ElectronicInvoiceModal
+          orderData={orderForElectronic}
+          onClose={() => setShowElectronicModal(false)}
+        />
+      )}
+
 
     </div>
   );

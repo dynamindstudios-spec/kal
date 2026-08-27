@@ -24,6 +24,8 @@ import { adminStore } from './services/adminStore';
 import { getSubscriptionStatus } from './services/api';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminLogin from './components/admin/AdminLogin';
+import WaiterApp from './components/waiter/WaiterApp';
+import WaiterLogin from './components/waiter/WaiterLogin';
 import FloatingSocialButton from './components/FloatingSocialButton';
 import PublicLockoutScreen from './components/PublicLockoutScreen';
 
@@ -225,6 +227,46 @@ export default function App() {
     normHash.startsWith('#dsb') || 
     normHash.startsWith('#/admin') || 
     normHash.startsWith('#admin');
+
+  const isWaiterRoute = 
+    normHash === '#/mesero' || 
+    normHash === '#mesero' || 
+    normHash === '#/waiter' || 
+    normHash === '#waiter' || 
+    normHash.startsWith('#/mesero') || 
+    normHash.startsWith('#mesero') || 
+    normHash.startsWith('#/waiter') || 
+    normHash.startsWith('#waiter');
+
+  if (isWaiterRoute) {
+    const waiterSession = adminStore.getWaiterAuth();
+    if (waiterSession) {
+      return (
+        <WaiterApp
+          key={`waiter-app-${authVersion}`}
+          waiterSession={waiterSession}
+          onLogout={() => {
+            setAuthVersion((v) => v + 1);
+          }}
+          onReturnToMenu={() => {
+            window.location.hash = '';
+          }}
+        />
+      );
+    }
+
+    return (
+      <WaiterLogin
+        key={`waiter-login-${authVersion}`}
+        onLoginSuccess={() => {
+          setAuthVersion((v) => v + 1);
+        }}
+        onReturnToMenu={() => {
+          window.location.hash = '';
+        }}
+      />
+    );
+  }
 
   if (isSiteLocked && !isAdminRoute) {
     return (

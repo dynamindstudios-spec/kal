@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  BarChart3, UtensilsCrossed, Settings, Key, LogOut, 
+  BarChart3, UtensilsCrossed, Settings, Key, LogOut, Package, 
   ExternalLink, Crown, Clock, Calendar, RotateCcw, Ban, Lock, ShieldAlert
 } from 'lucide-react';
 import { adminStore, ADMIN_COLOR_THEMES } from '../../services/adminStore';
@@ -9,6 +9,7 @@ import { RESTAURANT_DATA } from '../../data/menuData';
 import AdminMetrics from './AdminMetrics';
 import AdminOrdersAndTables from './AdminOrdersAndTables';
 import AdminMenuSettings from './AdminMenuSettings';
+import AdminInventory from './AdminInventory';
 import ChangePasswordModal from './ChangePasswordModal';
 import ResetDefaultsModal from './ResetDefaultsModal';
 import AdminColorThemePicker from './AdminColorThemePicker';
@@ -16,13 +17,22 @@ import AdminColorThemePicker from './AdminColorThemePicker';
 export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   const [activeModules, setActiveModules] = useState(() => adminStore.getModules());
   const [isSessionValid, setIsSessionValid] = useState(() => adminStore.getAuth().isAuthenticated);
-  const [activeSection, setActiveSection] = useState(() => {
+  const [activeSection, setActiveSectionState] = useState(() => {
+    const savedSection = localStorage.getItem('kal_admin_active_section');
+    if (savedSection && ['metrics', 'orders', 'settings', 'inventory'].includes(savedSection)) {
+      return savedSection;
+    }
     const mods = adminStore.getModules();
     if (mods.metrics !== false) return 'metrics';
     if (mods.orders !== false) return 'orders';
     if (mods.menu_editor !== false && mods.settings !== false) return 'settings';
     return 'metrics';
   });
+
+  const setActiveSection = (sec) => {
+    setActiveSectionState(sec);
+    localStorage.setItem('kal_admin_active_section', sec);
+  };
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [adminThemeId, setAdminThemeId] = useState(() => adminStore.getAdminTheme());
@@ -379,6 +389,33 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
             )}
           </button>
 
+          
+          {/* Navigation Item 4: Smart Inventory */}
+          <button
+            onClick={() => setActiveSection('inventory')}
+            className={`w-full p-3.5 rounded-2xl text-left flex items-center justify-between transition-all cursor-pointer shrink-0 ${
+              activeSection === 'inventory'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
+                : 'text-gray-400 hover:text-white hover:bg-[#141722]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                activeSection === 'inventory'
+                  ? 'bg-black/20 text-black'
+                  : 'bg-white/5 text-amber-400'
+              }`}>
+                <Package size={18} />
+              </div>
+              <div>
+                <span className="text-xs font-extrabold block leading-tight">Inventario & Botellas</span>
+                <span className="text-[10px] opacity-75 hidden md:block">
+                  Control de Stock & Copas/ml
+                </span>
+              </div>
+            </div>
+          </button>
+
           {/* Dedicated Change Password Button at Bottom of Sidebar */}
           <div className="mt-auto pt-4 border-t border-[#1e2230] space-y-2">
             <button
@@ -524,6 +561,20 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
                 </motion.div>
               )
             )}
+          
+            {/* SECCIÓN 4: INVENTARIO */}
+            {activeSection === 'inventory' && (
+              <motion.div
+                key="inventory-section"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <AdminInventory />
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </main>
 
