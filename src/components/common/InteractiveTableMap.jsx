@@ -1,29 +1,27 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Lock, Check, Map, Grid } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 
-// Mathematical table centers aligned with public/mesas.jpg
+// Mathematical table centers aligned with new public/mesas.jpg layout
 const TABLE_POSITIONS = [
   // Fila 1 (5 mesas superiores)
-  { num: 1, x: 11.5, y: 14.0 },
-  { num: 2, x: 28.5, y: 14.0 },
-  { num: 3, x: 46.2, y: 14.8 },
-  { num: 4, x: 63.5, y: 14.0 },
-  { num: 5, x: 80.5, y: 14.8 },
-  // Fila 2 (5 mesas intermedias)
-  { num: 6, x: 11.5, y: 38.8 },
-  { num: 7, x: 28.8, y: 39.5 },
-  { num: 8, x: 46.2, y: 38.8 },
-  { num: 9, x: 63.6, y: 39.5 },
-  { num: 10, x: 81.0, y: 38.8 },
-  // Fila 3 (3 mesas en L)
-  { num: 11, x: 11.5, y: 63.0 },
-  { num: 12, x: 31.0, y: 66.0 },
-  { num: 13, x: 46.2, y: 63.0 },
-  // Fila 4 (Corredor inferior interior)
-  { num: 14, x: 11.5, y: 87.5 },
-  { num: 15, x: 24.5, y: 87.5 }
+  { num: 1, x: 12.5, y: 18.0 },
+  { num: 2, x: 31.5, y: 18.5 },
+  { num: 3, x: 50.0, y: 18.5 },
+  { num: 4, x: 68.5, y: 18.5 },
+  { num: 5, x: 87.5, y: 18.5 },
+  // Fila 2 (5 zonas intermedias / VIP)
+  { num: 6, x: 12.5, y: 50.0 },
+  { num: 7, x: 31.5, y: 50.0 },
+  { num: 8, x: 50.0, y: 50.0 }, // Zona Central Lounge VIP
+  { num: 9, x: 68.5, y: 50.0 },
+  { num: 10, x: 87.5, y: 50.0 }, // Suite VIP Circular
+  // Fila 3 (5 mesas inferiores)
+  { num: 11, x: 12.5, y: 79.0 },
+  { num: 12, x: 31.5, y: 79.5 },
+  { num: 13, x: 50.0, y: 79.0 },
+  { num: 14, x: 68.5, y: 79.5 },
+  { num: 15, x: 87.5, y: 79.0 }
 ];
 
 export default function InteractiveTableMap({
@@ -52,7 +50,7 @@ export default function InteractiveTableMap({
 
   return (
     <div className="space-y-2.5 font-sans w-full select-none">
-      {/* Header controls: Switch between Plano VIP and Cuadrícula (Clean, without yellow labels) */}
+      {/* Header controls: Switch between Plano VIP and Cuadrícula */}
       <div className="flex items-center justify-between pb-0.5">
         <span className="text-xs font-black uppercase text-gray-300 tracking-wider flex items-center gap-1.5">
           <span>📍</span>
@@ -87,11 +85,11 @@ export default function InteractiveTableMap({
         </div>
       </div>
 
-      {/* VIEW 1: MAPA / PLANO INTERACTIVO CON mesas.jpg */}
+      {/* VIEW 1: MAPA / PLANO INTERACTIVO CON NUEVA IMAGEN mesas.jpg */}
       {viewMode === 'map' ? (
         <div className="relative w-full rounded-2xl overflow-hidden border border-white/10 bg-[#07080c] shadow-2xl">
           {/* Background Floor Plan Image */}
-          <div className="relative w-full aspect-[4/3] sm:aspect-[16/11]">
+          <div className="relative w-full aspect-[16/9] sm:aspect-[16/9]">
             <img
               src="/mesas.jpg"
               alt="Plano de Mesas KAL Discobar"

@@ -401,6 +401,29 @@
     .btn-secondary:hover {
       border-color: #fff;
     }
+    .btn-reset {
+      width: 100%;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-reset:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #ffffff;
+    }
     .alert-box {
       background: rgba(16, 185, 129, 0.15);
       border: 1px solid rgba(16, 185, 129, 0.3);
@@ -618,6 +641,9 @@
               <span>📋 Copiar Código</span>
             </button>
           </div>
+          <button type="button" class="btn-reset" onclick="handleClearAllQueue()">
+            <span>🗑️ Limpiar / Resetear Cola Completa</span>
+          </button>
         </div>
       </div>
 
@@ -860,6 +886,25 @@
         }
       } catch (e) {}
       showAlert('⚡ ¡Facturas listas en memoria local! Abre el Dashboard y haz clic en "Sincronizar App Local" o actualiza la pestaña.');
+    }
+
+    function handleClearAllQueue() {
+      const queue = getQueue();
+      if (queue.length === 0) {
+        alert('No hay facturas en la cola para limpiar.');
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `⚠️ ¿Estás seguro de que deseas ELIMINAR todas las ${queue.length} facturas de la cola offline?\n\nEsta acción borrará la lista local del equipo y no se puede deshacer.`
+      );
+
+      if (confirmed) {
+        saveQueue([]);
+        renderList();
+        generateNextInvoiceNum();
+        showAlert('🗑️ Se ha limpiado y reseteado toda la cola de facturas offline.');
+      }
     }
 
     // Initialize
