@@ -4,7 +4,7 @@ import {
   Calendar as CalendarIcon, DollarSign, TrendingUp, CreditCard, ShoppingBag, 
   Printer, CheckCircle2, Lock, ArrowUpRight, BarChart3, 
   Smartphone, Building2, Wallet, RefreshCw, AlertCircle, X, ChevronLeft, ChevronRight, ChevronDown, Key,
-  Download, FileText, RotateCcw, Edit3, ShieldAlert
+  Download, FileText, RotateCcw, Edit3, ShieldAlert, FileSpreadsheet
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import { RESTAURANT_DATA } from '../../data/menuData';
@@ -233,6 +233,7 @@ export default function AdminMetrics() {
   const [metrics, setMetrics] = useState(() => adminStore.getMetricsForDate(selectedDate));
   const [cashRegister, setCashRegister] = useState(() => adminStore.getCashRegister());
   const [cashHistory, setCashHistory] = useState(() => adminStore.getCashHistory());
+  const [contingencyInvoices, setContingencyInvoices] = useState(() => adminStore.getContingencyInvoicesForDate(selectedDate));
   
   // Close Cash Register Modal State
   const [showCloseModal, setShowCloseModal] = useState(false);
@@ -258,6 +259,7 @@ export default function AdminMetrics() {
   const [editedNotes, setEditedNotes] = useState('');
 
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showContingencyReportModal, setShowContingencyReportModal] = useState(false);
 
   // Sync with store changes
   useEffect(() => {
@@ -265,6 +267,7 @@ export default function AdminMetrics() {
       setMetrics(adminStore.getMetricsForDate(selectedDate));
       setCashRegister(adminStore.getCashRegister());
       setCashHistory(adminStore.getCashHistory());
+      setContingencyInvoices(adminStore.getContingencyInvoicesForDate(selectedDate));
     });
     return unsubscribe;
   }, [selectedDate]);
@@ -361,7 +364,23 @@ export default function AdminMetrics() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Contingency Invoices Report */}
+          <button
+            type="button"
+            onClick={() => setShowContingencyReportModal(true)}
+            className="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-[#181c29] border border-[#2c3247] hover:border-amber-400 text-amber-300 hover:text-amber-200 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+            title="Consultar registro de facturas manuales offline"
+          >
+            <FileSpreadsheet size={15} className="text-amber-400" />
+            <span>Informe Facturas Contingencia</span>
+            {contingencyInvoices.length > 0 && (
+              <span className="px-2 py-0.2 rounded-full bg-amber-500 text-black text-[10px] font-black">
+                {contingencyInvoices.length}
+              </span>
+            )}
+          </button>
+
           {/* Print Report */}
           <button
             onClick={() => setShowReportModal(true)}
@@ -1129,6 +1148,143 @@ export default function AdminMetrics() {
                 >
                   <Printer size={14} />
                   <span>Imprimir</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL: INFORME FACTURAS DE CONTINGENCIA */}
+      <AnimatePresence>
+        {showContingencyReportModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="w-full max-w-2xl bg-[#11131c] border border-amber-500/30 text-white rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 max-h-[88vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                    <FileSpreadsheet className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black uppercase text-white tracking-wide">
+                      Informe de Facturas de Contingencia
+                    </h2>
+                    <p className="text-xs text-gray-400">
+                      Talonario físico offline • Jornada: <span className="text-amber-400 font-bold">{selectedDate}</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowContingencyReportModal(false)}
+                  className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Summary KPIs */}
+              {(() => {
+                const totalContingencyCOP = contingencyInvoices.reduce((sum, i) => sum + (Number(i.totalCOP) || 0), 0);
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0">
+                    <div className="p-3.5 rounded-2xl bg-[#181b28] border border-white/10 space-y-1">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                        Total Facturado Offline
+                      </span>
+                      <span className="text-lg font-black text-amber-400 font-mono">
+                        ${Number(totalContingencyCOP).toLocaleString('es-CO')}
+                      </span>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#181b28] border border-white/10 space-y-1">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                        Facturas Emitidas
+                      </span>
+                      <span className="text-lg font-black text-white font-mono">
+                        {contingencyInvoices.length} <span className="text-xs text-gray-400 font-normal">recibos</span>
+                      </span>
+                    </div>
+
+                    <div className="col-span-2 sm:col-span-1 p-3.5 rounded-2xl bg-[#181b28] border border-white/10 space-y-1">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                        Estado en Caja
+                      </span>
+                      <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 size={14} />
+                        Sumado al Cuadre Diario
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Invoices List */}
+              <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                {contingencyInvoices.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 text-xs">
+                    No se registraron facturas de contingencia manual en esta fecha ({selectedDate}).
+                  </div>
+                ) : (
+                  contingencyInvoices.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="p-4 rounded-2xl bg-[#181a26] border border-white/10 flex items-start justify-between gap-3 text-xs"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-black text-xs border border-amber-500/30">
+                            {inv.invoiceNumber}
+                          </span>
+                          <span className="font-bold text-white text-xs">{inv.tableNumber || 'Barra'}</span>
+                          <span className="px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">
+                            {inv.paymentMethod || 'Efectivo'}
+                          </span>
+                        </div>
+                        {inv.notes && (
+                          <p className="text-gray-400 text-[11px] italic">
+                            Motivo / Detalle: "{inv.notes}"
+                          </p>
+                        )}
+                        <p className="text-[10px] text-gray-500">
+                          Registrado por: {inv.cashierName || '👑 admin'}
+                        </p>
+                      </div>
+
+                      <div className="text-right space-y-0.5 shrink-0">
+                        <span className="font-mono font-black text-amber-400 text-sm block">
+                          ${Number(inv.totalCOP).toLocaleString('es-CO')}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-mono">
+                          {new Date(inv.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="pt-3 border-t border-white/10 flex items-center justify-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowContingencyReportModal(false)}
+                  className="px-5 py-2.5 rounded-2xl bg-[#181a24] hover:bg-white/10 text-gray-300 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black flex items-center gap-1.5 shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+                >
+                  <Printer size={15} />
+                  <span>Imprimir Reporte Contingencias</span>
                 </button>
               </div>
             </motion.div>

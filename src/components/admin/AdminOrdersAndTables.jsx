@@ -148,50 +148,35 @@ export default function AdminOrdersAndTables() {
 
         </div>
 
-        
-        {/* ACTION BUTTONS: Contingency, Refunds & Electronic Invoicing */}
+        {/* ACTION BUTTONS: Contingency & Refunds */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setShowContingencyModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#1a1e2d] hover:bg-[#22283c] border border-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+            className="px-4 py-2.5 rounded-2xl bg-[#181c29] hover:bg-[#202537] border border-[#2c3247] hover:border-amber-400 text-gray-200 hover:text-white font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md"
             title="Registrar factura manual de talonario offline"
           >
-            <FileSpreadsheet size={14} className="text-amber-400" />
-            <span className="hidden sm:inline">Factura Contingencia</span>
+            <FileSpreadsheet size={15} className="text-amber-400" />
+            <span>Factura Contingencia</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowRefundsModal(true)}
-            className={`px-3.5 py-2 rounded-xl border font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md ${
+            className={`px-4 py-2.5 rounded-2xl border font-bold text-xs flex items-center gap-2 transition-all cursor-pointer shadow-md ${
               doubleChargesCount > 0
                 ? 'bg-red-950/80 border-red-500 text-red-300 animate-pulse'
-                : 'bg-[#1a1e2d] hover:bg-[#22283c] border-white/10 text-gray-300'
+                : 'bg-[#181c29] hover:bg-[#202537] border-[#2c3247] hover:border-amber-400 text-gray-200 hover:text-white'
             }`}
             title="Auditoría de cobros dobles y devoluciones"
           >
-            <RotateCcw size={14} className={doubleChargesCount > 0 ? 'text-red-400' : 'text-gray-400'} />
-            <span className="hidden sm:inline">Devoluciones & Cobros Dobles</span>
+            <RotateCcw size={15} className={doubleChargesCount > 0 ? 'text-red-400' : 'text-gray-400'} />
+            <span>Devoluciones</span>
             {doubleChargesCount > 0 && (
               <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[10px] font-black">
                 {doubleChargesCount}
               </span>
             )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              const billedOrders = adminStore.getOrders().filter((o) => o.status === 'billed' || o.isPaid);
-              setOrderForElectronic(billedOrders[0] || null);
-              setShowElectronicModal(true);
-            }}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-950/80 to-indigo-950/80 hover:from-blue-900/80 hover:to-indigo-900/80 border border-blue-500/40 text-blue-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
-            title="Emitir o consultar Facturación Electrónica DIAN"
-          >
-            <Building2 size={14} className="text-blue-400" />
-            <span className="hidden sm:inline">Factura Electrónica (DIAN)</span>
           </button>
         </div>
 
