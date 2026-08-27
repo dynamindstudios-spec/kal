@@ -149,8 +149,8 @@ export default function AdminOrdersAndTables() {
         </div>
 
         
-        {/* ACTION BUTTONS: Contingency & Refunds */}
-        <div className="flex items-center gap-2">
+        {/* ACTION BUTTONS: Contingency, Refunds & Electronic Invoicing */}
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setShowContingencyModal(true)}
@@ -172,12 +172,26 @@ export default function AdminOrdersAndTables() {
             title="Auditoría de cobros dobles y devoluciones"
           >
             <RotateCcw size={14} className={doubleChargesCount > 0 ? 'text-red-400' : 'text-gray-400'} />
-            <span className="hidden sm:inline">Devoluciones</span>
+            <span className="hidden sm:inline">Devoluciones & Cobros Dobles</span>
             {doubleChargesCount > 0 && (
               <span className="px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[10px] font-black">
                 {doubleChargesCount}
               </span>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const billedOrders = adminStore.getOrders().filter((o) => o.status === 'billed' || o.isPaid);
+              setOrderForElectronic(billedOrders[0] || null);
+              setShowElectronicModal(true);
+            }}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-950/80 to-indigo-950/80 hover:from-blue-900/80 hover:to-indigo-900/80 border border-blue-500/40 text-blue-300 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md"
+            title="Emitir o consultar Facturación Electrónica DIAN"
+          >
+            <Building2 size={14} className="text-blue-400" />
+            <span className="hidden sm:inline">Factura Electrónica (DIAN)</span>
           </button>
         </div>
 
@@ -686,6 +700,18 @@ export default function AdminOrdersAndTables() {
                           <button
                             type="button"
                             onClick={() => {
+                              setOrderForElectronic(ord);
+                              setShowElectronicModal(true);
+                            }}
+                            className="p-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 border border-blue-500/20 transition-all cursor-pointer shrink-0"
+                            title="Emitir Factura Electrónica DIAN"
+                          >
+                            <Building2 size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
                               setLastBilledData({
                                 orderNum: ord.orderNum,
                                 table: ord.table,
@@ -1087,6 +1113,29 @@ export default function AdminOrdersAndTables() {
                         Cerrar
                       </button>
 
+                      {/* Factura Electrónica Direct Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tNum = isBar ? 'barra' : selectedDetailItem.tableNum;
+                          setOrderForElectronic({
+                            id: isBar ? selectedDetailItem.order.orderNum : `ORD-MESA-${tNum}`,
+                            table: tNum,
+                            customerName: client || 'Cliente VIP',
+                            totalCOP: total,
+                            paymentMethod: isBar ? 'Wompi Demo' : 'Efectivo',
+                            items
+                          });
+                          setSelectedDetailItem(null);
+                          setShowElectronicModal(true);
+                        }}
+                        className="px-4 py-2.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 font-bold flex items-center gap-1.5 cursor-pointer"
+                        title="Emitir Factura Electrónica DIAN"
+                      >
+                        <Building2 size={15} />
+                        <span>Factura Electrónica</span>
+                      </button>
+
                       {/* Print button */}
                       <button
                         type="button"
@@ -1103,26 +1152,44 @@ export default function AdminOrdersAndTables() {
                           setSelectedDetailItem(null);
                           setShowReceiptModal(true);
                         }}
-                        className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold flex items-center gap-1.5"
+                        className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold flex items-center gap-1.5 cursor-pointer"
                       >
                         <Printer size={15} />
                         <span>Imprimir Comanda</span>
                       </button>
 
                       {!isBar && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const tNum = selectedDetailItem.tableNum;
-                            setSelectedDetailItem(null);
-                            setBillingTable(tNum);
-                            setShowBillModal(true);
-                          }}
-                          className="px-5 py-2.5 rounded-xl bg-amber-500 text-black font-black hover:bg-amber-400 shadow-lg shadow-amber-500/20 flex items-center gap-1.5"
-                        >
-                          <DollarSign size={15} />
-                          <span>Cobrar & Resetear Mesa</span>
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const tNum = selectedDetailItem.tableNum;
+                              if (window.confirm(`¿Seguro que deseas cancelar la comanda de la Mesa #${tNum}? Se liberará la mesa.`)) {
+                                adminStore.cancelTableOrder(tNum, 'Cancelado por Administrador');
+                                setSelectedDetailItem(null);
+                              }
+                            }}
+                            className="px-3.5 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                            title="Cancelar pedido de la mesa"
+                          >
+                            <Trash2 size={14} />
+                            <span>Cancelar Pedido</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const tNum = selectedDetailItem.tableNum;
+                              setSelectedDetailItem(null);
+                              setBillingTable(tNum);
+                              setShowBillModal(true);
+                            }}
+                            className="px-5 py-2.5 rounded-xl bg-amber-500 text-black font-black hover:bg-amber-400 shadow-lg shadow-amber-500/20 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <DollarSign size={15} />
+                            <span>Cobrar & Resetear Mesa</span>
+                          </button>
+                        </>
                       )}
 
                       {isBar && (
@@ -1132,7 +1199,7 @@ export default function AdminOrdersAndTables() {
                             adminStore.updateOrderStatus(selectedDetailItem.order.id, 'billed');
                             setSelectedDetailItem(null);
                           }}
-                          className="px-5 py-2.5 rounded-xl bg-emerald-500 text-black font-black hover:bg-emerald-400 shadow-lg flex items-center gap-1.5"
+                          className="px-5 py-2.5 rounded-xl bg-emerald-500 text-black font-black hover:bg-emerald-400 shadow-lg flex items-center gap-1.5 cursor-pointer"
                         >
                           <Check size={15} strokeWidth={3} />
                           <span>Marcar Entregado</span>
