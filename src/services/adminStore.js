@@ -727,10 +727,12 @@ class AdminStoreService {
     if (!item) return { success: false, message: 'Producto no encontrado.' };
 
     // Verificar si se está modificando el precio de venta o costo
-    const currentSalePrice = item.type === 'unit' ? (item.salePriceUnit || 0) : (item.salePriceBottle || 0);
+    const currentSalePrice = Number(item.type === 'unit' ? (item.salePriceUnit ?? item.price ?? 0) : (item.salePriceBottle ?? item.price ?? 0));
     const newSalePrice = updates.salePrice !== undefined ? Number(updates.salePrice) : currentSalePrice;
+    const currentCostPrice = Number(item.costPrice ?? 0);
+    const newCostPrice = updates.costPrice !== undefined ? Number(updates.costPrice) : currentCostPrice;
     const isPriceChanging = (updates.salePrice !== undefined && newSalePrice !== currentSalePrice) ||
-                            (updates.costPrice !== undefined && Number(updates.costPrice) !== Number(item.costPrice || 0));
+                            (updates.costPrice !== undefined && newCostPrice !== currentCostPrice);
 
     if (isPriceChanging) {
       const auth = this.getAuth();

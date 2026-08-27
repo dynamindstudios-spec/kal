@@ -14,6 +14,7 @@ export default function AdminInventory() {
   const [wasteLogs, setWasteLogs] = useState(() => adminStore.getInventoryWasteLogs());
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedCapacity, setSelectedCapacity] = useState('ALL');
   
   // Modals state
   const [showEntryModal, setShowEntryModal] = useState(false);
@@ -59,19 +60,129 @@ export default function AdminInventory() {
     return () => unsubscribe();
   }, []);
 
+  // Helper para identificar y clasificar capacidad de botella y rendimiento de copas
+  const getBottleCapacityInfo = (item) => {
+    if (!item) return { key: 'unit', label: 'Unidad', shortLabel: 'Unidad', ml: 0, shotsPerBottle: 1, isBottle: false, badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+    
+    if (item.type === 'unit') {
+      return {
+        key: 'unit',
+        label: 'Cerveza / Lata',
+        shortLabel: 'Lata / Unidad',
+        ml: item.bottleMl || 330,
+        shotsPerBottle: 1,
+        isBottle: false,
+        badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+        icon: '🍺'
+      };
+    }
+
+    const name = (item.name || '').toLowerCase();
+    const ml = Number(item.bottleMl || 0);
+
+    if (ml >= 1500 || name.includes('garrafa') || name.includes('1.75') || name.includes('1.75l') || name.includes('2l')) {
+      const totalMl = ml || 1750;
+      const shotSize = item.shotMl || 50;
+      return {
+        key: 'garrafa',
+        label: 'Garrafa (1.75L / 2L)',
+        shortLabel: 'Garrafa (1.75L)',
+        ml: totalMl,
+        shotsPerBottle: Math.floor(totalMl / shotSize),
+        isBottle: true,
+        badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+        icon: '🏺'
+      };
+    }
+
+    if (ml === 1000 || name.includes('1l') || name.includes('litro') || name.includes('1 litro')) {
+      const totalMl = 1000;
+      const shotSize = item.shotMl || 50;
+      return {
+        key: 'litro',
+        label: 'Litro (1.000 ml)',
+        shortLabel: 'Litro (1L)',
+        ml: totalMl,
+        shotsPerBottle: Math.floor(totalMl / shotSize),
+        isBottle: true,
+        badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+        icon: '🍾'
+      };
+    }
+
+    if ((ml > 400 && ml <= 600) || name.includes('media') || name.includes('500ml') || name.includes('500 ml') || name.includes('1/2')) {
+      const totalMl = ml || 500;
+      const shotSize = item.shotMl || 50;
+      return {
+        key: 'media',
+        label: 'Media Botella (500 ml)',
+        shortLabel: 'Media (500ml)',
+        ml: totalMl,
+        shotsPerBottle: Math.floor(totalMl / shotSize),
+        isBottle: true,
+        badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+        icon: '🍶'
+      };
+    }
+
+    if ((ml > 0 && ml <= 400) || name.includes('caneca') || name.includes('petaca') || name.includes('1/4') || name.includes('375ml') || name.includes('375 ml')) {
+      const totalMl = ml || 375;
+      const shotSize = item.shotMl || 50;
+      return {
+        key: 'caneca',
+        label: '1/4 Caneca / Petaca (375 ml)',
+        shortLabel: '1/4 Caneca (375ml)',
+        ml: totalMl,
+        shotsPerBottle: Math.floor(totalMl / shotSize),
+        isBottle: true,
+        badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+        icon: '🥃'
+      };
+    }
+
+    const defaultMl = ml || 750;
+    const shotSize = item.shotMl || (item.type === 'wine_and_glasses' ? 150 : 50);
+    return {
+      key: 'botella',
+      label: 'Botella Estándar (750 ml)',
+      shortLabel: 'Botella (750ml)',
+      ml: defaultMl,
+      shotsPerBottle: Math.floor(defaultMl / shotSize),
+      isBottle: true,
+      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      icon: '🍾'
+    };
+  };
+
   // Categorías para filtro
   const categories = ['ALL', ...new Set(inventory.map((i) => i.category || 'Otros'))];
+
+  // Capacidades disponibles para filtro
+  const capacityFilters = [
+    { key: 'ALL', label: 'Todas las Capacidades', icon: '🍷' },
+    { key: 'garrafa', label: 'Garrafas (1.75L+)', icon: '🏺' },
+    { key: 'litro', label: 'Litros (1L)', icon: '🍾' },
+    { key: 'botella', label: 'Botellas (750ml)', icon: '🍾' },
+    { key: 'media', label: 'Medias (500ml)', icon: '🍶' },
+    { key: 'caneca', label: '1/4 Canecas (375ml)', icon: '🥃' },
+    { key: 'unit', label: 'Cervezas & Latas', icon: '🍺' }
+  ];
 
   // Filtrar inventario
   const filteredInventory = inventory.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (item.category || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat = selectedCategory === 'ALL' || item.category === selectedCategory;
+    
+    // Filtro por capacidad de botella
+    const capInfo = getBottleCapacityInfo(item);
+    const matchesCap = selectedCapacity === 'ALL' || capInfo.key === selectedCapacity;
+
     if (selectedCategory === 'LOW_STOCK') {
       const isLow = (item.type === 'unit' ? (item.stockUnits || 0) : (item.stockBottles || 0)) <= (item.minStock || 3);
-      return matchesSearch && isLow;
+      return matchesSearch && isLow && matchesCap;
     }
-    return matchesSearch && matchesCat;
+    return matchesSearch && matchesCat && matchesCap;
   });
 
   // Métricas
@@ -192,8 +303,8 @@ export default function AdminInventory() {
 
   // Abrir Modal de Edición Manual (Lápiz)
   const handleOpenManualEdit = (item) => {
-    const initialSalePrice = String(item.type === 'unit' ? (item.salePriceUnit || item.price || 0) : (item.salePriceBottle || item.price || 0));
-    const initialCostPrice = String(item.costPrice || 0);
+    const initialSalePrice = String(item.type === 'unit' ? (item.salePriceUnit ?? item.price ?? 0) : (item.salePriceBottle ?? item.price ?? 0));
+    const initialCostPrice = String(item.costPrice ?? 0);
     setEditingItem({
       id: item.id,
       name: item.name,
@@ -400,45 +511,69 @@ export default function AdminInventory() {
       </div>
 
       {/* BARRA DE BÚSQUEDA Y CATEGORÍAS */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-[#11131c] p-4 rounded-3xl border border-[#232738]">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por licor, cerveza, vino..."
-            className="w-full bg-[#181a24] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400"
-          />
-        </div>
+      <div className="flex flex-col gap-3 bg-[#11131c] p-4 rounded-3xl border border-[#232738]">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por licor, cerveza, vino..."
+              className="w-full bg-[#181a24] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400"
+            />
+          </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
-          {categories.map((cat) => (
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3.5 py-2 rounded-2xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-amber-400 text-black shadow-md shadow-amber-400/10'
+                    : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5'
+                }`}
+              >
+                {cat === 'ALL' ? 'Todos' : cat}
+              </button>
+            ))}
             <button
-              key={cat}
               type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer ${
-                selectedCategory === cat
-                  ? 'bg-amber-400 text-black shadow-md shadow-amber-400/10'
-                  : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5'
+              onClick={() => setSelectedCategory('LOW_STOCK')}
+              className={`px-3.5 py-2 rounded-2xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                selectedCategory === 'LOW_STOCK'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/20'
+                  : 'bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-500/30'
               }`}
             >
-              {cat === 'ALL' ? 'Todos' : cat}
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Stock Bajo</span>
+            </button>
+          </div>
+        </div>
+
+        {/* FILTRO DE CAPACIDAD Y TAMAÑO DE BOTELLA */}
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full pt-2 border-t border-white/5 scrollbar-none">
+          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider shrink-0 pr-1 flex items-center gap-1">
+            <span>📏 Capacidad:</span>
+          </span>
+          {capacityFilters.map((cap) => (
+            <button
+              key={cap.key}
+              type="button"
+              onClick={() => setSelectedCapacity(cap.key)}
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                selectedCapacity === cap.key
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-md shadow-amber-500/20 font-black'
+                  : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5'
+              }`}
+            >
+              <span>{cap.icon}</span>
+              <span>{cap.label}</span>
             </button>
           ))}
-          <button
-            type="button"
-            onClick={() => setSelectedCategory('LOW_STOCK')}
-            className={`px-3.5 py-2 rounded-2xl text-xs font-bold uppercase whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'LOW_STOCK'
-                ? 'bg-red-600 text-white shadow-md shadow-red-600/20'
-                : 'bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-500/30'
-            }`}
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>Stock Bajo</span>
-          </button>
         </div>
       </div>
 
@@ -448,9 +583,9 @@ export default function AdminInventory() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/10 bg-white/5 text-[11px] font-black text-gray-400 uppercase tracking-wider">
-                <th className="py-4 px-5">Producto & Categoría</th>
+                <th className="py-4 px-5">Producto & Capacidad</th>
                 <th className="py-4 px-5">Stock Actual</th>
-                <th className="py-4 px-5">Conversión de Copas / ml</th>
+                <th className="py-4 px-5">Rendimiento de Copas / ml</th>
                 <th className="py-4 px-5">Estado</th>
                 <th className="py-4 px-5 text-right">Precios (Costo / Venta)</th>
                 <th className="py-4 px-5 text-center">Ajuste</th>
@@ -461,20 +596,26 @@ export default function AdminInventory() {
                 const isUnit = item.type === 'unit';
                 const currentStock = isUnit ? (item.stockUnits || 0) : (item.stockBottles || 0);
                 const isCritical = currentStock <= (item.minStock || 3);
+                const capInfo = getBottleCapacityInfo(item);
 
                 // Cálculo de copas y mililitros
                 let portionInfo = null;
+                let totalEstimatedShotsForItem = 0;
                 if (item.type === 'wine_and_glasses') {
                   const portionMl = item.glassMl || 150;
                   const glassesInOpened = Math.floor((item.openedBottlesMl || 0) / portionMl);
+                  const shotsInBottles = currentStock * capInfo.shotsPerBottle;
+                  totalEstimatedShotsForItem = shotsInBottles + glassesInOpened;
                   portionInfo = {
                     portionLabel: '150ml / copa',
                     openedMl: item.openedBottlesMl || 0,
                     glassesAvailable: glassesInOpened
                   };
-                } else if (item.type === 'bottle_and_shots') {
+                } else if (item.type === 'bottle_and_shots' || capInfo.isBottle) {
                   const portionMl = item.shotMl || 50;
                   const shotsInOpened = Math.floor((item.openedBottlesMl || 0) / portionMl);
+                  const shotsInBottles = currentStock * capInfo.shotsPerBottle;
+                  totalEstimatedShotsForItem = shotsInBottles + shotsInOpened;
                   portionInfo = {
                     portionLabel: '50ml / trago',
                     openedMl: item.openedBottlesMl || 0,
@@ -485,15 +626,18 @@ export default function AdminInventory() {
                 return (
                   <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
                     
-                    {/* PRODUCTO & CATEGORÍA */}
+                    {/* PRODUCTO & CATEGORÍA & CAPACIDAD */}
                     <td className="py-4 px-5">
-                      <div className="space-y-0.5">
+                      <div className="space-y-1">
                         <p className="font-bold text-white text-sm">{item.name}</p>
-                        <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                          <span className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 font-bold">
+                        <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+                          <span className="px-2 py-0.5 rounded-lg bg-white/5 border border-white/10 font-bold text-gray-300">
                             {item.category}
                           </span>
-                          <span>{item.unit}</span>
+                          <span className={`px-2 py-0.5 rounded-lg border font-bold flex items-center gap-1 ${capInfo.badgeColor}`}>
+                            <span>{capInfo.icon}</span>
+                            <span>{capInfo.shortLabel}</span>
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -508,27 +652,34 @@ export default function AdminInventory() {
                           {isUnit ? 'unidades' : 'botellas'}
                         </span>
                       </div>
-                      <p className="text-[10px] text-gray-500">Mínimo sugerido: {item.minStock || 3}</p>
+                      <p className="text-[10px] text-gray-500">Mínimo: {item.minStock || 3} {isUnit ? 'und' : 'bot'}</p>
                     </td>
 
-                    {/* CONVERSIÓN DE COPAS / MILILITROS */}
+                    {/* RENDIMIENTO DE COPAS / MILILITROS */}
                     <td className="py-4 px-5">
-                      {portionInfo ? (
+                      {capInfo.isBottle ? (
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-purple-300 font-mono">
-                              {portionInfo.openedMl} ml en barra
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-black text-purple-300 font-mono">
+                              ~{capInfo.shotsPerBottle} copas/botella
                             </span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-black">
-                              ~{portionInfo.glassesAvailable} copas
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-500/15 border border-purple-500/30 text-purple-200 font-bold">
+                              ~{totalEstimatedShotsForItem} copas en total
                             </span>
                           </div>
-                          <p className="text-[10px] text-gray-500">
-                            Porción estándar: {portionInfo.portionLabel}
+                          <p className="text-[10px] text-gray-400">
+                            {portionInfo && portionInfo.openedMl > 0 
+                              ? `🍾 ${portionInfo.openedMl} ml abiertos (~${portionInfo.glassesAvailable} copas en barra)` 
+                              : `Porción estándar: ${portionInfo?.portionLabel || '50 ml / trago'}`}
                           </p>
                         </div>
                       ) : (
-                        <span className="text-[11px] text-gray-500">Venta por unidad completa</span>
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-bold text-emerald-400">
+                            {currentStock} unidades en stock
+                          </span>
+                          <p className="text-[10px] text-gray-500">Venta por unidad / lata individual</p>
+                        </div>
                       )}
                     </td>
 

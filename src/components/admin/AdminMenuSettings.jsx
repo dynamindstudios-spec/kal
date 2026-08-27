@@ -149,6 +149,7 @@ export default function AdminMenuSettings() {
     };
 
     adminStore.saveDish(dishPayload);
+    setDishes(adminStore.getDishes());
     setShowDishModal(false);
     setDishAdminPassword('');
     setDishError('');
@@ -157,6 +158,7 @@ export default function AdminMenuSettings() {
   const handleDeleteDish = (dishId) => {
     if (window.confirm('¿Deseas eliminar este artículo del menú?')) {
       adminStore.deleteDish(dishId);
+      setDishes(adminStore.getDishes());
     }
   };
 
