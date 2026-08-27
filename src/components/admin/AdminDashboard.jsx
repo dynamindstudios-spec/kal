@@ -88,6 +88,7 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
   const isMetricsEnabled = activeModules.metrics !== false;
   const isOrdersEnabled = activeModules.orders !== false;
   const isMenuEditorEnabled = activeModules.menu_editor !== false && activeModules.settings !== false;
+  const isInventoryEnabled = activeModules.inventory !== false;
 
   const auth = adminStore.getAuth();
   const subStatus = adminStore.getSubscriptionStatus();
@@ -395,25 +396,36 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
             onClick={() => setActiveSection('inventory')}
             className={`w-full p-3.5 rounded-2xl text-left flex items-center justify-between transition-all cursor-pointer shrink-0 ${
               activeSection === 'inventory'
-                ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
-                : 'text-gray-400 hover:text-white hover:bg-[#141722]'
+                ? isInventoryEnabled
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-400 text-black font-black shadow-lg shadow-amber-500/20'
+                  : 'bg-red-950/80 border border-red-500/50 text-red-300 font-bold shadow-lg shadow-red-950/40'
+                : isInventoryEnabled
+                  ? 'text-gray-400 hover:text-white hover:bg-[#141722]'
+                  : 'text-zinc-500 hover:text-red-400 hover:bg-red-950/20'
             }`}
           >
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
                 activeSection === 'inventory'
-                  ? 'bg-black/20 text-black'
-                  : 'bg-white/5 text-amber-400'
+                  ? isInventoryEnabled ? 'bg-black/20 text-black' : 'bg-red-500/20 text-red-400'
+                  : isInventoryEnabled ? 'bg-white/5 text-amber-400' : 'bg-red-950/40 text-red-400'
               }`}>
                 <Package size={18} />
               </div>
               <div>
                 <span className="text-xs font-extrabold block leading-tight">Inventario & Botellas</span>
                 <span className="text-[10px] opacity-75 hidden md:block">
-                  Control de Stock & Copas/ml
+                  {isInventoryEnabled ? 'Control de Stock & Copas/ml' : 'Función Suspendida'}
                 </span>
               </div>
             </div>
+
+            {!isInventoryEnabled && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 border border-red-500/40 text-red-300 text-[10px] font-mono font-bold">
+                <Lock size={10} />
+                <span className="hidden sm:inline">Bloqueado</span>
+              </div>
+            )}
           </button>
 
           {/* Dedicated Change Password Button at Bottom of Sidebar */}
@@ -564,15 +576,40 @@ export default function AdminDashboard({ onLogout, onReturnToMenu }) {
           
             {/* SECCIÓN 4: INVENTARIO */}
             {activeSection === 'inventory' && (
-              <motion.div
-                key="inventory-section"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <AdminInventory />
-              </motion.div>
+              isInventoryEnabled ? (
+                <motion.div
+                  key="inventory-section"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <AdminInventory />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="inventory-locked"
+                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  className="p-8 sm:p-12 rounded-3xl bg-[#0c0e14] border-2 border-red-500/40 text-center space-y-5 max-w-lg mx-auto my-12 shadow-[0_0_50px_rgba(239,68,68,0.2)]"
+                >
+                  <div className="relative w-20 h-20 rounded-full bg-red-950/80 border-2 border-red-500 flex items-center justify-center mx-auto text-red-400 shadow-[0_0_30px_rgba(239,68,68,0.5)]">
+                    <Lock className="w-10 h-10 animate-pulse text-red-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <span className="px-3.5 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono font-bold uppercase tracking-widest inline-block">
+                      Sección Bloqueada
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-black text-red-400 uppercase tracking-wide">
+                      Inventario & Botellas Bloqueado
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
+                      El control de inventario, stock por botellas, copas/ml y entradas de mercancía ha sido deshabilitado temporalmente por la administración central.
+                    </p>
+                  </div>
+                </motion.div>
+              )
             )}
 
           </AnimatePresence>
