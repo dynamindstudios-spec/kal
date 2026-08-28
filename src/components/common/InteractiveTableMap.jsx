@@ -53,7 +53,7 @@ export default function InteractiveTableMap({
       if (onOccupiedClick) {
         onOccupiedClick(tableNum, occupInfo);
       } else {
-        setOccupiedToast(`Mesa #${tableNum} ocupada (${occupInfo.reason}). No disponible.`);
+        setOccupiedToast(`La mesa #${tableNum} ahora mismo está ocupada, intenta con otra.`);
         setTimeout(() => setOccupiedToast(''), 3000);
       }
       return;

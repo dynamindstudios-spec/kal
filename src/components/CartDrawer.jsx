@@ -140,19 +140,9 @@ export default function CartDrawer({
     }
 
     if (selectedTableOccupInfo.isOccupied) {
-      if (selectedTableOccupInfo.source === 'waiter') {
-        setTableCodeError(true);
-        setFormValidationError(
-          `🚫 La Mesa #${selectedTable} está siendo atendida presencialmente por el mesero (${selectedTableOccupInfo.waiterName || 'Staff'}). Para pedir más productos o bebidas, solicítalo directamente a tu mesero.`
-        );
-        return;
-      } else if (selectedTableOccupInfo.source === 'reservation') {
-        setTableCodeError(true);
-        setFormValidationError(
-          `🚫 La Mesa #${selectedTable} tiene una reserva VIP asignada (${selectedTableOccupInfo.customerName}).`
-        );
-        return;
-      }
+      setTableCodeError(true);
+      setFormValidationError(`La mesa #${selectedTable} ahora mismo está ocupada, intenta con otra.`);
+      return;
     }
 
     if (isTableCodeValid) {
@@ -266,17 +256,8 @@ export default function CartDrawer({
     if (orderType === 'table') {
       const occupInfo = adminStore.getTableOccupationInfo(selectedTable);
       if (occupInfo.isOccupied) {
-        if (occupInfo.source === 'waiter') {
-          setFormValidationError(
-            `🚫 La Mesa #${selectedTable} está siendo atendida presencialmente por el mesero (${occupInfo.waiterName || 'Staff'}). Para pedir más productos o bebidas, solicítalo directamente a tu mesero.`
-          );
-          return;
-        } else if (occupInfo.source === 'reservation') {
-          setFormValidationError(
-            `🚫 La Mesa #${selectedTable} tiene una reserva VIP asignada (${occupInfo.customerName}).`
-          );
-          return;
-        }
+        setFormValidationError(`La mesa #${selectedTable} ahora mismo está ocupada, intenta con otra.`);
+        return;
       }
 
       if (!isTableCodeValid) {
@@ -629,25 +610,25 @@ export default function CartDrawer({
                               <span>Mesa y Clave de Seguridad *</span>
                             </label>
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
-                              isSelectedTableOccupiedByWaiter
+                              selectedTableOccupInfo.isOccupied
                                 ? 'text-orange-400 bg-orange-500/15 border-orange-500/30'
                                 : isTableCodeValid
                                 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                                 : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
                             }`}>
-                              {isSelectedTableOccupiedByWaiter
-                                ? 'Mesa en Atención por Mesero 🤵'
+                              {selectedTableOccupInfo.isOccupied
+                                ? 'Mesa Ocupada 🚫'
                                 : isTableCodeValid
                                 ? 'Mesa Validada ✅'
                                 : 'Mesa Sin Validar ⚠️'}
                             </span>
                           </div>
 
-                          {isSelectedTableOccupiedByWaiter ? (
+                          {selectedTableOccupInfo.isOccupied ? (
                             <div className="p-3 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs font-bold flex items-center gap-2">
                               <AlertTriangle size={16} className="text-orange-400 shrink-0" />
                               <span>
-                                Esta mesa está siendo atendida presencialmente por el mesero ({selectedTableOccupInfo.waiterName || 'Staff'}). Para agregar productos, solicítalo directamente a tu mesero.
+                                La mesa #{selectedTable} ahora mismo está ocupada, intenta con otra.
                               </span>
                             </div>
                           ) : (
@@ -1005,9 +986,9 @@ export default function CartDrawer({
                     onSelectTable={handleTableSelect}
                     isWaiter={false}
                     disableOccupied={true}
-                    onOccupiedClick={(num, occupInfo) => {
+                    onOccupiedClick={(num) => {
                       setTableCodeError(true);
-                      setFormValidationError(`🚫 Mesa #${num} ocupada (${occupInfo.reason}). No disponible para pedidos desde la web.`);
+                      setFormValidationError(`La mesa #${num} ahora mismo está ocupada, intenta con otra.`);
                     }}
                   />
                 </div>
@@ -1021,10 +1002,10 @@ export default function CartDrawer({
                     </label>
                   </div>
 
-                  {isSelectedTableOccupiedByWaiter ? (
+                  {selectedTableOccupInfo.isOccupied ? (
                     <div className="p-3 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs font-bold flex items-center gap-2">
                       <AlertTriangle size={16} className="shrink-0 text-orange-400" />
-                      <span>🚫 Esta mesa está siendo atendida presencialmente por el mesero ({selectedTableOccupInfo.waiterName || 'Staff'}). Selecciona otra mesa libre en el plano para pedir por la web.</span>
+                      <span>La mesa #{selectedTable} ahora mismo está ocupada, intenta con otra. Selecciona una mesa libre en el plano.</span>
                     </div>
                   ) : isSelectedTableLocked ? (
                     <div className="p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-bold flex items-center gap-2">
@@ -1066,7 +1047,11 @@ export default function CartDrawer({
                           className="p-2.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold flex items-center gap-2 shadow-sm"
                         >
                           <XCircle size={16} className="shrink-0 text-red-400" />
-                          <span>Código o token incorrecto para Mesa #{selectedTable}. Consulta el hablador físico.</span>
+                          <span>
+                            {selectedTableOccupInfo.isOccupied
+                              ? `La mesa #${selectedTable} ahora mismo está ocupada, intenta con otra.`
+                              : `Código o token incorrecto para Mesa #${selectedTable}. Consulta el hablador físico.`}
+                          </span>
                         </motion.div>
                       ) : (
                         <span className="text-[10px] text-[var(--text-muted)] block italic">
