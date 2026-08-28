@@ -39,29 +39,38 @@ export default function CompactDishGrid({
                   alt={dish.name[currentLang] || dish.name.es}
                   className={`w-full h-full ${isTransparent ? 'object-contain filter drop-shadow' : 'object-cover rounded-lg'} group-hover:scale-105 transition-transform`}
                 />
-                {dish.discountPercentage && (
-                  <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-red-600 text-white font-black text-[8px]">
-                    -{dish.discountPercentage}%
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-xs font-black text-[var(--text-primary)] truncate group-hover:text-[var(--accent-color)] transition-colors">
-                  {dish.name[currentLang] || dish.name.es}
-                </h4>
-                <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
-                  <p className="text-[11px] font-extrabold text-[var(--accent-color)] font-mono">
-                    {currencyObj.symbol}{convertedPrice}
-                  </p>
-                  {convertedOriginalPrice && (
-                    <span className="text-[10px] text-gray-400 line-through font-mono font-bold">
-                      {currencyObj.symbol}{convertedOriginalPrice}
+                  {dish.discountPercentage ? (
+                    <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-red-600 text-white font-black text-[8px]">
+                      -{dish.discountPercentage}%
                     </span>
-                  )}
+                  ) : (dish.isAvailable === false || dish.available === false || dish.stockQty === 0) ? (
+                    <span className="absolute top-0.5 right-0.5 px-1 py-0.2 rounded bg-red-900 text-red-200 font-black text-[7px]">
+                      AGOTADO
+                    </span>
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 justify-between">
+                    <h4 className="text-xs font-black text-[var(--text-primary)] truncate group-hover:text-[var(--accent-color)] transition-colors">
+                      {dish.name[currentLang] || dish.name.es}
+                    </h4>
+                    {(dish.isAvailable === false || dish.available === false || dish.stockQty === 0) && (
+                      <span className="text-[8px] font-bold text-red-400 shrink-0 uppercase">Agotado</span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
+                    <p className="text-[11px] font-extrabold text-[var(--accent-color)] font-mono">
+                      {currencyObj.symbol}{convertedPrice}
+                    </p>
+                    {convertedOriginalPrice && (
+                      <span className="text-[10px] text-gray-400 line-through font-mono font-bold">
+                        {currencyObj.symbol}{convertedOriginalPrice}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
         );
       })}
     </div>

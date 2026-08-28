@@ -305,18 +305,25 @@ export default function AdminInventory() {
   const handleOpenManualEdit = (item) => {
     const initialSalePrice = String(item.type === 'unit' ? (item.salePriceUnit ?? item.price ?? 0) : (item.salePriceBottle ?? item.price ?? 0));
     const initialCostPrice = String(item.costPrice ?? 0);
+    const initialStockBottles = String(item.stockBottles ?? 0);
+    const initialStockUnits = String(item.stockUnits ?? 0);
+    const initialOpenedMl = String(item.openedBottlesMl ?? 0);
+
     setEditingItem({
       id: item.id,
       name: item.name,
       type: item.type,
-      stockBottles: String(item.stockBottles ?? 0),
-      stockUnits: String(item.stockUnits ?? 0),
-      openedBottlesMl: String(item.openedBottlesMl ?? 0),
+      stockBottles: initialStockBottles,
+      stockUnits: initialStockUnits,
+      openedBottlesMl: initialOpenedMl,
       minStock: String(item.minStock ?? 3),
       salePrice: initialSalePrice,
       costPrice: initialCostPrice,
       initialSalePrice,
-      initialCostPrice
+      initialCostPrice,
+      initialStockBottles,
+      initialStockUnits,
+      initialOpenedMl
     });
     setEditingPassword('');
     setEditError('');
@@ -329,12 +336,16 @@ export default function AdminInventory() {
 
     if (!editingItem) return;
 
-    // Detectar si se modificó el precio de venta o costo
+    // Detectar si se modificó cantidad, mililitros o precio
+    const isQtyOrMlModified = (Number(editingItem.stockBottles || 0) !== Number(editingItem.initialStockBottles || 0)) ||
+                             (Number(editingItem.stockUnits || 0) !== Number(editingItem.initialStockUnits || 0)) ||
+                             (Number(editingItem.openedBottlesMl || 0) !== Number(editingItem.initialOpenedMl || 0));
+
     const isPriceModified = (Number(editingItem.salePrice || 0) !== Number(editingItem.initialSalePrice || 0)) || 
                             (Number(editingItem.costPrice || 0) !== Number(editingItem.initialCostPrice || 0));
 
-    if (isPriceModified && !editingPassword.trim()) {
-      setEditError('Se detectó modificación de precio: ingresa tu clave de administrador para autorizar.');
+    if ((isQtyOrMlModified || isPriceModified) && !editingPassword.trim()) {
+      setEditError('Se detectó modificación de inventario o precio: ingresa tu clave de administrador para autorizar el ajuste.');
       return;
     }
 
@@ -1264,10 +1275,20 @@ export default function AdminInventory() {
                   </div>
                 </div>
 
-                {/* AUTORIZACIÓN CON CONTRASEÑA SOLO SI SE MODIFICA EL PRECIO */}
+                {/* AUTORIZACIÓN CON CONTRASEÑA SI SE MODIFICA CANTIDAD, ML O PRECIO */}
                 {(() => {
-                  const isPriceModified = editingItem && ((Number(editingItem.salePrice || 0) !== Number(editingItem.initialSalePrice || 0)) || (Number(editingItem.costPrice || 0) !== Number(editingItem.initialCostPrice || 0)));
-                  if (!isPriceModified) return null;
+                  const isQtyOrMlModified = editingItem && (
+                    (Number(editingItem.stockBottles || 0) !== Number(editingItem.initialStockBottles || 0)) ||
+                    (Number(editingItem.stockUnits || 0) !== Number(editingItem.initialStockUnits || 0)) ||
+                    (Number(editingItem.openedBottlesMl || 0) !== Number(editingItem.initialOpenedMl || 0))
+                  );
+                  const isPriceModified = editingItem && (
+                    (Number(editingItem.salePrice || 0) !== Number(editingItem.initialSalePrice || 0)) || 
+                    (Number(editingItem.costPrice || 0) !== Number(editingItem.initialCostPrice || 0))
+                  );
+
+                  if (!isQtyOrMlModified && !isPriceModified) return null;
+
                   return (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
@@ -1276,18 +1297,18 @@ export default function AdminInventory() {
                     >
                       <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                         <KeyRound size={14} className="text-amber-400" />
-                        <span>Autorizar Cambio de Precio: Clave Admin *</span>
+                        <span>Autorizar Ajuste: Clave de Administrador *</span>
                       </label>
                       <input
                         type="password"
                         value={editingPassword}
                         onChange={(e) => setEditingPassword(e.target.value)}
-                        placeholder="Ingresa clave del panel"
+                        placeholder="Ingresa clave del panel admin"
                         required
                         className="w-full bg-[#141620] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
                       />
                       <p className="text-[10px] text-gray-400">
-                        🔒 Se detectó modificación en el precio. Ingresa tu contraseña de administrador para autorizar el cambio.
+                        🔒 Se detectó modificación de {isPriceModified ? 'precio' : 'cantidad / mililitros'}. Ingresa tu contraseña de administrador para autorizar el ajuste en el inventario.
                       </p>
                     </motion.div>
                   );

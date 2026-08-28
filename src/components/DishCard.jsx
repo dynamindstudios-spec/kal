@@ -113,10 +113,18 @@ export default function DishCard({
             -{dish.discountPercentage}% OFF
           </span>
         )}
+
+        {(dish.isAvailable === false || dish.available === false || dish.stockQty === 0) && (
+          <span className="px-2 py-0.5 rounded-full bg-red-950/80 border border-red-500/50 text-red-300 font-black text-[9px] sm:text-[10px] shadow-lg uppercase tracking-wider shrink-0">
+            🚫 AGOTADO
+          </span>
+        )}
       </div>
 
       {/* BOTTOM BOX: Title & Price */}
-      <div className="relative z-20 p-3 sm:p-4 m-1.5 sm:m-3 rounded-2xl glass-panel border border-[var(--surface-border)] bg-[var(--surface-bg)] shadow-xl backdrop-blur-md flex items-center justify-between gap-2">
+      <div className={`relative z-20 p-3 sm:p-4 m-1.5 sm:m-3 rounded-2xl glass-panel border border-[var(--surface-border)] bg-[var(--surface-bg)] shadow-xl backdrop-blur-md flex items-center justify-between gap-2 ${
+        (dish.isAvailable === false || dish.available === false || dish.stockQty === 0) ? 'opacity-70' : ''
+      }`}>
         <div className="min-w-0 flex-1">
           <h3 className="text-xs sm:text-sm font-black text-[var(--text-primary)] line-clamp-1 leading-snug">
             {dish.name[currentLang] || dish.name.es}

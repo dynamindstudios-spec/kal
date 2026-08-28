@@ -114,13 +114,73 @@ function getDishModalImage(dish, selectedCap, selectedPresentation) {
   return dish.image;
 }
 
+function getProductPresentations(dish) {
+  if (!dish || dish.category !== 'licores') return [];
+  const id = (dish.id || '').toLowerCase();
+
+  // 1. Aguardientes Nacionales (Antioqueño, Amarillo)
+  if (id.includes('antioqueno') || id.includes('amarillo')) {
+    return [
+      { id: 'quarter', label: '1/4 Caneca', ml: '375ml', multiplier: 0.5, icon: '🧪' },
+      { id: 'half', label: 'Media Botella', ml: '500ml', multiplier: 0.68, icon: '🏺' },
+      { id: 'bottle', label: 'Botella Estándar', ml: '750ml', multiplier: 1.0, icon: '🍾' },
+      { id: 'garrafa', label: 'Garrafa', ml: '1.75L', multiplier: 2.1, icon: '🪣' }
+    ];
+  }
+  if (id.includes('nectar')) {
+    return [
+      { id: 'half', label: 'Media Botella', ml: '375ml', multiplier: 0.65, icon: '🏺' },
+      { id: 'bottle', label: 'Botella Estándar', ml: '750ml', multiplier: 1.0, icon: '🍾' }
+    ];
+  }
+
+  // 2. Rones Nacionales (Ron Caldas 3, 8, Ron Medellín)
+  if (id.includes('caldas-3') || id.includes('medellin')) {
+    return [
+      { id: 'quarter', label: '1/4 Caneca', ml: '375ml', multiplier: 0.5, icon: '🧪' },
+      { id: 'half', label: 'Media Botella', ml: '500ml', multiplier: 0.68, icon: '🏺' },
+      { id: 'bottle', label: 'Botella Estándar', ml: '750ml', multiplier: 1.0, icon: '🍾' },
+      { id: 'garrafa', label: 'Garrafa', ml: '1.75L', multiplier: 2.1, icon: '🪣' }
+    ];
+  }
+  if (id.includes('caldas-8')) {
+    return [
+      { id: 'half', label: 'Media Botella', ml: '375ml', multiplier: 0.65, icon: '🏺' },
+      { id: 'bottle', label: 'Botella Estándar', ml: '750ml', multiplier: 1.0, icon: '🍾' },
+      { id: 'garrafa', label: 'Garrafa', ml: '1.75L', multiplier: 2.1, icon: '🪣' }
+    ];
+  }
+
+  // 3. Whiskies con Garrafa Magnum y Media (Old Parr 12, Buchanan's 12)
+  if (id.includes('old-parr-12') || id.includes('buchanans-12') || id === 'whisky-old-parr' || id === 'whisky-buchanans-12') {
+    return [
+      { id: 'half', label: 'Media Botella', ml: '375ml', multiplier: 0.62, icon: '🏺' },
+      { id: 'bottle', label: 'Botella Estándar', ml: '750ml', multiplier: 1.0, icon: '🍾' },
+      { id: 'garrafa', label: 'Garrafa Magnum', ml: '1.75L', multiplier: 2.2, icon: '🪣' }
+    ];
+  }
+
+  // 4. Licores con Media Botella Oficial (JW Black, JW Red, Jack Daniel's, Don Julio Reposado, Absolut, Smirnoff)
+  if (id.includes('johnnie-black') || id.includes('johnnie-red') || (id.includes('jack-daniels') && !id.includes('honey')) || id.includes('don-julio-reposado') || id.includes('absolut') || id.includes('smirnoff')) {
+    return [
+      { id: 'half', label: 'Media Botella', ml: '375ml', multiplier: 0.62, icon: '🏺' },
+      { id: 'bottle', label: 'Botella Estándar', ml: '750ml', multiplier: 1.0, icon: '🍾' }
+    ];
+  }
+
+  // Otros licores estándar (Don Julio 1942, 70, Blanco, Zacapa, Dom Pérignon, Moët, etc. vienen únicamente en Botella 750ml)
+  return [];
+}
+
 export default function DishModal({ dish, onClose, currentCurrency, currentLang, onAddToCart, onTriggerFlyingPlate }) {
   if (!dish) return null;
 
+  const isDishOutOfStock = dish.isAvailable === false || dish.available === false || dish.stockQty === 0;
+
   // Aguardiente Bottle Cap Swatch Options (Only for Aguardiente Antioqueño, strictly NOT for Amarillo de Manzanares)
-  const isAguardienteAntioqueno = (dish.id.includes('antioqueno') || dish.name.es.toLowerCase().includes('antioqueño')) &&
+  const isAguardienteAntioqueno = (dish.id.includes('antioqueno') || (dish.name?.es || '').toLowerCase().includes('antioqueño')) &&
     !dish.id.includes('amarillo') &&
-    !dish.name.es.toLowerCase().includes('amarillo') &&
+    !(dish.name?.es || '').toLowerCase().includes('amarillo') &&
     !dish.id.includes('nectar');
   
   const capOptions = [
@@ -129,18 +189,12 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
     { id: 'verde', label: 'Tapa Verde', spec: 'Sin Azúcar Suave 24°', color: '#10b981', glow: 'rgba(16,185,129,0.9)', badge: '🟢 Tapa Verde' }
   ];
 
-  // Bottle Size Presentation Options
-  const isLiquorCategory = dish.category === 'licores' || dish.category === 'mezcladores';
-
-  const presentations = [
-    { id: 'quarter', label: '1/4 Caneca', ml: '375ml', multiplier: 0.5, icon: '🧪' },
-    { id: 'half', label: 'Media Botella', ml: '500ml', multiplier: 0.68, icon: '🏺' },
-    { id: 'bottle', label: 'Botella Estándar', ml: '750ml - 1L', multiplier: 1.0, icon: '🍾' },
-    { id: 'garrafa', label: 'Garrafa', ml: '1.75L - 2L', multiplier: 2.1, icon: '🪣' }
-  ];
+  // Realistic Bottle Size Presentation Options per Product
+  const productPresentations = getProductPresentations(dish);
+  const defaultPres = productPresentations.find(p => p.id === 'bottle') || productPresentations[0] || { id: 'bottle', label: 'Botella Estándar', ml: '750ml', multiplier: 1.0, icon: '🍾' };
 
   const [selectedCap, setSelectedCap] = useState(capOptions[1]); // Default to Tapa Azul
-  const [selectedPresentation, setSelectedPresentation] = useState(presentations[2]); // Default to Botella Estándar
+  const [selectedPresentation, setSelectedPresentation] = useState(defaultPres);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -149,7 +203,7 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
 
   // Calculate Unit Price based on selected Presentation
   const basePriceCOP = dish.priceCOP;
-  const unitPriceCOP = isLiquorCategory ? Math.round(basePriceCOP * selectedPresentation.multiplier) : basePriceCOP;
+  const unitPriceCOP = productPresentations.length > 0 ? Math.round(basePriceCOP * selectedPresentation.multiplier) : basePriceCOP;
   const totalPriceCOP = unitPriceCOP * quantity;
 
   const formattedTotalPrice = Number(totalPriceCOP * currencyObj.rate).toLocaleString(
@@ -162,9 +216,11 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
   const isTransparentPng = activeModalImage && activeModalImage.includes('/licores_sin_fondo/');
 
   const handleAddToCart = (e) => {
+    if (isDishOutOfStock) return;
+
     let optionSuffix = [];
     if (isAguardienteAntioqueno) optionSuffix.push(selectedCap.badge);
-    if (isLiquorCategory) optionSuffix.push(selectedPresentation.label);
+    if (productPresentations.length > 0) optionSuffix.push(selectedPresentation.label);
 
     const fullNameWithSpecs = optionSuffix.length > 0
       ? `${dish.name.es} (${optionSuffix.join(' - ')})`
@@ -351,8 +407,8 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
               </div>
             )}
 
-            {/* SECCIÓN 2: PRESENTACIÓN DE BOTELLA / LITAJE (Tarjetas Segmentadas) */}
-            {isLiquorCategory && (
+            {/* SECCIÓN 2: PRESENTACIÓN DE BOTELLA / LITAJE (Tarjetas Segmentadas solo para productos con tamaños reales) */}
+            {productPresentations.length > 0 && (
               <div className="p-3 rounded-2xl bg-white/5 border border-white/10 space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
@@ -360,13 +416,13 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
                     <span>Litaje / Presentación</span>
                   </h4>
                   <span className="text-[11px] font-mono font-bold text-[var(--accent-color)]">
-                    {selectedPresentation.ml}
+                    {selectedPresentation?.ml || 'Estándar'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  {presentations.map((pres) => {
-                    const isSelected = selectedPresentation.id === pres.id;
+                  {productPresentations.map((pres) => {
+                    const isSelected = selectedPresentation?.id === pres.id;
                     return (
                       <button
                         key={pres.id}
@@ -403,8 +459,9 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
               <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/15">
                 <button
                   type="button"
+                  disabled={isDishOutOfStock}
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Minus size={14} />
                 </button>
@@ -413,8 +470,9 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
                 </span>
                 <button
                   type="button"
+                  disabled={isDishOutOfStock}
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus size={14} />
                 </button>
@@ -424,15 +482,20 @@ export default function DishModal({ dish, onClose, currentCurrency, currentLang,
             {/* Add to Cart CTA Button */}
             <button
               type="button"
+              disabled={isDishOutOfStock}
               onClick={handleAddToCart}
               style={{
-                backgroundColor: added ? '#10b981' : 'var(--accent-color)',
-                color: added ? '#ffffff' : 'var(--accent-on)',
-                boxShadow: added ? '0 0 25px rgba(16,185,129,0.8)' : '0 0 25px var(--accent-glow)'
+                backgroundColor: isDishOutOfStock ? '#374151' : (added ? '#10b981' : 'var(--accent-color)'),
+                color: isDishOutOfStock ? '#9ca3af' : (added ? '#ffffff' : 'var(--accent-on)'),
+                boxShadow: isDishOutOfStock ? 'none' : (added ? '0 0 25px rgba(16,185,129,0.8)' : '0 0 25px var(--accent-glow)')
               }}
-              className="w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer hover:brightness-110 shadow-xl"
+              className={`w-full py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xl ${
+                isDishOutOfStock ? 'cursor-not-allowed opacity-80 border border-white/10' : 'cursor-pointer hover:brightness-110'
+              }`}
             >
-              {added ? (
+              {isDishOutOfStock ? (
+                <span>🚫 Producto Agotado por el Momento</span>
+              ) : added ? (
                 <>
                   <Check size={18} />
                   <span>¡Añadido al Pedido VIP!</span>

@@ -58,11 +58,15 @@ export default function BasicDishList({
                         <h3 className="text-sm md:text-base font-extrabold text-[var(--text-primary)] line-clamp-1 group-hover:text-[var(--accent-color)] transition-colors">
                           {dish.name[currentLang] || dish.name.es}
                         </h3>
-                        {dish.discountPercentage && (
+                        {dish.discountPercentage ? (
                           <span className="px-1.5 py-0.5 rounded-full bg-red-600 text-white font-black text-[9px] uppercase">
                             -{dish.discountPercentage}% OFF
                           </span>
-                        )}
+                        ) : (dish.isAvailable === false || dish.available === false || dish.stockQty === 0) ? (
+                          <span className="px-1.5 py-0.5 rounded-full bg-red-950/80 border border-red-500/40 text-red-300 font-black text-[8px] uppercase">
+                            AGOTADO
+                          </span>
+                        ) : null}
                         <div className="flex-1 border-b border-dotted border-[var(--surface-border)] opacity-60 hidden sm:block" />
                       </div>
 

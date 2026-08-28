@@ -428,16 +428,40 @@
       background: rgba(16, 185, 129, 0.15);
       border: 1px solid rgba(16, 185, 129, 0.3);
       color: #6ee7b7;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 700;
-      text-align: center;
+    }
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    /* MODAL CONFIRM */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(4px);
       display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+    .modal-card {
+      background: #141724;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      max-width: 380px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
+
   <div class="container">
     
     <!-- HEADER -->
@@ -445,10 +469,8 @@
       <div class="header-title">
         <div class="icon-box">⚡</div>
         <div>
-          <h1>KAL DISCOBAR • Modo Contingencia Offline</h1>
-          <p style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">
-            Terminal de Caja Autónoma • Funciona 100% sin internet en el Escritorio
-          </p>
+          <h1>KAL DISCOBAR • Facturación de Contingencia Offline POS</h1>
+          <p>Terminal Autónomo de Facturas Físicas & Resta Automática de Inventario</p>
         </div>
       </div>
       <div class="badge">🔴 MODO OFFLINE ACTIVO</div>
@@ -463,11 +485,11 @@
           <span>📝 Registrar Factura / Talonario Físico</span>
         </div>
 
-        <form id="invoiceForm" onsubmit="handleSaveInvoice(event)" style="display: flex; flex-direction: column; gap: 12px;">
+        <form id="invoiceForm" onsubmit="handleSaveInvoice(event)" style="display: flex; flex-direction: column; gap: 10px;">
           <div class="row-2">
             <div class="form-group">
               <label>N° Talonario / Factura *</label>
-              <input type="text" id="invNum" placeholder="Ej: TAL-0450" required style="font-weight: 700; font-family: var(--mono);">
+              <input type="text" id="invNum" placeholder="Ej: TAL-001" required style="font-weight: 700; font-family: var(--mono);">
             </div>
             <div class="form-group">
               <label>Monto Total COP *</label>
@@ -475,74 +497,27 @@
             </div>
           </div>
 
-          <div class="quick-amounts">
-            <span class="chip" onclick="setAmount(50000)">$50.000</span>
-            <span class="chip" onclick="setAmount(100000)">$100.000</span>
-            <span class="chip" onclick="setAmount(180000)">$180.000</span>
-            <span class="chip" onclick="setAmount(200000)">$200.000</span>
-            <span class="chip" onclick="setAmount(350000)">$350.000</span>
-          </div>
-
-          <!-- PRODUCT SELECTION CATALOG (For Automatic Inventory Deduction) -->
+          <!-- PRODUCT SELECTION & LIVE SEARCH -->
           <div class="catalog-box">
-            <div class="catalog-title">
-              <span>🍾 Artículos Vendidos (Resta Inventario)</span>
-              <span id="selectedCountBadge" style="color: var(--gold); font-mono;">0 agregados</span>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label style="color: var(--gold);">🍾 Selección Rápida de Productos</label>
+              <span id="selectedCountBadge" style="font-size: 10px; font-weight: 800; color: var(--gold); font-family: var(--mono);">0 agregados</span>
             </div>
 
-            <!-- Pre-defined fast bar items -->
-            <div class="prod-grid">
-              <button type="button" class="prod-btn" onclick="addItem('lic_amarillo', 'Aguardiente Amarillo', 180000, 'bottle')">
-                <span class="prod-name">🟡 Aguardiente Amarillo</span>
-                <span class="prod-price">$180.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('lic_ron8', 'Ron Medellín 8 Años', 190000, 'bottle')">
-                <span class="prod-name">🥃 Ron Medellín 8A</span>
-                <span class="prod-price">$190.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('lic_buchanans', 'Buchanan\'s Deluxe', 320000, 'bottle')">
-                <span class="prod-name">🥃 Buchanan\'s Deluxe</span>
-                <span class="prod-price">$320.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('lic_oldparr', 'Old Parr 12 Años', 340000, 'bottle')">
-                <span class="prod-name">🥃 Old Parr 12A</span>
-                <span class="prod-price">$340.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('lic_donjulio', 'Tequila Don Julio Blanco', 420000, 'bottle')">
-                <span class="prod-name">🌵 Tequila Don Julio</span>
-                <span class="prod-price">$420.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('cer_corona', 'Cerveza Corona', 18000, 'unit')">
-                <span class="prod-name">🍺 Corona</span>
-                <span class="prod-price">$18.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('cer_club', 'Cerveza Club Colombia', 15000, 'unit')">
-                <span class="prod-name">🍺 Club Colombia</span>
-                <span class="prod-price">$15.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('cer_stella', 'Cerveza Stella Artois', 18000, 'unit')">
-                <span class="prod-name">🍺 Stella Artois</span>
-                <span class="prod-price">$18.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('coct_gintonic', 'Gin Tonic Premium', 42000, 'cocktail')">
-                <span class="prod-name">🍸 Gin Tonic VIP</span>
-                <span class="prod-price">$42.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('copa_vino', 'Copa Vino Tinto Malbec', 28000, 'glass')">
-                <span class="prod-name">🍷 Copa Vino Tinto</span>
-                <span class="prod-price">$28.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('shot_aguardiente', 'Shot Aguardiente Amarillo', 15000, 'shot')">
-                <span class="prod-name">🥃 Shot Aguardiente</span>
-                <span class="prod-price">$15.000</span>
-              </button>
-              <button type="button" class="prod-btn" onclick="addItem('shot_tequila', 'Shot Tequila', 25000, 'shot')">
-                <span class="prod-name">🌵 Shot Tequila</span>
-                <span class="prod-price">$25.000</span>
-              </button>
+            <!-- Search Bar -->
+            <input type="text" id="catalogSearch" class="search-input" placeholder="🔍 Buscar por nombre (Ej: Amarillo, Corona, Old Parr, Red Bull)..." oninput="renderProductGrid()">
+
+            <!-- Category Pills -->
+            <div class="cat-scroll" id="categoryPills">
+              <!-- Rendered dynamically -->
             </div>
 
-            <!-- List of added items for current invoice -->
+            <!-- Product Grid -->
+            <div class="prod-grid" id="productGrid">
+              <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Selected items list -->
             <div id="selectedItemsContainer" class="selected-items-list" style="display: none;"></div>
           </div>
 
@@ -555,6 +530,7 @@
                 <option value="Nequi">📱 Nequi</option>
                 <option value="Daviplata">📲 Daviplata</option>
                 <option value="Datáfono / Tarjeta">💳 Datáfono / Tarjeta</option>
+                <option value="Wompi">⚡ Wompi</option>
               </select>
             </div>
             <div class="form-group">
@@ -582,14 +558,13 @@
 
           <div class="row-2">
             <div class="form-group">
-              <label>Vendido / Atendido Por *</label>
+              <label>Vendido Por *</label>
               <select id="invSeller" onchange="toggleCustomSeller(this.value)">
                 <option value="👑 Administrador / Caja">👑 Administrador / Caja</option>
                 <option value="👨‍🍳 Carlos (Mesero)">👨‍🍳 Carlos (Mesero)</option>
                 <option value="👨‍🍳 Andrés (Mesero)">👨‍🍳 Andrés (Mesero)</option>
                 <option value="👩‍🍳 Camila (Caja)">👩‍🍳 Camila (Caja)</option>
-                <option value="🍹 Bartender Principal">🍹 Bartender Principal</option>
-                <option value="OTRO">✍️ Otro (Escribir Nombre)</option>
+                <option value="OTRO">✍️ Otro</option>
               </select>
             </div>
             <div class="form-group" id="customSellerBox" style="display: none;">
@@ -597,12 +572,12 @@
               <input type="text" id="invCustomSeller" placeholder="Nombre completo">
             </div>
             <div class="form-group" id="notesBox">
-              <label>Observaciones / Motivo</label>
+              <label>Observaciones</label>
               <input type="text" id="invNotes" value="Falla de conexión offline">
             </div>
           </div>
 
-          <button type="submit" class="btn-submit">💾 Guardar Factura Físico</button>
+          <button type="submit" class="btn-submit">💾 Guardar Factura</button>
         </form>
       </div>
 
@@ -614,11 +589,11 @@
 
         <div class="counter-card">
           <div>
-            <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Total Acumulado</div>
+            <div style="font-size: 10.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Total Acumulado</div>
             <div class="counter-val" id="totalCopDisplay">$0 COP</div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Recibos</div>
+            <div style="font-size: 10.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">Recibos</div>
             <div class="counter-val" id="countDisplay" style="color: #fff;">0</div>
           </div>
         </div>
@@ -631,285 +606,460 @@
 
         <div class="actions">
           <button type="button" class="btn-sync" onclick="handleSyncDashboard()">
-            <span>⚡ Sincronizar con el Dashboard de KAL</span>
+            <span>⚡ Sincronizar con Dashboard</span>
           </button>
           <div class="row-2">
             <button type="button" class="btn-secondary" onclick="handleExportTxt()">
-              <span>📥 Exportar Archivo</span>
+              <span>📥 Exportar JSON</span>
             </button>
             <button type="button" class="btn-secondary" onclick="handleCopyPayload()">
               <span>📋 Copiar Código</span>
             </button>
           </div>
-          <button type="button" class="btn-reset" onclick="handleClearAllQueue()">
+          <button type="button" class="btn-reset" onclick="openResetModal()">
             <span>🗑️ Limpiar / Resetear Cola Completa</span>
           </button>
         </div>
       </div>
 
     </div>
+
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN PARA LIMPIAR COLA -->
+  <div id="resetModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div style="font-size: 32px;">⚠️</div>
+      <h3 style="font-size: 16px; font-weight: 900; color: #fff;">¿Limpiar cola de contingencia?</h3>
+      <p style="font-size: 12px; color: var(--text-dim);">Esta acción borrará todas las facturas guardadas en la cola local. Asegúrate de haberlas sincronizado o exportado antes.</p>
+      <div class="row-2" style="margin-top: 8px;">
+        <button type="button" class="btn-secondary" onclick="closeResetModal()">Cancelar</button>
+        <button type="button" class="btn-reset" onclick="confirmResetAllQueue()" style="background: var(--red); color: #fff;">Sí, Limpiar Cola</button>
+      </div>
+    </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'kal_contingency_offline_queue';
-    let currentSelectedItems = [];
+    const STORAGE_KEY = 'kal_admin_contingency_invoices';
 
-    function getQueue() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      } catch (e) {
-        return [];
+    // MASTER CATALOG COMPLETO DE KAL DISCOBAR
+    const MASTER_CATALOG = [
+      // AGUARDIENTES & RONES
+      { id: 'garrafa-antioqueno-azul', name: 'Garrafa Antioqueño Azul 1.75L', cat: 'Aguardientes', price: 210000, type: 'bottle' },
+      { id: 'botella-antioqueno-azul', name: 'Botella Antioqueño Azul 750ml', cat: 'Aguardientes', price: 110000, type: 'bottle' },
+      { id: 'media-antioqueno-azul', name: 'Media Antioqueño Azul 375ml', cat: 'Aguardientes', price: 75000, type: 'bottle' },
+      { id: 'caneca-antioqueno-azul', name: 'Caneca Antioqueño Azul 375ml', cat: 'Aguardientes', price: 55000, type: 'bottle' },
+      
+      { id: 'garrafa-antioqueno-rojo', name: 'Garrafa Antioqueño Rojo 1.75L', cat: 'Aguardientes', price: 200000, type: 'bottle' },
+      { id: 'botella-antioqueno-rojo', name: 'Botella Antioqueño Rojo 750ml', cat: 'Aguardientes', price: 105000, type: 'bottle' },
+      { id: 'media-antioqueno-rojo', name: 'Media Antioqueño Rojo 375ml', cat: 'Aguardientes', price: 70000, type: 'bottle' },
+
+      { id: 'garrafa-amarillo', name: 'Garrafa Amarillo Manzanares 1.75L', cat: 'Aguardientes', price: 240000, type: 'bottle' },
+      { id: 'botella-amarillo', name: 'Botella Amarillo Manzanares 750ml', cat: 'Aguardientes', price: 120000, type: 'bottle' },
+      { id: 'media-amarillo', name: 'Media Amarillo Manzanares 375ml', cat: 'Aguardientes', price: 80000, type: 'bottle' },
+      { id: 'caneca-amarillo', name: 'Caneca Amarillo Manzanares 375ml', cat: 'Aguardientes', price: 60000, type: 'bottle' },
+
+      { id: 'botella-nectar-rojo', name: 'Botella Néctar Tradicional 750ml', cat: 'Aguardientes', price: 105000, type: 'bottle' },
+      { id: 'media-nectar-rojo', name: 'Media Néctar Tradicional 375ml', cat: 'Aguardientes', price: 68000, type: 'bottle' },
+      { id: 'botella-nectar-verde', name: 'Botella Néctar Verde Sin Azúcar 750ml', cat: 'Aguardientes', price: 110000, type: 'bottle' },
+
+      { id: 'garrafa-caldas-3', name: 'Garrafa Ron Caldas 3 Años 1.75L', cat: 'Rones', price: 240000, type: 'bottle' },
+      { id: 'botella-caldas-3', name: 'Botella Ron Caldas 3 Años 750ml', cat: 'Rones', price: 125000, type: 'bottle' },
+      { id: 'media-caldas-3', name: 'Media Ron Caldas 3 Años 375ml', cat: 'Rones', price: 85000, type: 'bottle' },
+      { id: 'caneca-caldas-3', name: 'Caneca Ron Caldas 3 Años 375ml', cat: 'Rones', price: 62000, type: 'bottle' },
+      { id: 'botella-caldas-5', name: 'Botella Ron Caldas 5 Años 750ml', cat: 'Rones', price: 145000, type: 'bottle' },
+      { id: 'garrafa-caldas-8', name: 'Garrafa Ron Caldas 8 Años 1.75L', cat: 'Rones', price: 270000, type: 'bottle' },
+      { id: 'botella-caldas-8', name: 'Botella Ron Caldas 8 Años 750ml', cat: 'Rones', price: 175000, type: 'bottle' },
+      { id: 'media-caldas-8', name: 'Media Ron Caldas 8 Años 375ml', cat: 'Rones', price: 115000, type: 'bottle' },
+      { id: 'botella-caldas-leon', name: 'Botella Ron Caldas León Dormido 750ml', cat: 'Rones', price: 280000, type: 'bottle' },
+
+      { id: 'garrafa-medellin', name: 'Garrafa Ron Medellín 3 Años 1.75L', cat: 'Rones', price: 250000, type: 'bottle' },
+      { id: 'botella-medellin', name: 'Botella Ron Medellín 3 Años 750ml', cat: 'Rones', price: 115000, type: 'bottle' },
+      { id: 'media-medellin', name: 'Media Ron Medellín 3 Años 375ml', cat: 'Rones', price: 78000, type: 'bottle' },
+      { id: 'botella-zacapa-23', name: 'Botella Ron Zacapa Centenario 23 750ml', cat: 'Rones', price: 390000, type: 'bottle' },
+
+      // WHISKIES
+      { id: 'garrafa-old-parr-12', name: 'Garrafa Whisky Old Parr 12 Magnum 1.75L', cat: 'Whiskies', price: 590000, type: 'bottle' },
+      { id: 'botella-old-parr-12', name: 'Botella Whisky Old Parr 12 Años 750ml', cat: 'Whiskies', price: 220000, type: 'bottle' },
+      { id: 'media-old-parr-12', name: 'Media Whisky Old Parr 12 Años 375ml', cat: 'Whiskies', price: 135000, type: 'bottle' },
+      { id: 'botella-old-parr-18', name: 'Botella Whisky Old Parr 18 Años 750ml', cat: 'Whiskies', price: 380000, type: 'bottle' },
+
+      { id: 'garrafa-buchanans-12', name: "Garrafa Whisky Buchanan's 12 Magnum 1.75L", cat: 'Whiskies', price: 640000, type: 'bottle' },
+      { id: 'botella-buchanans-12', name: "Botella Whisky Buchanan's 12 Años 750ml", cat: 'Whiskies', price: 240000, type: 'bottle' },
+      { id: 'media-buchanans-12', name: "Media Whisky Buchanan's 12 Años 375ml", cat: 'Whiskies', price: 150000, type: 'bottle' },
+      { id: 'botella-buchanans-master', name: "Botella Whisky Buchanan's Master 750ml", cat: 'Whiskies', price: 270000, type: 'bottle' },
+      { id: 'botella-buchanans-18', name: "Botella Whisky Buchanan's 18 Años 750ml", cat: 'Whiskies', price: 390000, type: 'bottle' },
+
+      { id: 'botella-jw-red', name: 'Botella Johnnie Walker Red Label 750ml', cat: 'Whiskies', price: 180000, type: 'bottle' },
+      { id: 'media-jw-red', name: 'Media Johnnie Walker Red Label 375ml', cat: 'Whiskies', price: 110000, type: 'bottle' },
+      { id: 'botella-jw-black', name: 'Botella Johnnie Walker Black Label 750ml', cat: 'Whiskies', price: 230000, type: 'bottle' },
+      { id: 'media-jw-black', name: 'Media Johnnie Walker Black Label 375ml', cat: 'Whiskies', price: 145000, type: 'bottle' },
+      { id: 'botella-jw-double-black', name: 'Botella Johnnie Walker Double Black 750ml', cat: 'Whiskies', price: 260000, type: 'bottle' },
+      { id: 'botella-jw-gold', name: 'Botella Johnnie Walker Gold Label 750ml', cat: 'Whiskies', price: 340000, type: 'bottle' },
+      { id: 'botella-jw-blue', name: 'Botella Johnnie Walker Blue Label 750ml', cat: 'Whiskies', price: 1150000, type: 'bottle' },
+
+      { id: 'botella-chivas-12', name: 'Botella Whisky Chivas Regal 12 750ml', cat: 'Whiskies', price: 210000, type: 'bottle' },
+      { id: 'media-chivas-12', name: 'Media Whisky Chivas Regal 12 375ml', cat: 'Whiskies', price: 130000, type: 'bottle' },
+      { id: 'botella-chivas-18', name: 'Botella Whisky Chivas Regal 18 750ml', cat: 'Whiskies', price: 380000, type: 'bottle' },
+      { id: 'botella-jack-daniels', name: "Botella Jack Daniel's Old No. 7 750ml", cat: 'Whiskies', price: 210000, type: 'bottle' },
+      { id: 'media-jack-daniels', name: "Media Jack Daniel's Old No. 7 375ml", cat: 'Whiskies', price: 130000, type: 'bottle' },
+      { id: 'botella-jack-honey', name: "Botella Jack Daniel's Honey 750ml", cat: 'Whiskies', price: 220000, type: 'bottle' },
+      { id: 'botella-macallan-12', name: 'Botella The Macallan 12 Double Cask 750ml', cat: 'Whiskies', price: 420000, type: 'bottle' },
+      { id: 'botella-monkey-shoulder', name: 'Botella Monkey Shoulder 750ml', cat: 'Whiskies', price: 230000, type: 'bottle' },
+
+      // TEQUILAS
+      { id: 'botella-don-julio-reposado', name: 'Botella Tequila Don Julio Reposado 750ml', cat: 'Tequilas', price: 320000, type: 'bottle' },
+      { id: 'media-don-julio-reposado', name: 'Media Tequila Don Julio Reposado 375ml', cat: 'Tequilas', price: 195000, type: 'bottle' },
+      { id: 'botella-don-julio-blanco', name: 'Botella Tequila Don Julio Blanco 750ml', cat: 'Tequilas', price: 290000, type: 'bottle' },
+      { id: 'botella-don-julio-70', name: 'Botella Tequila Don Julio 70 Cristalino 750ml', cat: 'Tequilas', price: 420000, type: 'bottle' },
+      { id: 'botella-don-julio-1942', name: 'Botella Tequila Don Julio 1942 VIP 750ml', cat: 'Tequilas', price: 1200000, type: 'bottle' },
+      { id: 'botella-1800-cristalino', name: 'Botella Tequila 1800 Cristalino 750ml', cat: 'Tequilas', price: 340000, type: 'bottle' },
+      { id: 'botella-patron-silver', name: 'Botella Tequila Patrón Silver 750ml', cat: 'Tequilas', price: 310000, type: 'bottle' },
+      { id: 'botella-patron-reposado', name: 'Botella Tequila Patrón Reposado 750ml', cat: 'Tequilas', price: 330000, type: 'bottle' },
+      { id: 'botella-jose-cuervo', name: 'Botella Tequila Jose Cuervo 750ml', cat: 'Tequilas', price: 140000, type: 'bottle' },
+      { id: 'media-jose-cuervo', name: 'Media Tequila Jose Cuervo 375ml', cat: 'Tequilas', price: 85000, type: 'bottle' },
+      { id: 'botella-mezcal-400', name: 'Botella Mezcal 400 Conejos 750ml', cat: 'Tequilas', price: 220000, type: 'bottle' },
+
+      // VODKAS & GINEBRAS
+      { id: 'litro-absolut-blue', name: 'Botella 1L Vodka Absolut Blue', cat: 'Vodkas', price: 210000, type: 'bottle' },
+      { id: 'botella-absolut-blue', name: 'Botella Vodka Absolut 750ml', cat: 'Vodkas', price: 180000, type: 'bottle' },
+      { id: 'media-absolut-blue', name: 'Media Vodka Absolut 375ml', cat: 'Vodkas', price: 110000, type: 'bottle' },
+      { id: 'litro-smirnoff-red', name: 'Botella 1L Vodka Smirnoff Red', cat: 'Vodkas', price: 150000, type: 'bottle' },
+      { id: 'botella-smirnoff-red', name: 'Botella Vodka Smirnoff 750ml', cat: 'Vodkas', price: 160000, type: 'bottle' },
+      { id: 'media-smirnoff-red', name: 'Media Vodka Smirnoff 375ml', cat: 'Vodkas', price: 95000, type: 'bottle' },
+      { id: 'botella-grey-goose', name: 'Botella Vodka Grey Goose 750ml', cat: 'Vodkas', price: 280000, type: 'bottle' },
+      { id: 'litro-tanqueray', name: 'Botella 1L Gin Tanqueray', cat: 'Ginebras', price: 270000, type: 'bottle' },
+      { id: 'botella-tanqueray', name: 'Botella Gin Tanqueray 750ml', cat: 'Ginebras', price: 210000, type: 'bottle' },
+      { id: 'botella-hendricks', name: "Botella Gin Hendrick's 750ml", cat: 'Ginebras', price: 260000, type: 'bottle' },
+      { id: 'botella-bombay', name: 'Botella Gin Bombay Sapphire 750ml', cat: 'Ginebras', price: 210000, type: 'bottle' },
+
+      // APERITIVOS & CHAMPAGNES & VINOS
+      { id: 'litro-jagermeister', name: 'Botella 1L Jägermeister Herbal', cat: 'Aperitivos', price: 260000, type: 'bottle' },
+      { id: 'botella-jagermeister', name: 'Botella Jägermeister Herbal 700ml', cat: 'Aperitivos', price: 190000, type: 'bottle' },
+      { id: 'litro-baileys', name: 'Botella 1L Crema Baileys', cat: 'Aperitivos', price: 190000, type: 'bottle' },
+      { id: 'botella-baileys', name: 'Botella Crema Baileys 750ml', cat: 'Aperitivos', price: 140000, type: 'bottle' },
+      { id: 'litro-aperol', name: 'Botella 1L Aperol Spritz', cat: 'Aperitivos', price: 170000, type: 'bottle' },
+      { id: 'botella-dom-perignon', name: 'Botella Dom Pérignon Brut 750ml', cat: 'Champagnes', price: 1650000, type: 'bottle' },
+      { id: 'botella-moet-brut', name: 'Botella Moët & Chandon Brut 750ml', cat: 'Champagnes', price: 540000, type: 'bottle' },
+      { id: 'botella-moet-rose', name: 'Botella Moët & Chandon Rosé 750ml', cat: 'Champagnes', price: 590000, type: 'bottle' },
+      { id: 'botella-catena-zapata', name: 'Botella Vino Catena Zapata Malbec', cat: 'Vinos', price: 180000, type: 'bottle' },
+      { id: 'botella-santa-rita', name: 'Botella Vino Santa Rita 120 Sauvignon', cat: 'Vinos', price: 85000, type: 'bottle' },
+
+      // CERVEZAS
+      { id: 'cerveza-corona', name: 'Cerveza Corona Extra 355ml', cat: 'Cervezas', price: 14000, type: 'unit' },
+      { id: 'cerveza-stella', name: 'Cerveza Stella Artois 330ml', cat: 'Cervezas', price: 15000, type: 'unit' },
+      { id: 'cerveza-heineken', name: 'Cerveza Heineken 330ml', cat: 'Cervezas', price: 14000, type: 'unit' },
+      { id: 'cerveza-club-dorada', name: 'Cerveza Club Colombia Dorada', cat: 'Cervezas', price: 12000, type: 'unit' },
+      { id: 'cerveza-club-roja', name: 'Cerveza Club Colombia Roja', cat: 'Cervezas', price: 12000, type: 'unit' },
+      { id: 'cerveza-poker', name: 'Cerveza Poker 330ml', cat: 'Cervezas', price: 10000, type: 'unit' },
+      { id: 'cerveza-aguila-light', name: 'Cerveza Águila Light 330ml', cat: 'Cervezas', price: 10000, type: 'unit' },
+      { id: 'cerveza-michelob', name: 'Cerveza Michelob Ultra 355ml', cat: 'Cervezas', price: 14000, type: 'unit' },
+      { id: 'cerveza-smirnoff-ice', name: 'Smirnoff Ice Botella 275ml', cat: 'Cervezas', price: 15000, type: 'unit' },
+
+      // CÓCTELES & SHOTS
+      { id: 'coctel-veneno-cobra', name: 'Cóctel Veneno de Cobra', cat: 'Cócteles', price: 38000, type: 'cocktail' },
+      { id: 'coctel-margarita', name: 'Cóctel Margarita Clásica', cat: 'Cócteles', price: 32000, type: 'cocktail' },
+      { id: 'coctel-mojito', name: 'Cóctel Mojito Cubano', cat: 'Cócteles', price: 30000, type: 'cocktail' },
+      { id: 'coctel-gin-tonic', name: 'Cóctel Gin & Tonic Tanqueray', cat: 'Cócteles', price: 35000, type: 'cocktail' },
+      { id: 'shot-jagerbomb', name: 'Shot Jägerbomb', cat: 'Cócteles', price: 25000, type: 'shot' },
+      { id: 'shot-b52', name: 'Shot B-52 Flameante', cat: 'Cócteles', price: 24000, type: 'shot' },
+
+      // MEZCLADORES & SNACKS
+      { id: 'redbull-original', name: 'Red Bull Energy Drink 250ml', cat: 'Mezcladores', price: 16000, type: 'unit' },
+      { id: 'redbull-sugarfree', name: 'Red Bull Sugarfree 250ml', cat: 'Mezcladores', price: 16000, type: 'unit' },
+      { id: 'redbull-sandia', name: 'Red Bull Sandía 250ml', cat: 'Mezcladores', price: 17000, type: 'unit' },
+      { id: 'monster-energy', name: 'Monster Energy Drink 473ml', cat: 'Mezcladores', price: 17000, type: 'unit' },
+      { id: 'gatorade-electrolitos', name: 'Gatorade Electrolitos 500ml', cat: 'Mezcladores', price: 9000, type: 'unit' },
+      { id: 'soda-bretana', name: 'Soda Bretaña 300ml', cat: 'Mezcladores', price: 7000, type: 'unit' },
+      { id: 'ginger-ale', name: 'Ginger Ale Canada Dry 300ml', cat: 'Mezcladores', price: 8000, type: 'unit' },
+      { id: 'coca-cola', name: 'Coca-Cola Original 300ml', cat: 'Mezcladores', price: 7000, type: 'unit' },
+      { id: 'agua-cristal', name: 'Agua Mineral Cristal 600ml', cat: 'Mezcladores', price: 6000, type: 'unit' },
+      { id: 'jarra-naranja', name: 'Jarra Zumo Naranja Natural 1L', cat: 'Mezcladores', price: 22000, type: 'unit' },
+      { id: 'snack-ferrero', name: "Chocolates Ferrero / M&M's", cat: 'Snacks', price: 12000, type: 'unit' },
+      { id: 'snack-pringles', name: 'Papas Pringles 124g', cat: 'Snacks', price: 16000, type: 'unit' },
+      { id: 'snack-pasabocas', name: 'Mix Pasabocas Salados / Maní', cat: 'Snacks', price: 10000, type: 'unit' },
+      { id: 'snack-vape', name: 'Vape Desechable 5000 Puffs', cat: 'Snacks', price: 55000, type: 'unit' }
+    ];
+
+    const CATEGORIES = [
+      'Todos', 'Aguardientes', 'Rones', 'Whiskies', 'Tequilas', 'Vodkas', 'Ginebras', 'Aperitivos', 'Champagnes', 'Vinos', 'Cervezas', 'Cócteles', 'Mezcladores', 'Snacks'
+    ];
+
+    let activeCategory = 'Todos';
+    let selectedItems = []; // Items in current invoice draft
+
+    // Init UI
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCategoryPills();
+      renderProductGrid();
+      renderInvoicesList();
+    });
+
+    function renderCategoryPills() {
+      const container = document.getElementById('categoryPills');
+      container.innerHTML = CATEGORIES.map(cat => `
+        <button type="button" class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">${cat}</button>
+      `).join('');
+    }
+
+    function selectCategory(cat) {
+      activeCategory = cat;
+      renderCategoryPills();
+      renderProductGrid();
+    }
+
+    function renderProductGrid() {
+      const query = (document.getElementById('catalogSearch').value || '').toLowerCase().trim();
+      const grid = document.getElementById('productGrid');
+
+      const filtered = MASTER_CATALOG.filter(item => {
+        const matchesCat = activeCategory === 'Todos' || item.cat === activeCategory;
+        const matchesQuery = !query || item.name.toLowerCase().includes(query) || item.cat.toLowerCase().includes(query);
+        return matchesCat && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 11px; padding: 12px;">No se encontraron productos</div>';
+        return;
       }
+
+      grid.innerHTML = filtered.map(item => `
+        <button type="button" class="prod-btn" onclick="addItem('${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${item.type}')">
+          <span class="prod-name">${item.name}</span>
+          <span class="prod-price">$${item.price.toLocaleString('es-CO')}</span>
+        </button>
+      `).join('');
     }
 
-    function saveQueue(queue) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
-      renderList();
-    }
-
-    function setAmount(val) {
-      document.getElementById('invTotal').value = val;
-    }
-
-    function addItem(id, name, priceCOP, type) {
-      const existing = currentSelectedItems.find(i => i.id === id);
+    function addItem(id, name, price, type) {
+      const existing = selectedItems.find(i => i.id === id);
       if (existing) {
         existing.quantity += 1;
       } else {
-        currentSelectedItems.push({ id, name, priceCOP, quantity: 1, type });
+        selectedItems.push({ id, name, price, quantity: 1, type });
       }
+      recalculateDraftTotal();
       renderSelectedItems();
-      recalcTotalFromItems();
     }
 
     function updateItemQty(id, delta) {
-      const idx = currentSelectedItems.findIndex(i => i.id === id);
-      if (idx >= 0) {
-        currentSelectedItems[idx].quantity += delta;
-        if (currentSelectedItems[idx].quantity <= 0) {
-          currentSelectedItems.splice(idx, 1);
-        }
+      const item = selectedItems.find(i => i.id === id);
+      if (!item) return;
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        selectedItems = selectedItems.filter(i => i.id !== id);
       }
+      recalculateDraftTotal();
       renderSelectedItems();
-      recalcTotalFromItems();
+    }
+
+    function removeItem(id) {
+      selectedItems = selectedItems.filter(i => i.id !== id);
+      recalculateDraftTotal();
+      renderSelectedItems();
+    }
+
+    function recalculateDraftTotal() {
+      const total = selectedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+      document.getElementById('invTotal').value = total > 0 ? total : '';
+      document.getElementById('selectedCountBadge').innerText = `${selectedItems.length} agregados`;
     }
 
     function renderSelectedItems() {
       const container = document.getElementById('selectedItemsContainer');
-      const badge = document.getElementById('selectedCountBadge');
-      const totalCount = currentSelectedItems.reduce((s, i) => s + i.quantity, 0);
-
-      badge.innerText = `${totalCount} item(s)`;
-      if (currentSelectedItems.length === 0) {
+      if (selectedItems.length === 0) {
         container.style.display = 'none';
         container.innerHTML = '';
         return;
       }
-
       container.style.display = 'flex';
-      container.innerHTML = currentSelectedItems.map(it => `
-        <div class="item-tag">
-          <span style="font-weight: 700;">${it.name} ($${it.priceCOP.toLocaleString('es-CO')})</span>
-          <div class="item-tag-qty">
-            <button type="button" class="btn-circle" onclick="updateItemQty('${it.id}', -1)">-</button>
-            <span style="font-family: var(--mono); font-weight: 800; color: var(--gold);">${it.quantity}</span>
-            <button type="button" class="btn-circle" onclick="updateItemQty('${it.id}', 1)">+</button>
+      container.innerHTML = selectedItems.map(item => `
+        <div class="item-chip">
+          <span style="font-weight: 700; color: #fff;">${item.name} ($${item.price.toLocaleString('es-CO')})</span>
+          <div class="item-controls">
+            <button type="button" class="qty-btn" onclick="updateItemQty('${item.id}', -1)">-</button>
+            <span style="font-family: var(--mono); font-weight: 800; color: var(--gold);">${item.quantity}</span>
+            <button type="button" class="qty-btn" onclick="updateItemQty('${item.id}', 1)">+</button>
+            <button type="button" class="del-btn" onclick="removeItem('${item.id}')">✕</button>
           </div>
         </div>
       `).join('');
     }
 
-    function recalcTotalFromItems() {
-      if (currentSelectedItems.length > 0) {
-        const sum = currentSelectedItems.reduce((s, i) => s + (i.priceCOP * i.quantity), 0);
-        document.getElementById('invTotal').value = sum;
-      }
-    }
-
-    function generateNextInvoiceNum() {
-      const queue = getQueue();
-      let highest = 1000;
-      queue.forEach(q => {
-        const match = (q.invoiceNumber || '').match(/\d+/);
-        if (match) {
-          const num = parseInt(match[0], 10);
-          if (num > highest) highest = num;
-        }
-      });
-      document.getElementById('invNum').value = 'TAL-' + (highest + 1);
-    }
-
     function toggleCustomSeller(val) {
       const box = document.getElementById('customSellerBox');
-      const input = document.getElementById('invCustomSeller');
+      const notes = document.getElementById('notesBox');
       if (val === 'OTRO') {
         box.style.display = 'flex';
-        input.required = true;
+        notes.style.display = 'none';
       } else {
         box.style.display = 'none';
-        input.required = false;
+        notes.style.display = 'flex';
       }
+    }
+
+    function getInvoices() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveInvoices(invoices) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices));
+      renderInvoicesList();
+      try {
+        window.dispatchEvent(new CustomEvent('kal_store_update'));
+      } catch {}
     }
 
     function handleSaveInvoice(e) {
       e.preventDefault();
       const num = document.getElementById('invNum').value.trim();
-      const total = parseFloat(document.getElementById('invTotal').value) || 0;
+      const total = parseFloat(document.getElementById('invTotal').value);
       const payment = document.getElementById('invPayment').value;
       const table = document.getElementById('invTable').value;
+      const sellerSelect = document.getElementById('invSeller').value;
+      const customSeller = document.getElementById('invCustomSeller').value.trim();
+      const seller = sellerSelect === 'OTRO' ? (customSeller || 'Mesero Particular') : sellerSelect;
       const notes = document.getElementById('invNotes').value.trim();
 
-      const sellerSel = document.getElementById('invSeller').value;
-      const customSeller = document.getElementById('invCustomSeller').value.trim();
-      const seller = sellerSel === 'OTRO' ? (customSeller || 'Personalizado') : sellerSel;
-
-      if (!num || total <= 0) return;
-
-      const queue = getQueue();
-      queue.unshift({
-        id: 'off-' + Date.now(),
-        invoiceNumber: num,
-        totalCOP: total,
-        paymentMethod: payment,
-        tableNumber: table,
-        sellerName: seller,
-        cashierName: seller,
-        notes: notes,
-        items: [...currentSelectedItems],
-        createdAt: new Date().toISOString()
-      });
-
-      saveQueue(queue);
-
-      // Reset form
-      currentSelectedItems = [];
-      renderSelectedItems();
-      document.getElementById('invTotal').value = '';
-      document.getElementById('invNotes').value = 'Falla de conexión offline';
-      generateNextInvoiceNum();
-      showAlert(`✅ Factura ${num} guardada (${seller}).`);
-    }
-
-    function deleteInvoice(id) {
-      let queue = getQueue();
-      queue = queue.filter(q => q.id !== id);
-      saveQueue(queue);
-    }
-
-    function renderList() {
-      const queue = getQueue();
-      const listEl = document.getElementById('invoicesList');
-      const countEl = document.getElementById('countDisplay');
-      const totalEl = document.getElementById('totalCopDisplay');
-
-      countEl.innerText = queue.length;
-      const totalSum = queue.reduce((sum, item) => sum + (parseFloat(item.totalCOP) || 0), 0);
-      totalEl.innerText = '$' + totalSum.toLocaleString('es-CO') + ' COP';
-
-      if (queue.length === 0) {
-        listEl.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 12px;">No hay facturas guardadas. Las que agregues se guardarán aquí automáticamente.</div>';
+      if (!num || !total || total <= 0) {
+        showAlert('Ingresa un número de factura válido y un total mayor a $0.', 'error');
         return;
       }
 
-      listEl.innerHTML = queue.map(item => {
-        const time = new Date(item.createdAt).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-        const itemsSummary = (item.items && item.items.length > 0)
-          ? item.items.map(i => `${i.quantity}x ${i.name}`).join(', ')
-          : '';
+      const invoice = {
+        id: 'cont-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+        invoiceNumber: num,
+        total: total,
+        paymentMethod: payment,
+        table: table,
+        seller: seller,
+        notes: notes || 'Factura física de contingencia',
+        createdAt: new Date().toISOString(),
+        synced: false,
+        items: [...selectedItems]
+      };
+
+      const invoices = getInvoices();
+      invoices.unshift(invoice);
+      saveInvoices(invoices);
+
+      // Reset form
+      document.getElementById('invoiceForm').reset();
+      selectedItems = [];
+      recalculateDraftTotal();
+      renderSelectedItems();
+      toggleCustomSeller('👑 Administrador / Caja');
+
+      showAlert(`Factura #${num} guardada exitosamente en la cola local.`, 'success');
+    }
+
+    function renderInvoicesList() {
+      const invoices = getInvoices();
+      const totalCop = invoices.reduce((acc, inv) => acc + (Number(inv.total) || 0), 0);
+      document.getElementById('totalCopDisplay').innerText = `$${totalCop.toLocaleString('es-CO')} COP`;
+      document.getElementById('countDisplay').innerText = invoices.length;
+
+      const list = document.getElementById('invoicesList');
+      if (invoices.length === 0) {
+        list.innerHTML = `
+          <div style="text-align: center; color: var(--text-dim); padding: 24px 0; font-size: 12px;">
+            No hay facturas pendientes en la cola local.
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = invoices.map(inv => {
+        const time = new Date(inv.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const itemsSummary = inv.items && inv.items.length > 0 
+          ? inv.items.map(i => `${i.quantity}x ${i.name.split(' ')[0]}`).join(', ')
+          : 'Total digitado';
 
         return `
-          <div class="item-card">
-            <div class="item-info">
-              <div class="item-num">${item.invoiceNumber} • <span style="color: var(--gold);">${item.tableNumber}</span> • <span style="color: #a78bfa; font-size: 10px;">${item.sellerName || 'Caja'}</span></div>
-              <div class="item-meta">${time} • ${item.paymentMethod}</div>
-              ${itemsSummary ? `<div class="item-items-text" title="${itemsSummary}">📦 ${itemsSummary}</div>` : ''}
+          <div class="invoice-card">
+            <div class="inv-header">
+              <span class="inv-num">🧾 ${inv.invoiceNumber} • ${inv.table || 'Barra'}</span>
+              <span class="inv-total">$${Number(inv.total).toLocaleString('es-CO')}</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span class="item-amount">$${Number(item.totalCOP).toLocaleString('es-CO')}</span>
-              <button class="btn-del" onclick="deleteInvoice('${item.id}')" title="Eliminar">✕</button>
+            <div class="inv-sub">
+              <span>👤 ${inv.seller || 'Caja'} • 💳 ${inv.paymentMethod}</span>
+              <span>🕒 ${time}</span>
             </div>
+            <div style="font-size: 10px; color: var(--gold); font-family: var(--mono);">${itemsSummary}</div>
           </div>
         `;
       }).join('');
     }
 
-    function showAlert(msg) {
-      const el = document.getElementById('alertMsg');
-      el.innerText = msg;
-      el.style.display = 'block';
-      setTimeout(() => { el.style.display = 'none'; }, 4000);
-    }
-
-    function handleExportTxt() {
-      const queue = getQueue();
-      if (queue.length === 0) {
-        alert('No hay facturas para exportar.');
-        return;
-      }
-
-      const jsonStr = JSON.stringify(queue, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Facturas_Contingencia_KAL_${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-
-    function handleCopyPayload() {
-      const queue = getQueue();
-      if (queue.length === 0) {
-        alert('No hay facturas para copiar.');
-        return;
-      }
-      navigator.clipboard.writeText(JSON.stringify(queue, null, 2))
-        .then(() => showAlert('📋 ¡Código JSON de facturas copiado al portapapeles!'))
-        .catch(() => alert('Error al copiar.'));
+    function showAlert(text, type = 'success') {
+      const alert = document.getElementById('alertMsg');
+      alert.className = `alert-box alert-${type}`;
+      alert.innerText = text;
+      alert.style.display = 'block';
+      setTimeout(() => { alert.style.display = 'none'; }, 4000);
     }
 
     function handleSyncDashboard() {
-      const queue = getQueue();
-      if (queue.length === 0) {
-        alert('No hay facturas pendientes para sincronizar.');
+      const invoices = getInvoices();
+      if (invoices.length === 0) {
+        showAlert('No hay facturas en cola para sincronizar.', 'error');
         return;
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+      showAlert(`⚡ Sincronizadas ${invoices.length} facturas con el panel principal de KAL DISCOBAR.`, 'success');
       try {
-        window.dispatchEvent(new Event('storage'));
-        if (window.opener && window.opener.adminStore) {
-          const res = window.opener.adminStore.importContingencyFromText(JSON.stringify(queue));
-          showAlert(`⚡ ¡Sincronizado directamente con el Dashboard! ${res.message}`);
-          return;
-        }
-      } catch (e) {}
-      showAlert('⚡ ¡Facturas listas en memoria local! Abre el Dashboard y haz clic en "Sincronizar App Local" o actualiza la pestaña.');
+        window.dispatchEvent(new CustomEvent('kal_store_update'));
+      } catch {}
     }
 
-    function handleClearAllQueue() {
-      const queue = getQueue();
-      if (queue.length === 0) {
-        alert('No hay facturas en la cola para limpiar.');
+    function handleExportTxt() {
+      const invoices = getInvoices();
+      if (invoices.length === 0) {
+        showAlert('No hay facturas para exportar.', 'error');
         return;
       }
-
-      const confirmed = window.confirm(
-        `⚠️ ¿Estás seguro de que deseas ELIMINAR todas las ${queue.length} facturas de la cola offline?\n\nEsta acción borrará la lista local del equipo y no se puede deshacer.`
-      );
-
-      if (confirmed) {
-        saveQueue([]);
-        renderList();
-        generateNextInvoiceNum();
-        showAlert('🗑️ Se ha limpiado y reseteado toda la cola de facturas offline.');
-      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(invoices, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `KAL_Contingencia_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showAlert('Archivo exportado correctamente.', 'success');
     }
 
-    // Initialize
-    generateNextInvoiceNum();
-    renderList();
+    function handleCopyPayload() {
+      const invoices = getInvoices();
+      if (invoices.length === 0) {
+        showAlert('No hay facturas para copiar.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(JSON.stringify(invoices, null, 2))
+        .then(() => showAlert('Código de facturas copiado al portapapeles.', 'success'))
+        .catch(() => showAlert('Error al copiar.', 'error'));
+    }
+
+    function openResetModal() {
+      const invoices = getInvoices();
+      if (invoices.length === 0) {
+        showAlert('La cola ya está vacía.', 'error');
+        return;
+      }
+      document.getElementById('resetModal').style.display = 'flex';
+    }
+
+    function closeResetModal() {
+      document.getElementById('resetModal').style.display = 'none';
+    }
+
+    function confirmResetAllQueue() {
+      saveInvoices([]);
+      closeResetModal();
+      showAlert('La cola de contingencia ha sido reseteada por completo.', 'success');
+    }
   </script>
 </body>
 </html>

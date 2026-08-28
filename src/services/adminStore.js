@@ -77,6 +77,18 @@ const INITIAL_SOCIAL_LINKS = {
 class AdminStoreService {
   constructor() {
     this.listeners = new Set();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key && e.key.startsWith('kal_')) {
+          this.notify();
+        }
+      });
+      window.addEventListener('kal_store_update', () => {
+        this.listeners.forEach((cb) => {
+          try { cb(); } catch {}
+        });
+      });
+    }
     this.init();
   }
 
@@ -174,6 +186,11 @@ class AdminStoreService {
     this.listeners.forEach((cb) => {
       try { cb(); } catch (err) { console.error('[adminStore] Listener error:', err); }
     });
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('kal_store_update'));
+      } catch {}
+    }
   }
 
   // ----------------------------------------------------
@@ -793,27 +810,47 @@ class AdminStoreService {
     return { success: true, item, message: 'Mercancía ingresada correctamente.' };
   }
 
-  // Ajuste manual de stock (Clave admin requerida solo si se modifica el precio)
+  // Ajuste manual de stock (Clave admin requerida para modificar cantidad, milimetraje o precios)
   updateStockManually(itemId, updates, adminPassword = '') {
     const inventory = this.getInventory();
     const item = inventory.find((i) => i.id === itemId);
     if (!item) return { success: false, message: 'Producto no encontrado.' };
 
-    // Verificar si se está modificando el precio de venta o costo
+    // Verificar si se está modificando cantidad, milimetraje o precios
+    const currentBottles = Number(item.stockBottles ?? 0);
+    const newBottles = updates.stockBottles !== undefined ? Number(updates.stockBottles) : currentBottles;
+
+    const currentUnits = Number(item.stockUnits ?? 0);
+    const newUnits = updates.stockUnits !== undefined ? Number(updates.stockUnits) : currentUnits;
+
+    const currentMl = Number(item.openedBottlesMl ?? 0);
+    const newMl = updates.openedBottlesMl !== undefined ? Number(updates.openedBottlesMl) : currentMl;
+
     const currentSalePrice = Number(item.type === 'unit' ? (item.salePriceUnit ?? item.price ?? 0) : (item.salePriceBottle ?? item.price ?? 0));
     const newSalePrice = updates.salePrice !== undefined ? Number(updates.salePrice) : currentSalePrice;
+
     const currentCostPrice = Number(item.costPrice ?? 0);
     const newCostPrice = updates.costPrice !== undefined ? Number(updates.costPrice) : currentCostPrice;
+
+    const isQuantityOrMlChanging = (updates.stockBottles !== undefined && newBottles !== currentBottles) ||
+                                   (updates.stockUnits !== undefined && newUnits !== currentUnits) ||
+                                   (updates.openedBottlesMl !== undefined && newMl !== currentMl);
+
     const isPriceChanging = (updates.salePrice !== undefined && newSalePrice !== currentSalePrice) ||
                             (updates.costPrice !== undefined && newCostPrice !== currentCostPrice);
 
-    if (isPriceChanging) {
+    if (isQuantityOrMlChanging || isPriceChanging) {
       const auth = this.getAuth();
       const cleanPass = String(adminPassword || '').trim();
       const isPassValid = cleanPass === auth.password || cleanPass === auth.authorizedPassword || cleanPass === '12345678' || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
       
       if (!isPassValid) {
-        return { success: false, message: 'Contraseña de administrador requerida para autorizar el cambio de precio.' };
+        return { 
+          success: false, 
+          message: isPriceChanging 
+            ? 'Contraseña de administrador requerida para autorizar el cambio de precio.' 
+            : 'Contraseña de administrador requerida para modificar la cantidad o el milimetraje de inventario.' 
+        };
       }
     }
 
@@ -1867,27 +1904,67 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
   getDishes() {
     const rawDishes = this.getRawDishes();
     const promo = this.getPromotion();
+    const inventory = this.getInventory();
 
-    if (!promo || !promo.active || !promo.percentage || promo.percentage <= 0) {
-      return rawDishes;
-    }
+    const hasPromo = Boolean(promo && promo.active && promo.percentage && promo.percentage > 0);
+    const discountRate = hasPromo ? (100 - promo.percentage) / 100 : 1;
 
-    const discountRate = (100 - promo.percentage) / 100;
     return rawDishes.map((dish) => {
-      const originalPrice = Number(dish.priceCOP || dish.price || 0);
-      const matchesCategory = promo.category === 'all' || !promo.category || dish.category === promo.category;
-      
-      if (matchesCategory && originalPrice > 0) {
-        const discounted = Math.round(originalPrice * discountRate);
-        return {
-          ...dish,
-          originalPriceCOP: originalPrice,
-          priceCOP: discounted,
-          discountPercentage: promo.percentage,
-          discountTitle: promo.title
-        };
+      // 1. Vinculación y verificación de stock en vivo con el catálogo de inventario
+      const dishIdNorm = (dish.id || '').toLowerCase().replace(/^inv-/, '');
+      const dishNameNorm = (dish.name?.es || dish.name || '').toLowerCase();
+
+      const invItem = inventory.find((i) => {
+        if (!i) return false;
+        if (i.id === dish.id || i.id === `inv-${dish.id}`) return true;
+        if (Array.isArray(i.menuBindingIds) && i.menuBindingIds.some((b) => b.toLowerCase() === dishIdNorm || dishIdNorm.includes(b.toLowerCase()))) {
+          return true;
+        }
+        const invIdNorm = (i.id || '').toLowerCase().replace(/^inv-/, '');
+        const invNameNorm = (i.name || '').toLowerCase();
+        return invIdNorm === dishIdNorm || dishNameNorm.includes(invNameNorm.split(' ')[0]);
+      });
+
+      let isAvailable = dish.isAvailable !== false && dish.available !== false;
+      let stockQty = 99;
+
+      if (invItem) {
+        const bottles = Number(invItem.stockBottles || 0);
+        const units = Number(invItem.stockUnits || 0);
+        const openedMl = Number(invItem.openedBottlesMl || 0);
+        const totalPhysical = bottles + units + openedMl;
+
+        if (totalPhysical <= 0 || invItem.isOutOfStock === true || invItem.isAvailable === false) {
+          isAvailable = false;
+          stockQty = 0;
+        } else {
+          stockQty = bottles + units;
+        }
       }
-      return dish;
+
+      // 2. Precios y Descuentos Dinámicos
+      const originalPrice = Number(dish.priceCOP || dish.price || 0);
+      const matchesCategory = hasPromo && (promo.category === 'all' || !promo.category || dish.category === promo.category);
+
+      let priceCOP = originalPrice;
+      let originalPriceCOP = null;
+      let discountPercentage = null;
+
+      if (matchesCategory && originalPrice > 0 && discountRate < 1) {
+        priceCOP = Math.round(originalPrice * discountRate);
+        originalPriceCOP = originalPrice;
+        discountPercentage = promo.percentage;
+      }
+
+      return {
+        ...dish,
+        isAvailable,
+        stockQty,
+        priceCOP,
+        originalPriceCOP,
+        discountPercentage,
+        discountTitle: promo?.title || ''
+      };
     });
   }
 
