@@ -19,6 +19,7 @@ import FooterSection from './components/FooterSection';
 import SpotlightTour from './components/SpotlightTour';
 import ReservationModal from './components/ReservationModal';
 import LoadingScreen from './components/LoadingScreen';
+import PromoCelebrationModal from './components/PromoCelebrationModal';
 import { DISHES, UI_TEXT, RESTAURANT_DATA, MENU_CATEGORIES } from './data/menuData';
 import { adminStore } from './services/adminStore';
 import { getSubscriptionStatus } from './services/api';
@@ -39,6 +40,8 @@ export default function App() {
   const [liveDishes, setLiveDishes] = useState(() => adminStore.getDishes());
   const [liveCategories, setLiveCategories] = useState(() => adminStore.getCategories());
   const [promotion, setPromotion] = useState(() => adminStore.getPromotion());
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+  const prevPromoRef = React.useRef(Boolean(promotion?.active));
 
   const isInitiallyAdmin = (window.location.hash || '').toLowerCase().includes('dsb') || 
                            (window.location.hash || '').toLowerCase().includes('admin') ||
@@ -124,21 +127,90 @@ export default function App() {
 
     const unsubscribe = adminStore.subscribe(() => {
       setAuthVersion((v) => v + 1);
-      setLiveDishes(adminStore.getDishes());
+      const newDishes = adminStore.getDishes();
+      setLiveDishes(newDishes);
       setLiveCategories(adminStore.getCategories());
-      setPromotion(adminStore.getPromotion());
+      
+      const newPromo = adminStore.getPromotion();
+      setPromotion(newPromo);
+      
+      if (newPromo && newPromo.active && Number(newPromo.percentage) > 0) {
+        setIsPromoModalOpen(true);
+      }
+
       if (!adminStore.getLoadingScreenEnabled()) {
         setIsLoading(false);
       }
     });
 
+    const triggerPromoLive = (p) => {
+      const liveP = p || adminStore.getPromotion();
+      setPromotion(liveP);
+      setLiveDishes(adminStore.getDishes());
+      if (liveP && liveP.active && Number(liveP.percentage) > 0) {
+        setIsPromoModalOpen(true);
+      }
+    };
+
+    const handlePromoEvent = (e) => {
+      triggerPromoLive(e?.detail);
+    };
+
+    const handleStorageEvent = (e) => {
+      if (e.key === 'kal_admin_menu_promotion' || e.key === 'kal_promo_event_trigger' || e.key === 'kal_store_update') {
+        triggerPromoLive(adminStore.getPromotion());
+      }
+    };
+
+    let bc = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        bc = new BroadcastChannel('kal_promo_channel');
+        bc.onmessage = (msg) => {
+          if (msg.data?.type === 'PROMOTION_UPDATED') {
+            triggerPromoLive(msg.data.payload);
+          }
+        };
+      }
+    } catch {}
+
+    window.addEventListener('kal_promotion_change', handlePromoEvent);
+    window.addEventListener('storage', handleStorageEvent);
+
     return () => {
       window.removeEventListener('hashchange', handleHash);
       window.removeEventListener('popstate', handleHash);
+      window.removeEventListener('kal_promotion_change', handlePromoEvent);
+      window.removeEventListener('storage', handleStorageEvent);
+      if (bc) {
+        try { bc.close(); } catch {}
+      }
       clearInterval(pollInterval);
       unsubscribe();
     };
   }, []);
+
+  // Disparar ventana de fuegos artificiales al estar en la carta si la promoción está activa
+  useEffect(() => {
+    const isCustomerView = !currentHash.toLowerCase().includes('dsb') && 
+                           !currentHash.toLowerCase().includes('admin') && 
+                           !currentHash.toLowerCase().includes('mesero') && 
+                           !currentHash.toLowerCase().includes('waiter');
+
+    if (isCustomerView && promotion && promotion.active && Number(promotion.percentage) > 0) {
+      setIsPromoModalOpen(true);
+    }
+  }, [currentHash, promotion]);
+
+  // Sincronizar precios de los productos en el carrito automáticamente cuando cambia la promoción o catálogo
+  useEffect(() => {
+    setCartItems((prev) =>
+      prev.map((item) => {
+        const updated = liveDishes.find((d) => d.id === item.dish.id);
+        return updated ? { ...item, dish: updated } : item;
+      })
+    );
+  }, [liveDishes]);
 
   // Sync HTML body class with active theme and scene
   useEffect(() => {
@@ -368,48 +440,14 @@ export default function App() {
         setIsMuted={setIsMuted}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenReservation={() => setIsReservationOpen(true)}
+        promotion={promotion}
+        onOpenPromoCelebration={() => setIsPromoModalOpen(true)}
       />
 
       <div className="relative z-10 flex-1 w-full">
         
         {/* Video Header with Dynamic Scene Video & KAL DISCOBAR Logo */}
         <HeroSection currentLang={lang} backgroundScene={backgroundScene} />
-
-        {/* PROMOTIONAL STRATEGY DISCOUNT BANNER */}
-        {promotion?.active && Number(promotion?.percentage) > 0 && (
-          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 -mt-3 mb-4">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-3xl p-4 sm:p-5 bg-gradient-to-r from-red-950/90 via-[#1c0f18] to-amber-950/80 border-2 border-amber-400/60 shadow-2xl shadow-amber-500/20 backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left"
-            >
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-400 text-black flex items-center justify-center font-black text-2xl shadow-lg shrink-0 animate-pulse">
-                  🔥
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
-                    <span className="text-sm sm:text-base font-black text-amber-300 uppercase tracking-wider">
-                      {promotion.title || '¡DESCUENTO ESPECIAL VIP EN CARTA!'}
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-red-600 text-white font-black text-xs uppercase tracking-wider animate-bounce shadow-md">
-                      -{promotion.percentage}% OFF
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-300 font-semibold mt-0.5">
-                    {promotion.bannerText || 'Todos los precios ya tienen aplicado el descuento por tiempo limitado.'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="shrink-0 flex items-center gap-2">
-                <span className="px-3.5 py-1.5 rounded-xl bg-amber-400/20 text-amber-300 border border-amber-400/40 text-xs font-black uppercase tracking-wider">
-                  ⚡ Precios Rebajados en Vivo
-                </span>
-              </div>
-            </motion.div>
-          </div>
-        )}
 
         {/* Main Content Layout */}
         <main className="w-full max-w-7xl mx-auto px-4 md:px-6 my-8">
@@ -623,6 +661,22 @@ export default function App() {
         isOpen={isReservationOpen}
         onClose={() => setIsReservationOpen(false)}
         currentLang={lang}
+      />
+
+      {/* Real-time Promotional Fireworks Celebration Modal */}
+      <PromoCelebrationModal
+        isOpen={isPromoModalOpen}
+        onClose={() => {
+          setIsPromoModalOpen(false);
+          if (promotion) {
+            const promoKey = `kal_seen_promo_${promotion.percentage}_${(promotion.title || '').replace(/\s+/g, '_')}`;
+            sessionStorage.setItem(promoKey, 'true');
+          }
+        }}
+        promotion={promotion}
+        onExploreMenu={() => {
+          window.scrollTo({ top: 380, behavior: 'smooth' });
+        }}
       />
 
     </div>

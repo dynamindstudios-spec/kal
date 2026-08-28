@@ -21,6 +21,7 @@ export default function AdminInventory() {
   const [showWasteModal, setShowWasteModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showWasteHistoryModal, setShowWasteHistoryModal] = useState(false);
+  const [showCustomLiquorModal, setShowCustomLiquorModal] = useState(false);
   
   // Manual edit state
   const [editingItem, setEditingItem] = useState(null);
@@ -50,6 +51,56 @@ export default function AdminInventory() {
     adminPassword: ''
   });
   const [wasteError, setWasteError] = useState('');
+
+  // Formulario de Personalización de Licores, Aguardientes y Tamaños
+  const [customLiquorForm, setCustomLiquorForm] = useState({
+    id: '',
+    name: 'Aguardiente Antioqueño 24° Tapa Azul 750ml',
+    category: 'Aguardiente',
+    variantColor: '🔵 Tapa Azul (Sin Azúcar)',
+    sizeType: 'botella_750',
+    unit: 'Botella 750ml',
+    type: 'bottle_and_shots',
+    bottleMl: 750,
+    shotMl: 40,
+    costPrice: '65000',
+    salePriceBottle: '110000',
+    salePriceShot: '11000',
+    stockBottles: '10',
+    openedBottlesMl: '0',
+    minStock: '3',
+    supplier: 'Distribuidora Licores de Antioquia',
+    adminPassword: ''
+  });
+  const [customLiquorError, setCustomLiquorError] = useState('');
+  const [exportSuccessMsg, setExportSuccessMsg] = useState('');
+
+  // Presets de Variedades / Colores para Aguardientes y Licores
+  const AGUARDIENTE_COLOR_PRESETS = [
+    { label: '🔵 Tapa Azul (Sin Azúcar)', namePrefix: 'Aguardiente Antioqueño 24° Tapa Azul' },
+    { label: '🔴 Tapa Roja (Tradicional)', namePrefix: 'Aguardiente Antioqueño 29° Tradicional Tapa Roja' },
+    { label: '🟢 Tapa Verde (Real Sin Azúcar)', namePrefix: 'Aguardiente Antioqueño Real 24° Tapa Verde' },
+    { label: '🟡 Amarillo de Manzanares', namePrefix: 'Aguardiente Amarillo de Manzanares 24°' },
+    { label: '⚪ Néctar Club (Sin Azúcar)', namePrefix: 'Aguardiente Néctar Club Sin Azúcar' },
+    { label: '🔴 Néctar Tradicional', namePrefix: 'Aguardiente Néctar Tradicional' },
+    { label: '🟢 Néctar Verde', namePrefix: 'Aguardiente Néctar Verde Sin Azúcar' },
+    { label: '🥃 Aguardiente Cristal', namePrefix: 'Aguardiente Cristal Sin Azúcar' },
+    { label: '✍️ Otra Marca / Personalizado', namePrefix: 'Aguardiente' }
+  ];
+
+  const SIZE_PRESETS = [
+    { id: 'garrafa_1750', label: '🍾 Garrafa 1.75L / 2L', unit: 'Garrafa 1.75L', bottleMl: 1750, shotMl: 40, type: 'bottle_and_shots' },
+    { id: 'litro_1000', label: '🧴 Litro 1.000ml', unit: 'Litro 1000ml', bottleMl: 1000, shotMl: 40, type: 'bottle_and_shots' },
+    { id: 'botella_750', label: '🍾 Botella 750ml / 700ml', unit: 'Botella 750ml', bottleMl: 750, shotMl: 40, type: 'bottle_and_shots' },
+    { id: 'media_500', label: '🍶 Media 500ml', unit: 'Media 500ml', bottleMl: 500, shotMl: 40, type: 'bottle_and_shots' },
+    { id: 'media_375', label: '🍶 Media 375ml', unit: 'Media 375ml', bottleMl: 375, shotMl: 40, type: 'bottle_and_shots' },
+    { id: 'caneca_375', label: '📦 1/4 Caneca / Petaca 375ml', unit: '1/4 Caneca 375ml', bottleMl: 375, shotMl: 40, type: 'bottle_and_shots' },
+    { id: 'caneca_250', label: '📦 1/4 Caneca / Petaca 250ml', unit: '1/4 Caneca 250ml', bottleMl: 250, shotMl: 40, type: 'bottle_and_shots' },
+    { id: 'shot_individual', label: '🥃 Trago / Shot (40ml)', unit: 'Shot 40ml', bottleMl: 0, shotMl: 40, type: 'shot' },
+    { id: 'unit_beer', label: '🍺 Cerveza / Botellín / Lata', unit: 'Botella 330ml', bottleMl: 0, shotMl: 0, type: 'unit' },
+    { id: 'unit_mixer', label: '🥤 Mezclador / Energizante', unit: 'Lata 250ml', bottleMl: 0, shotMl: 0, type: 'unit' },
+    { id: 'unit_snack', label: '🍫 Snack / Confitería', unit: 'Unidad', bottleMl: 0, shotMl: 0, type: 'unit' }
+  ];
 
   useEffect(() => {
     const unsubscribe = adminStore.subscribe(() => {
@@ -370,6 +421,152 @@ export default function AdminInventory() {
     }
   };
 
+  // Abrir Modal de Personalización de Licor (Nuevo)
+  const handleOpenNewCustomLiquor = () => {
+    setCustomLiquorForm({
+      id: '',
+      name: 'Aguardiente Antioqueño 24° Tapa Azul 750ml',
+      category: 'Aguardiente',
+      variantColor: '🔵 Tapa Azul (Sin Azúcar)',
+      sizeType: 'botella_750',
+      unit: 'Botella 750ml',
+      type: 'bottle_and_shots',
+      bottleMl: 750,
+      shotMl: 40,
+      costPrice: '65000',
+      salePriceBottle: '110000',
+      salePriceShot: '11000',
+      stockBottles: '10',
+      openedBottlesMl: '0',
+      minStock: '3',
+      supplier: 'Distribuidora Licores de Antioquia',
+      adminPassword: ''
+    });
+    setCustomLiquorError('');
+    setShowCustomLiquorModal(true);
+  };
+
+  // Abrir Modal de Personalización de Licor (Editar Existente)
+  const handleOpenEditCustomLiquor = (item) => {
+    const salePrice = String(item.type === 'unit' ? (item.salePriceUnit ?? item.price ?? 0) : (item.salePriceBottle ?? item.price ?? 0));
+    setCustomLiquorForm({
+      id: item.id,
+      name: item.name,
+      category: item.category || 'Aguardiente',
+      variantColor: item.variantColor || '',
+      sizeType: item.unit?.includes('1.75') ? 'garrafa_1750' : item.unit?.includes('1000') || item.unit?.includes('Litro') ? 'litro_1000' : item.unit?.includes('500') ? 'media_500' : item.unit?.includes('375') ? 'media_375' : 'botella_750',
+      unit: item.unit || 'Botella 750ml',
+      type: item.type || 'bottle_and_shots',
+      bottleMl: item.bottleMl || 750,
+      shotMl: item.shotMl || 40,
+      costPrice: String(item.costPrice || 0),
+      salePriceBottle: salePrice,
+      salePriceShot: String(item.salePriceShot || 0),
+      stockBottles: String(item.stockBottles ?? item.stockUnits ?? 0),
+      openedBottlesMl: String(item.openedBottlesMl || 0),
+      minStock: String(item.minStock || 3),
+      supplier: item.supplier || 'Distribuidora Licores',
+      adminPassword: ''
+    });
+    setCustomLiquorError('');
+    setShowCustomLiquorModal(true);
+  };
+
+  // Manejar selección de Preset de Color / Variedad para Aguardiente
+  const handleSelectColorPreset = (preset) => {
+    const sizeObj = SIZE_PRESETS.find(s => s.id === customLiquorForm.sizeType) || SIZE_PRESETS[2];
+    const newName = `${preset.namePrefix} ${sizeObj.unit.replace('Botella ', '').replace('Garrafa ', 'Garrafa ')}`;
+    setCustomLiquorForm(prev => ({
+      ...prev,
+      variantColor: preset.label,
+      name: newName
+    }));
+  };
+
+  // Manejar selección de Preset de Tamaño / Capacidad
+  const handleSelectSizePreset = (preset) => {
+    const colorLabel = customLiquorForm.variantColor || 'Tapa Azul';
+    const colorPreset = AGUARDIENTE_COLOR_PRESETS.find(c => c.label === colorLabel) || AGUARDIENTE_COLOR_PRESETS[0];
+    const prefix = customLiquorForm.category === 'Aguardiente' 
+      ? colorPreset.namePrefix 
+      : customLiquorForm.name.split(' ').slice(0, 3).join(' ') || customLiquorForm.category;
+
+    const newName = `${prefix} ${preset.unit.replace('Botella ', '').replace('Garrafa ', 'Garrafa ')}`;
+
+    setCustomLiquorForm(prev => ({
+      ...prev,
+      sizeType: preset.id,
+      unit: preset.unit,
+      type: preset.type,
+      bottleMl: preset.bottleMl,
+      shotMl: preset.shotMl,
+      name: newName
+    }));
+  };
+
+  // Guardar Licor / Variante Personalizada
+  const handleSaveCustomLiquor = (e) => {
+    e.preventDefault();
+    setCustomLiquorError('');
+
+    if (!customLiquorForm.name.trim()) {
+      setCustomLiquorError('El nombre del producto es obligatorio.');
+      return;
+    }
+
+    if (!customLiquorForm.adminPassword.trim()) {
+      setCustomLiquorError('Debes ingresar tu contraseña de administrador para autorizar la creación o modificación de precios del licor.');
+      return;
+    }
+
+    const payload = {
+      id: customLiquorForm.id || undefined,
+      name: customLiquorForm.name.trim(),
+      category: customLiquorForm.category,
+      variantColor: customLiquorForm.variantColor,
+      type: customLiquorForm.type,
+      unit: customLiquorForm.unit,
+      bottleMl: customLiquorForm.bottleMl,
+      shotMl: customLiquorForm.shotMl,
+      costPrice: parseFloat(customLiquorForm.costPrice) || 0,
+      salePriceBottle: parseFloat(customLiquorForm.salePriceBottle) || 0,
+      salePriceUnit: parseFloat(customLiquorForm.salePriceBottle) || 0,
+      salePriceShot: parseFloat(customLiquorForm.salePriceShot) || 0,
+      stockBottles: parseInt(customLiquorForm.stockBottles, 10) || 0,
+      stockUnits: parseInt(customLiquorForm.stockBottles, 10) || 0,
+      openedBottlesMl: parseInt(customLiquorForm.openedBottlesMl, 10) || 0,
+      minStock: parseInt(customLiquorForm.minStock, 10) || 3,
+      supplier: customLiquorForm.supplier
+    };
+
+    const res = adminStore.saveCustomLiquorItem(payload, customLiquorForm.adminPassword);
+
+    if (res.success) {
+      setInventory(adminStore.getInventory());
+      setShowCustomLiquorModal(false);
+      setCustomLiquorError('');
+      setExportSuccessMsg(`✓ "${payload.name}" guardado y sincronizado con la carta.`);
+      setTimeout(() => setExportSuccessMsg(''), 4000);
+    } else {
+      setCustomLiquorError(res.message || 'Error al guardar licor.');
+    }
+  };
+
+  // Exportar Catálogo para Contingencia
+  const handleExportContingencyCatalog = () => {
+    try {
+      const catalog = adminStore.exportCatalogForContingency();
+      const jsonStr = JSON.stringify(catalog, null, 2);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(jsonStr);
+      }
+      setExportSuccessMsg(`✅ ¡Catálogo exportado (${catalog.length} productos)! Copiado al portapapeles. Pégalo en el botón 'Importar Catálogo' del HTML de Contingencia en tu Escritorio.`);
+      setTimeout(() => setExportSuccessMsg(''), 6000);
+    } catch (e) {
+      alert('Error exportando catálogo');
+    }
+  };
+
   const selectedWasteItem = inventory.find((i) => i.id === wasteForm.itemId);
 
   return (
@@ -385,12 +582,31 @@ export default function AdminInventory() {
               <Boxes className="w-5 h-5" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-wider whitespace-nowrap">
-              Control de Inventario & Botellas
+              Control de Inventario & Precios
             </h1>
           </div>
 
           {/* Botones Principales a la Derecha */}
           <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap w-full md:w-auto">
+            <button
+              type="button"
+              onClick={handleOpenNewCustomLiquor}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-all cursor-pointer"
+              title="Personalizar Aguardientes por colores, rones, whiskies y tamaños"
+            >
+              <Plus size={16} strokeWidth={3} />
+              <span>Personalizar Licores & Tamaños</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowEntryModal(true)}
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-[#1c202e] hover:bg-[#252a3d] border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            >
+              <PackageCheck size={15} className="text-emerald-400" />
+              <span>Entrada Stock</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -401,22 +617,23 @@ export default function AdminInventory() {
               title="Dar de baja mercancía por daño o merma"
             >
               <Trash2 size={15} className="text-red-400" />
-              <span>Bajar Mercancía / Merma</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowEntryModal(true)}
-              className="flex-1 sm:flex-none px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 transition-all cursor-pointer"
-            >
-              <Plus size={16} strokeWidth={3} />
-              <span>Entrada de Mercancía</span>
+              <span>Bajar Merma</span>
             </button>
           </div>
         </div>
 
         {/* Fila 2: Botones de Auditoría e Historial Justo Abajo del Título */}
         <div className="flex items-center gap-2 pt-2 border-t border-white/5 flex-wrap">
+          <button
+            type="button"
+            onClick={handleExportContingencyCatalog}
+            className="px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            title="Copiar catálogo actualizado para pegarlo en el HTML de Contingencia"
+          >
+            <FileSpreadsheet size={14} className="text-amber-400" />
+            <span>📤 Exportar Catálogo a Contingencia</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setShowWasteHistoryModal(true)}
@@ -443,6 +660,17 @@ export default function AdminInventory() {
           </button>
         </div>
 
+        {/* ALERTA DE EXPORTACIÓN O ACCIÓN */}
+        {exportSuccessMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-2"
+          >
+            <Sparkles size={16} className="text-amber-400 shrink-0" />
+            <span>{exportSuccessMsg}</span>
+          </motion.div>
+        )}
       </div>
 
       {/* KPI METRIC CARDS (Colores refinados y palabras completas abajo a la derecha) */}
@@ -721,16 +949,27 @@ export default function AdminInventory() {
                       )}
                     </td>
 
-                    {/* ACCIONES (Botón de Lápiz) */}
+                    {/* ACCIONES (Botón de Editar Precios/Variante + Ajuste Rápido) */}
                     <td className="py-4 px-5 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenManualEdit(item)}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-amber-400 border border-white/10 transition-colors cursor-pointer"
-                        title="Ajustar Stock Manualmente"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditCustomLiquor(item)}
+                          className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                          title="Editar precio, variedad o tamaño"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Editar</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenManualEdit(item)}
+                          className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 transition-colors cursor-pointer"
+                          title="Ajuste rápido de stock y ml"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
 
                   </tr>
@@ -1399,6 +1638,267 @@ export default function AdminInventory() {
                   ))
                 )}
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ==================================================== */}
+      {/* MODAL: PERSONALIZAR LICORES, AGUARDIENTES & TAMAÑOS */}
+      {/* ==================================================== */}
+      <AnimatePresence>
+        {showCustomLiquorModal && (
+          <div className="fixed inset-0 z-[99999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="w-full max-w-2xl bg-[#11131c] border border-amber-500/40 rounded-3xl p-6 sm:p-7 text-white space-y-5 shadow-2xl my-8 max-h-[90vh] flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-black uppercase text-white">
+                      {customLiquorForm.id ? 'Editar Licor / Precios' : 'Personalizar Licor & Variantes'}
+                    </h2>
+                    <p className="text-xs text-gray-400">
+                      Configura colores (Tapa Azul/Roja/Verde/Amarillo), tamaños (Garrafa, Litro, Media) y precios oficiales
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomLiquorModal(false)}
+                  className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {customLiquorError && (
+                <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-bold text-center flex-shrink-0">
+                  {customLiquorError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveCustomLiquor} className="space-y-4 overflow-y-auto pr-1 flex-1 scrollbar-thin scrollbar-thumb-white/10">
+                
+                {/* Categoría */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                    Categoría de Licor / Bebida *
+                  </label>
+                  <select
+                    value={customLiquorForm.category}
+                    onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, category: e.target.value })}
+                    className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400 font-bold"
+                  >
+                    <option value="Aguardiente">Aguardientes</option>
+                    <option value="Rones">Rones</option>
+                    <option value="Whiskies">Licores & Whiskies</option>
+                    <option value="Tequilas & Mezcal">Tequilas & Mezcal</option>
+                    <option value="Vodkas">Vodkas</option>
+                    <option value="Ginebras">Ginebras</option>
+                    <option value="Vinos & Champagne">Vinos & Champagne</option>
+                    <option value="Cervezas">Cervezas</option>
+                    <option value="Mezcladores & Bebidas">Mezcladores & Energizantes</option>
+                    <option value="Snacks">Snacks & Confitería</option>
+                  </select>
+                </div>
+
+                {/* Si es Aguardiente: Selector Rápido de Color / Variedad */}
+                {customLiquorForm.category === 'Aguardiente' && (
+                  <div className="space-y-1.5 p-3.5 rounded-2xl bg-white/[0.02] border border-white/10">
+                    <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🎨 Variedad / Color de Tapa de Aguardiente:</span>
+                    </label>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {AGUARDIENTE_COLOR_PRESETS.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleSelectColorPreset(preset)}
+                          className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border ${
+                            customLiquorForm.variantColor === preset.label
+                              ? 'bg-amber-500 text-black border-amber-400 font-black shadow-md'
+                              : 'bg-[#181a24] text-gray-300 border-white/5 hover:border-white/20'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selector Rápido de Tamaño / Presentación */}
+                <div className="space-y-1.5 p-3.5 rounded-2xl bg-white/[0.02] border border-white/10">
+                  <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📏 Tamaño / Presentación:</span>
+                  </label>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {SIZE_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleSelectSizePreset(preset)}
+                        className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer border ${
+                          customLiquorForm.sizeType === preset.id
+                            ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black border-amber-400 font-black shadow-md'
+                            : 'bg-[#181a24] text-gray-300 border-white/5 hover:border-white/20'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Nombre Oficial Generado / Editable */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                    Nombre del Producto en Inventario y Menú *
+                  </label>
+                  <input
+                    type="text"
+                    value={customLiquorForm.name}
+                    onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, name: e.target.value })}
+                    placeholder="Ej: Aguardiente Antioqueño 24° Tapa Azul 750ml"
+                    required
+                    className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400 font-bold"
+                  />
+                </div>
+
+                {/* Precios (Venta Botella, Venta Trago, Costo Proveedor) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-[#141620] border border-white/5">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                      Precio Venta Botella COP *
+                    </label>
+                    <input
+                      type="number"
+                      step="1000"
+                      value={customLiquorForm.salePriceBottle}
+                      onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, salePriceBottle: e.target.value })}
+                      placeholder="Ej: 110000"
+                      required
+                      className="w-full bg-[#0a0c12] border border-amber-500/40 rounded-xl px-3 py-2 text-xs text-amber-400 focus:outline-none focus:border-amber-400 font-mono font-black"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-purple-300 uppercase tracking-wider">
+                      Precio Venta Trago/Shot COP
+                    </label>
+                    <input
+                      type="number"
+                      step="1000"
+                      value={customLiquorForm.salePriceShot}
+                      onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, salePriceShot: e.target.value })}
+                      placeholder="Ej: 11000"
+                      className="w-full bg-[#0a0c12] border border-purple-500/30 rounded-xl px-3 py-2 text-xs text-purple-300 focus:outline-none focus:border-purple-400 font-mono font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                      Costo Compra Proveedor COP
+                    </label>
+                    <input
+                      type="number"
+                      step="1000"
+                      value={customLiquorForm.costPrice}
+                      onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, costPrice: e.target.value })}
+                      placeholder="Ej: 65000"
+                      className="w-full bg-[#0a0c12] border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300 focus:outline-none focus:border-amber-400 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Stock y Alertas */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                      Stock Actual (Botellas/Unid) *
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={customLiquorForm.stockBottles}
+                      onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, stockBottles: e.target.value })}
+                      placeholder="Ej: 12"
+                      required
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-amber-400 font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                      Alerta Stock Mínimo
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={customLiquorForm.minStock}
+                      onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, minStock: e.target.value })}
+                      placeholder="Ej: 3"
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-amber-400 font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                      Proveedor
+                    </label>
+                    <input
+                      type="text"
+                      value={customLiquorForm.supplier}
+                      onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, supplier: e.target.value })}
+                      placeholder="Ej: Distribuidora Licores"
+                      className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+
+                {/* CLAVE DE ADMINISTRADOR OBLIGATORIA */}
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                  <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <KeyRound size={14} className="text-amber-400" />
+                    <span>Autorización: Clave de Administrador *</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={customLiquorForm.adminPassword}
+                    onChange={(e) => setCustomLiquorForm({ ...customLiquorForm, adminPassword: e.target.value })}
+                    placeholder="Ingresa clave del panel para autorizar cambios"
+                    required
+                    className="w-full bg-[#141620] border border-amber-500/40 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
+                  />
+                  <p className="text-[10px] text-gray-400">
+                    🔒 La creación o cambio de precios de licores se sincroniza de forma inmediata con el menú de clientes.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-3 border-t border-white/10 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomLiquorModal(false)}
+                    className="flex-1 py-3 rounded-2xl bg-[#181a24] hover:bg-white/10 text-gray-300 text-xs font-bold uppercase transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-amber-500/10 cursor-pointer"
+                  >
+                    Guardar Licor & Precios
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

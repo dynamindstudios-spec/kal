@@ -97,7 +97,7 @@ export default function FloatingSocialButton() {
                   className="relative group flex items-center justify-center"
                 >
                   {/* Tooltip to the right */}
-                  <span className="absolute left-14 px-3 py-1 rounded-xl bg-black/90 backdrop-blur-md text-xs font-black text-white border border-amber-500/30 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap tracking-wide">
+                  <span className="absolute left-14 px-3 py-1 rounded-xl bg-black/90 backdrop-blur-md text-xs font-black text-white border border-[var(--accent-color)]/40 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap tracking-wide">
                     {item.tooltip}
                   </span>
 
@@ -123,7 +123,7 @@ export default function FloatingSocialButton() {
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-label="Abrir menú de redes y contacto"
-        className="relative group w-14 h-14 rounded-full bg-[#0c0e14]/90 text-[#FFD700] border-2 border-amber-400 shadow-[0_0_25px_rgba(255,215,0,0.55)] hover:shadow-[0_0_35px_rgba(255,215,0,0.85)] flex items-center justify-center cursor-pointer backdrop-blur-lg transition-all"
+        className="relative group w-14 h-14 rounded-full bg-[#0c0e14]/90 text-[var(--accent-color)] border-2 border-[var(--accent-color)] shadow-[0_0_25px_var(--accent-glow)] hover:shadow-[0_0_35px_var(--accent-glow)] flex items-center justify-center cursor-pointer backdrop-blur-lg transition-all"
       >
         <AnimatePresence mode="wait">
           {isOpen ? (
@@ -133,7 +133,7 @@ export default function FloatingSocialButton() {
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: 90, opacity: 0 }}
             >
-              <svg className="w-6 h-6 text-[#FFD700]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-6 h-6 text-[var(--accent-color)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -144,7 +144,7 @@ export default function FloatingSocialButton() {
               initial={{ rotate: 90, opacity: 0 }}
               animate={{ rotate: 0, opacity: 1 }}
               exit={{ rotate: -90, opacity: 0 }}
-              className="flex items-center justify-center text-[#FFD700]"
+              className="flex items-center justify-center text-[var(--accent-color)]"
             >
               <MusicCocktailIcon className="w-6 h-6" />
             </motion.div>
@@ -153,7 +153,7 @@ export default function FloatingSocialButton() {
 
         {/* Pulse indicator */}
         {!isOpen && (
-          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#FFD700] border border-black flex items-center justify-center shadow-md">
+          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[var(--accent-color)] border border-black flex items-center justify-center shadow-md">
             <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
           </span>
         )}

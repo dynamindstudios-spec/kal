@@ -289,6 +289,13 @@ export default function AdminMetrics() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showContingencyReportModal, setShowContingencyReportModal] = useState(false);
 
+  // Void / Cancel Contingency Invoice Modal State
+  const [cancellingInvoice, setCancellingInvoice] = useState(null);
+  const [cancelPasswordInput, setCancelPasswordInput] = useState('');
+  const [cancelReasonInput, setCancelReasonInput] = useState('Error de digitación / carga incorrecta');
+  const [cancelErrorMsg, setCancelErrorMsg] = useState('');
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState('');
+
   // Cash Register Initial Base Float Modal State
   const [showBaseFloatModal, setShowBaseFloatModal] = useState(false);
   const [baseFloatInput, setBaseFloatInput] = useState('200000');
@@ -467,6 +474,34 @@ export default function AdminMetrics() {
       }
     } catch (e) {
       setImportStatusMsg('Error al leer las facturas locales de la Terminal Offline.');
+    }
+  };
+
+  // Anular Factura de Contingencia con Clave de Administrador
+  const handleConfirmCancelInvoice = (e) => {
+    e.preventDefault();
+    if (!cancellingInvoice) return;
+    setCancelErrorMsg('');
+    setCancelSuccessMsg('');
+
+    const res = adminStore.voidContingencyInvoice({
+      invoiceId: cancellingInvoice.id,
+      adminPassword: cancelPasswordInput,
+      reason: cancelReasonInput
+    });
+
+    if (res.success) {
+      setCancelSuccessMsg(res.message);
+      setContingencyInvoices(adminStore.getContingencyInvoicesForDate(selectedDate));
+      setMetrics(adminStore.getMetricsForDate(selectedDate));
+      setCashRegister(adminStore.getCashRegister());
+      setTimeout(() => {
+        setCancellingInvoice(null);
+        setCancelPasswordInput('');
+        setCancelSuccessMsg('');
+      }, 1200);
+    } else {
+      setCancelErrorMsg(res.message || 'Contraseña de administrador incorrecta.');
     }
   };
 
@@ -1481,35 +1516,85 @@ export default function AdminMetrics() {
                   contingencyInvoices.map((inv) => (
                     <div
                       key={inv.id}
-                      className="p-4 rounded-2xl bg-[#181a26] border border-white/10 flex items-start justify-between gap-3 text-xs"
+                      className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs transition-all ${
+                        inv.status === 'cancelled'
+                          ? 'bg-red-950/20 border-red-500/30 opacity-75'
+                          : 'bg-[#181a26] border-white/10 hover:border-amber-500/30'
+                      }`}
                     >
-                      <div className="space-y-1">
+                      <div className="space-y-1.5 flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-black text-xs border border-amber-500/30">
+                          <span className={`px-2.5 py-0.5 rounded-md font-mono font-black text-xs border ${
+                            inv.status === 'cancelled'
+                              ? 'bg-red-500/20 text-red-300 border-red-500/40 line-through'
+                              : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                          }`}>
                             {inv.invoiceNumber}
                           </span>
                           <span className="font-bold text-white text-xs">{inv.tableNumber || 'Barra'}</span>
                           <span className="px-2 py-0.5 rounded bg-white/5 text-[10px] text-gray-300">
                             {inv.paymentMethod || 'Efectivo'}
                           </span>
+                          {inv.status === 'cancelled' && (
+                            <span className="px-2.5 py-0.5 rounded-full bg-red-600/30 text-red-400 font-black text-[10px] uppercase tracking-wider border border-red-500/50 flex items-center gap-1">
+                              <span>🔴 ANULADA</span>
+                            </span>
+                          )}
                         </div>
+
+                        {/* Detalle de Artículos */}
+                        {inv.items && inv.items.length > 0 && (
+                          <div className="text-[11px] text-amber-300/80 font-mono flex items-center gap-1 flex-wrap">
+                            <span className="text-gray-400">📦 Artículos:</span>
+                            <span>{inv.items.map(i => `${i.quantity}x ${i.name}`).join(' • ')}</span>
+                          </div>
+                        )}
+
                         {inv.notes && (
                           <p className="text-gray-400 text-[11px] italic">
                             Motivo / Detalle: "{inv.notes}"
                           </p>
                         )}
+
+                        {inv.status === 'cancelled' && inv.cancellationReason && (
+                          <p className="text-red-400 text-[11px] font-medium">
+                            ⚠️ Motivo anulación: "{inv.cancellationReason}" ({inv.cancelledAt ? new Date(inv.cancelledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''})
+                          </p>
+                        )}
+
                         <p className="text-[10px] text-gray-500">
-                          Registrado por: {inv.cashierName || '👑 admin'}
+                          Registrado por: {inv.sellerName || inv.cashierName || '👑 admin'}
                         </p>
                       </div>
 
-                      <div className="text-right space-y-0.5 shrink-0">
-                        <span className="font-mono font-black text-amber-400 text-sm block">
-                          ${Number(inv.totalCOP).toLocaleString('es-CO')}
-                        </span>
-                        <span className="text-[10px] text-gray-400 font-mono">
-                          {new Date(inv.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                      <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                        <div className="text-right space-y-0.5">
+                          <span className={`font-mono font-black text-sm block ${
+                            inv.status === 'cancelled' ? 'text-gray-500 line-through' : 'text-amber-400'
+                          }`}>
+                            ${Number(inv.totalCOP).toLocaleString('es-CO')}
+                          </span>
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {new Date(inv.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+
+                        {inv.status !== 'cancelled' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCancellingInvoice(inv);
+                              setCancelPasswordInput('');
+                              setCancelErrorMsg('');
+                              setCancelSuccessMsg('');
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/30 border border-red-500/40 text-red-400 hover:text-red-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                            title="Anular factura y devolver artículos al inventario"
+                          >
+                            <X size={13} />
+                            <span>Anular Factura</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))
@@ -1534,6 +1619,113 @@ export default function AdminMetrics() {
                   <span>Imprimir Reporte Contingencias</span>
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* MODAL: CONFIRMAR ANULACIÓN DE FACTURA DE CONTINGENCIA   */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {cancellingInvoice && (
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md font-sans">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              className="w-full max-w-md bg-[#121420] border border-red-500/40 text-white rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400">
+                    <ShieldAlert size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-black uppercase text-white tracking-wide">
+                      Anular Factura #{cancellingInvoice.invoiceNumber}
+                    </h2>
+                    <p className="text-xs text-gray-400">Reintegro automático de stock y ajuste en caja</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCancellingInvoice(null)}
+                  className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-red-950/30 border border-red-500/30 text-xs text-red-200 space-y-1.5">
+                <p className="font-bold flex items-center gap-1.5 text-red-300">
+                  <AlertCircle size={14} />
+                  <span>Consecuencias de la anulación:</span>
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[11px] text-gray-300">
+                  <li>Los artículos restados ({cancellingInvoice.items?.length || 0} ítems) se <strong>sumarán nuevamente al stock de inventario</strong>.</li>
+                  <li>El monto de <strong>${Number(cancellingInvoice.totalCOP).toLocaleString('es-CO')} COP</strong> se descontará de los ingresos y del arqueo de caja.</li>
+                </ul>
+              </div>
+
+              {cancelErrorMsg && (
+                <div className="p-3 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs font-bold text-center">
+                  {cancelErrorMsg}
+                </div>
+              )}
+
+              {cancelSuccessMsg && (
+                <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center">
+                  {cancelSuccessMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleConfirmCancelInvoice} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                    Motivo de la Anulación *
+                  </label>
+                  <input
+                    type="text"
+                    value={cancelReasonInput}
+                    onChange={(e) => setCancelReasonInput(e.target.value)}
+                    required
+                    placeholder="Ej: Factura subida por error / talonario repetido"
+                    className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-400"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Key size={13} className="text-red-400" />
+                    <span>Clave de Administrador Requerida *</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={cancelPasswordInput}
+                    onChange={(e) => setCancelPasswordInput(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="w-full bg-[#181a24] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-400 font-mono text-center tracking-widest text-base"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-2 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setCancellingInvoice(null)}
+                    className="flex-1 py-3 rounded-2xl bg-[#181a24] hover:bg-white/10 text-gray-300 text-xs font-bold uppercase transition-all cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-red-600/30 cursor-pointer"
+                  >
+                    Confirmar Anulación
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

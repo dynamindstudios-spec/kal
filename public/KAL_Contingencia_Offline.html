@@ -21,7 +21,35 @@
       --font: 'Outfit', sans-serif;
       --mono: 'JetBrains Mono', monospace;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 204, 0, 0.4) rgba(17, 19, 30, 0.8);
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(13, 15, 24, 0.6);
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #ffcc00, #b28f00);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 204, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ffe066;
+      box-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
+    }
+    ::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
+    }
     body {
       background-color: var(--bg);
       color: var(--text);
@@ -153,26 +181,26 @@
       gap: 6px;
       flex-wrap: wrap;
     }
-    .chip {
+    .amount-btn {
       background: var(--card-alt);
       border: 1px solid var(--border);
-      color: var(--text-dim);
-      padding: 5px 10px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
+      color: var(--gold);
       font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.15s;
     }
-    .chip:hover {
+    .amount-btn:hover {
       border-color: var(--gold);
-      color: var(--gold);
+      background: rgba(255, 204, 0, 0.1);
     }
-
-    /* Product catalog grid */
+    
+    /* PRODUCT CATALOG SELECTOR */
     .catalog-box {
-      background: #0d0f18;
+      background: rgba(0, 0, 0, 0.25);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 12px;
@@ -180,121 +208,190 @@
       flex-direction: column;
       gap: 10px;
     }
-    .catalog-title {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .search-input {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      width: 100%;
     }
     .prod-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 6px;
-      max-height: 170px;
+      gap: 8px;
+      max-height: 240px;
       overflow-y: auto;
       padding-right: 4px;
     }
     .prod-btn {
       background: var(--card-alt);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 10px;
-      padding: 7px 8px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 10px;
       text-align: left;
       cursor: pointer;
-      transition: all 0.15s;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      justify-content: space-between;
+      gap: 4px;
+      transition: all 0.15s ease;
+      user-select: none;
     }
     .prod-btn:hover {
       border-color: var(--gold);
       background: rgba(255, 204, 0, 0.08);
+      transform: translateY(-1px);
     }
     .prod-name {
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 700;
       color: #fff;
-      white-space: nowrap;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
     .prod-price {
-      font-size: 10px;
-      font-family: var(--mono);
-      color: var(--gold);
+      font-size: 11px;
       font-weight: 800;
+      color: var(--gold);
+      font-family: var(--mono);
     }
+
+    /* SELECTED ITEMS LIST */
     .selected-items-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 120px;
+      max-height: 190px;
       overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 8px;
     }
-    .item-tag {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
-      padding: 5px 10px;
+    .item-chip {
+      background: #141724;
+      border: 1px solid rgba(255, 204, 0, 0.35);
+      border-radius: 12px;
+      padding: 7px 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 11px;
+      gap: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
-    .item-tag-qty {
+    .item-chip-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+    .item-chip-title span:first-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item-chip-price {
+      color: var(--gold);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .item-controls {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
+      flex-shrink: 0;
     }
-    .btn-circle {
-      width: 20px;
-      height: 20px;
-      border-radius: 6px;
-      background: var(--card-alt);
-      border: 1px solid var(--border);
+    .qty-btn {
+      background: #1c2030;
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-weight: 800;
+      font-size: 13px;
       cursor: pointer;
+      transition: all 0.15s;
+    }
+    .qty-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: #252b40;
+    }
+    .qty-number {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--gold);
+      min-width: 18px;
+      text-align: center;
+    }
+    .del-btn {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-left: 2px;
+    }
+    .del-btn:hover {
+      background: #ef4444;
+      color: #fff;
     }
 
     .btn-submit {
-      background: linear-gradient(135deg, #ffcc00, #e5b842);
+      background: linear-gradient(135deg, #ffcc00, #ffaa00);
       color: #000;
-      border: none;
       font-family: var(--font);
       font-size: 13px;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 13px;
+      padding: 14px;
       border-radius: 16px;
+      border: none;
       cursor: pointer;
       transition: all 0.2s;
-      box-shadow: 0 4px 14px rgba(255, 204, 0, 0.2);
+      box-shadow: 0 4px 14px rgba(255, 204, 0, 0.25);
+      margin-top: 4px;
     }
     .btn-submit:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(255, 204, 0, 0.3);
+      box-shadow: 0 6px 20px rgba(255, 204, 0, 0.4);
     }
     .counter-card {
-      background: linear-gradient(135deg, #131726, #181d33);
+      background: var(--card-alt);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 14px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .counter-val {
       font-family: var(--mono);
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 18px;
+      font-weight: 900;
       color: var(--gold);
     }
     .list {
@@ -305,107 +402,91 @@
       overflow-y: auto;
       padding-right: 4px;
     }
-    .item-card {
+    .invoice-card {
       background: var(--card-alt);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color 0.2s;
+    }
+    .invoice-card:hover {
+      border-color: rgba(255, 204, 0, 0.4);
+    }
+    .inv-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
     }
-    .item-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-    .item-num {
+    .inv-num {
       font-family: var(--mono);
-      font-size: 12px;
       font-weight: 800;
+      font-size: 13px;
       color: #fff;
     }
-    .item-meta {
-      font-size: 10px;
-      color: var(--text-dim);
-    }
-    .item-items-text {
-      font-size: 10px;
-      color: #a78bfa;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 180px;
-    }
-    .item-amount {
+    .inv-total {
       font-family: var(--mono);
-      font-size: 13px;
       font-weight: 800;
-      color: var(--green);
-      white-space: nowrap;
+      font-size: 13px;
+      color: var(--gold);
     }
-    .btn-del {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: var(--red);
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      cursor: pointer;
+    .inv-sub {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-dim);
     }
     .actions {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: auto;
+      margin-top: 6px;
     }
     .btn-sync {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: var(--green);
+      background: #10b981;
+      color: #fff;
+      font-family: var(--font);
       font-size: 12px;
       font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       padding: 12px;
       border-radius: 14px;
+      border: none;
       cursor: pointer;
-      text-transform: uppercase;
+      transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      transition: all 0.2s;
     }
     .btn-sync:hover {
-      background: rgba(16, 185, 129, 0.25);
+      background: #059669;
     }
     .btn-secondary {
       background: var(--card-alt);
       border: 1px solid var(--border);
-      color: var(--text);
-      font-size: 11px;
+      color: #fff;
+      font-family: var(--font);
+      font-size: 11.5px;
       font-weight: 700;
       padding: 10px;
       border-radius: 12px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
+      transition: all 0.2s;
+      text-align: center;
     }
     .btn-secondary:hover {
-      border-color: #fff;
+      border-color: var(--gold);
+      color: var(--gold);
     }
     .btn-reset {
-      width: 100%;
-      background: rgba(239, 68, 68, 0.12);
-      border: 1px solid rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
       color: #fca5a5;
+      font-family: var(--font);
       font-size: 11px;
       font-weight: 800;
       padding: 10px;
@@ -428,6 +509,11 @@
       background: rgba(16, 185, 129, 0.15);
       border: 1px solid rgba(16, 185, 129, 0.3);
       color: #6ee7b7;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      display: none;
     }
     .alert-error {
       background: rgba(239, 68, 68, 0.15);
@@ -438,20 +524,20 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.8);
-      backdrop-filter: blur(4px);
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(6px);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 1000;
       padding: 16px;
     }
     .modal-card {
       background: #141724;
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
-      max-width: 380px;
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 400px;
       width: 100%;
       display: flex;
       flex-direction: column;
@@ -470,10 +556,15 @@
         <div class="icon-box">⚡</div>
         <div>
           <h1>KAL DISCOBAR • Facturación de Contingencia Offline POS</h1>
-          <p>Terminal Autónomo de Facturas Físicas & Resta Automática de Inventario</p>
+          <p style="font-size: 12px; color: var(--text-dim);">Terminal Autónomo de Facturas Físicas & Resta Automática de Inventario</p>
         </div>
       </div>
-      <div class="badge">🔴 MODO OFFLINE ACTIVO</div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn-secondary" onclick="openCatalogEditorModal()" style="padding: 8px 14px; font-size: 11.5px; font-weight: 800; border-color: rgba(255,204,0,0.4); color: var(--gold); background: rgba(255,204,0,0.08);">
+          ✏️ Editar Menú & Precios
+        </button>
+        <div class="badge">🔴 MODO OFFLINE ACTIVO</div>
+      </div>
     </div>
 
     <!-- MAIN GRID -->
@@ -506,11 +597,6 @@
 
             <!-- Search Bar -->
             <input type="text" id="catalogSearch" class="search-input" placeholder="🔍 Buscar por nombre (Ej: Amarillo, Corona, Old Parr, Red Bull)..." oninput="renderProductGrid()">
-
-            <!-- Category Pills -->
-            <div class="cat-scroll" id="categoryPills">
-              <!-- Rendered dynamically -->
-            </div>
 
             <!-- Product Grid -->
             <div class="prod-grid" id="productGrid">
@@ -606,7 +692,7 @@
 
         <div class="actions">
           <button type="button" class="btn-sync" onclick="handleSyncDashboard()">
-            <span>⚡ Sincronizar con Dashboard</span>
+            <span>⚡ Sincronizar con Dashboard & Menú</span>
           </button>
           <div class="row-2">
             <button type="button" class="btn-secondary" onclick="handleExportTxt()">
@@ -626,6 +712,95 @@
 
   </div>
 
+  <!-- MODAL: EDITOR DE MENÚ & PRECIOS DE CONTINGENCIA -->
+  <div id="catalogEditorModal" class="modal-backdrop" style="align-items: flex-start; overflow-y: auto; padding: 24px 16px;">
+    <div class="modal-card" style="max-width: 820px; text-align: left; max-height: 90vh; display: flex; flex-direction: column; gap: 14px;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <div>
+          <h2 style="font-size: 16px; font-weight: 900; color: var(--gold); text-transform: uppercase;">✏️ Editar Menú & Precios de Contingencia</h2>
+          <p style="font-size: 11.5px; color: var(--text-dim);">Ajusta los precios de venta, agrega productos o importa el catálogo del Dashboard</p>
+        </div>
+        <button type="button" onclick="closeCatalogEditorModal()" style="background: rgba(255,255,255,0.08); border: none; color: #fff; width: 32px; height: 32px; border-radius: 10px; font-size: 16px; cursor: pointer;">✕</button>
+      </div>
+
+      <!-- Action buttons inside modal -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" class="btn-secondary" onclick="toggleAddProductForm()" style="font-size: 11px; padding: 8px 12px; background: rgba(255,204,0,0.1); border-color: rgba(255,204,0,0.3); color: var(--gold);">
+          ➕ Agregar Nuevo Producto
+        </button>
+        <button type="button" class="btn-secondary" onclick="toggleImportJsonBox()" style="font-size: 11px; padding: 8px 12px; border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7;">
+          📥 Importar Catálogo JSON
+        </button>
+        <button type="button" class="btn-secondary" onclick="handleExportCurrentCatalogJson()" style="font-size: 11px; padding: 8px 12px;">
+          📋 Copiar Catálogo
+        </button>
+        <button type="button" class="btn-secondary" onclick="handleResetDefaultCatalog()" style="font-size: 11px; padding: 8px 12px; color: #fca5a5; border-color: rgba(239,68,68,0.3);">
+          🔄 Restablecer a Precios Oficiales
+        </button>
+      </div>
+
+      <!-- Add Product Inline Form (Hidden by default) -->
+      <div id="addProductFormBox" style="display: none; background: rgba(0,0,0,0.35); border: 1px solid var(--border); border-radius: 14px; padding: 12px; gap: 10px; flex-direction: column;">
+        <div style="font-size: 12px; font-weight: 800; color: var(--gold);">➕ Crear Nuevo Producto para Facturación Offline</div>
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 8px;">
+          <input type="text" id="newProdName" placeholder="Nombre (Ej: Aguardiente Tapa Verde 750ml)" style="font-size: 11px; padding: 8px;">
+          <input type="text" id="newProdCat" placeholder="Categoría (Ej: Aguardiente)" style="font-size: 11px; padding: 8px;">
+          <input type="number" id="newProdPrice" placeholder="Precio COP *" style="font-size: 11px; padding: 8px; color: var(--gold); font-weight: bold;">
+          <select id="newProdType" style="font-size: 11px; padding: 8px;">
+            <option value="bottle_and_shots">Botella / Trago</option>
+            <option value="unit">Unidad / Cerveza</option>
+            <option value="shot">Shot Individual</option>
+          </select>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn-secondary" onclick="toggleAddProductForm()" style="font-size: 11px; padding: 6px 12px;">Cancelar</button>
+          <button type="button" class="btn-submit" onclick="handleSaveNewCustomProduct()" style="font-size: 11px; padding: 6px 14px; margin: 0;">Guardar Producto</button>
+        </div>
+      </div>
+
+      <!-- Import JSON Box (Hidden by default) -->
+      <div id="importJsonBox" style="display: none; background: rgba(0,0,0,0.35); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 14px; padding: 12px; gap: 10px; flex-direction: column;">
+        <div style="font-size: 12px; font-weight: 800; color: #6ee7b7;">📥 Pegar Catálogo JSON Exportado del Panel Admin</div>
+        <textarea id="importJsonTextarea" rows="4" placeholder='Pega aquí el texto JSON copiado del botón "Exportar Catálogo" del panel admin...' style="font-size: 11px; font-family: var(--mono); width: 100%;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" class="btn-secondary" onclick="toggleImportJsonBox()" style="font-size: 11px; padding: 6px 12px;">Cancelar</button>
+          <button type="button" class="btn-sync" onclick="handleApplyImportedJson()" style="font-size: 11px; padding: 6px 14px;">⚡ Aplicar y Actualizar Precios</button>
+        </div>
+      </div>
+
+      <!-- Search in editor -->
+      <input type="text" id="editorSearchInput" placeholder="🔍 Filtrar producto por nombre para editar precio..." class="search-input" oninput="renderEditorProductsTable()">
+
+      <!-- Products table in editor -->
+      <div style="flex: 1; overflow-y: auto; max-height: 380px; border: 1px solid var(--border); border-radius: 14px; background: rgba(0,0,0,0.25);">
+        <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text-dim); text-transform: uppercase;">
+              <th style="padding: 10px; text-align: left;">Producto</th>
+              <th style="padding: 10px; text-align: left;">Categoría</th>
+              <th style="padding: 10px; text-align: right; width: 150px;">Precio COP ($)</th>
+              <th style="padding: 10px; text-align: center; width: 60px;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="editorTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Save Button -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px;">
+        <span id="editorFeedbackMsg" style="font-size: 11px; font-weight: 700; color: #10b981;"></span>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn-secondary" onclick="closeCatalogEditorModal()">Cerrar</button>
+          <button type="button" class="btn-submit" onclick="handleSaveAllEditorPrices()" style="background: var(--gold); color: #000; margin: 0; padding: 10px 18px;">💾 Guardar Todos los Precios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL DE CONFIRMACIÓN PARA LIMPIAR COLA -->
   <div id="resetModal" class="modal-backdrop">
     <div class="modal-card">
@@ -641,185 +816,229 @@
 
   <script>
     const STORAGE_KEY = 'kal_admin_contingency_invoices';
+    const CUSTOM_CATALOG_KEY = 'kal_admin_contingency_custom_catalog';
 
-    // MASTER CATALOG COMPLETO DE KAL DISCOBAR
-    const MASTER_CATALOG = [
-      // AGUARDIENTES & RONES
-      { id: 'garrafa-antioqueno-azul', name: 'Garrafa Antioqueño Azul 1.75L', cat: 'Aguardientes', price: 210000, type: 'bottle' },
-      { id: 'botella-antioqueno-azul', name: 'Botella Antioqueño Azul 750ml', cat: 'Aguardientes', price: 110000, type: 'bottle' },
-      { id: 'media-antioqueno-azul', name: 'Media Antioqueño Azul 375ml', cat: 'Aguardientes', price: 75000, type: 'bottle' },
-      { id: 'caneca-antioqueno-azul', name: 'Caneca Antioqueño Azul 375ml', cat: 'Aguardientes', price: 55000, type: 'bottle' },
-      
-      { id: 'garrafa-antioqueno-rojo', name: 'Garrafa Antioqueño Rojo 1.75L', cat: 'Aguardientes', price: 200000, type: 'bottle' },
-      { id: 'botella-antioqueno-rojo', name: 'Botella Antioqueño Rojo 750ml', cat: 'Aguardientes', price: 105000, type: 'bottle' },
-      { id: 'media-antioqueno-rojo', name: 'Media Antioqueño Rojo 375ml', cat: 'Aguardientes', price: 70000, type: 'bottle' },
+    // MASTER CATALOG COMPLETO DE KAL DISCOBAR (100% Sincronizado con INITIAL_INVENTORY de la página)
+    const BASE_MASTER_CATALOG = [
+      // 1. GARRAFAS (1.75L / 2L)
+      { id: 'inv-garrafa-antioqueno-azul', name: 'Garrafa Aguardiente Antioqueño Azul 1.75L', cat: 'Garrafas & Litros', price: 210000, type: 'bottle_and_shots', unit: 'Garrafa 1.75L' },
+      { id: 'inv-garrafa-amarillo', name: 'Garrafa Aguardiente Amarillo de Manzanares 1.75L', cat: 'Garrafas & Litros', price: 240000, type: 'bottle_and_shots', unit: 'Garrafa 1.75L' },
+      { id: 'inv-garrafa-caldas-8', name: 'Garrafa Ron Viejo de Caldas 8 Años 1.75L', cat: 'Garrafas & Litros', price: 270000, type: 'bottle_and_shots', unit: 'Garrafa 1.75L' },
+      { id: 'inv-garrafa-ron-medellin', name: 'Garrafa Ron Medellín Añejo 1.75L', cat: 'Garrafas & Litros', price: 230000, type: 'bottle_and_shots', unit: 'Garrafa 1.75L' },
+      { id: 'inv-garrafa-oldparr-12', name: 'Garrafa Whisky Grand Old Parr 12 Años 2L', cat: 'Garrafas & Litros', price: 490000, type: 'bottle_and_shots', unit: 'Garrafa 2L' },
+      { id: 'inv-garrafa-buchanans-12', name: "Garrafa Whisky Buchanan's De Luxe 12 Años 2L", cat: 'Garrafas & Litros', price: 540000, type: 'bottle_and_shots', unit: 'Garrafa 2L' },
+      { id: 'inv-garrafa-tequila-cuervo-rep', name: 'Garrafa Tequila Jose Cuervo Especial Reposado 1.75L', cat: 'Garrafas & Litros', price: 340000, type: 'bottle_and_shots', unit: 'Garrafa 1.75L' },
+      { id: 'inv-garrafa-vodka-absolut', name: 'Garrafa Vodka Absolut Original 1.75L', cat: 'Garrafas & Litros', price: 330000, type: 'bottle_and_shots', unit: 'Garrafa 1.75L' },
 
-      { id: 'garrafa-amarillo', name: 'Garrafa Amarillo Manzanares 1.75L', cat: 'Aguardientes', price: 240000, type: 'bottle' },
-      { id: 'botella-amarillo', name: 'Botella Amarillo Manzanares 750ml', cat: 'Aguardientes', price: 120000, type: 'bottle' },
-      { id: 'media-amarillo', name: 'Media Amarillo Manzanares 375ml', cat: 'Aguardientes', price: 80000, type: 'bottle' },
-      { id: 'caneca-amarillo', name: 'Caneca Amarillo Manzanares 375ml', cat: 'Aguardientes', price: 60000, type: 'bottle' },
+      // 2. LITROS (1.000ml)
+      { id: 'inv-litro-antioqueno-azul', name: 'Litro Aguardiente Antioqueño Azul 1000ml', cat: 'Garrafas & Litros', price: 135000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-antioqueno-rojo', name: 'Litro Aguardiente Antioqueño Rojo 1000ml', cat: 'Garrafas & Litros', price: 135000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-amarillo-1000', name: 'Litro Aguardiente Amarillo de Manzanares 1000ml', cat: 'Garrafas & Litros', price: 155000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-caldas-3', name: 'Litro Ron Viejo de Caldas Tradicional 1000ml', cat: 'Garrafas & Litros', price: 140000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-medellin-3', name: 'Litro Ron Medellín Añejo 3 Años 1000ml', cat: 'Garrafas & Litros', price: 138000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-oldparr-1000', name: 'Litro Whisky Grand Old Parr 12 Años 1000ml', cat: 'Garrafas & Litros', price: 290000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-buchanans-1000', name: "Litro Whisky Buchanan's 12 Años 1000ml", cat: 'Garrafas & Litros', price: 320000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-jw-black-1000', name: 'Litro Johnnie Walker Black Label 1000ml', cat: 'Garrafas & Litros', price: 310000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
+      { id: 'inv-litro-jagermeister', name: 'Litro Licor de Hierbas Jägermeister 1000ml', cat: 'Garrafas & Litros', price: 240000, type: 'bottle_and_shots', unit: 'Litro 1000ml' },
 
-      { id: 'botella-nectar-rojo', name: 'Botella Néctar Tradicional 750ml', cat: 'Aguardientes', price: 105000, type: 'bottle' },
-      { id: 'media-nectar-rojo', name: 'Media Néctar Tradicional 375ml', cat: 'Aguardientes', price: 68000, type: 'bottle' },
-      { id: 'botella-nectar-verde', name: 'Botella Néctar Verde Sin Azúcar 750ml', cat: 'Aguardientes', price: 110000, type: 'bottle' },
+      // 3. BOTELLAS ESTÁNDAR (750ml / 700ml)
+      { id: 'inv-aguardiente-antioqueno-azul', name: 'Aguardiente Antioqueño 24° Tapa Azul 750ml', cat: 'Aguardiente', price: 110000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-aguardiente-antioqueno-rojo', name: 'Aguardiente Antioqueño 29° Tapa Roja 750ml', cat: 'Aguardiente', price: 110000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-aguardiente-antioqueno-verde', name: 'Aguardiente Antioqueño Real 24° Tapa Verde 750ml', cat: 'Aguardiente', price: 135000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-aguardiente-amarillo-750', name: 'Aguardiente Amarillo de Manzanares 750ml', cat: 'Aguardiente', price: 125000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-aguardiente-nectar-club', name: 'Aguardiente Néctar Club Sin Azúcar 750ml', cat: 'Aguardiente', price: 105000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-ron-caldas-3', name: 'Ron Viejo de Caldas 3 Años 750ml', cat: 'Rones', price: 115000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-ron-caldas-8-750', name: 'Ron Viejo de Caldas Juan de la Cruz 8 Años 750ml', cat: 'Rones', price: 145000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-ron-medellin-3', name: 'Ron Medellín Añejo 3 Años 750ml', cat: 'Rones', price: 110000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-ron-medellin-8', name: 'Ron Medellín Extra Añejo 8 Años 750ml', cat: 'Rones', price: 140000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-ron-zacapa-23', name: 'Ron Zacapa Centenario 23 Solera 750ml', cat: 'Rones', price: 360000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-ron-hechicera', name: 'Ron La Hechicera Solera 21 Reserva 700ml', cat: 'Rones', price: 295000, type: 'bottle_and_shots', unit: 'Botella 700ml' },
+      { id: 'inv-whisky-oldparr-750', name: 'Whisky Grand Old Parr 12 Años 750ml', cat: 'Licores & Whiskies', price: 225000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-oldparr-18', name: 'Whisky Grand Old Parr Superior 18 Años 750ml', cat: 'Licores & Whiskies', price: 420000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-buchanans-12-750', name: "Whisky Buchanan's De Luxe 12 Años 750ml", cat: 'Licores & Whiskies', price: 245000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-buchanans-master', name: "Whisky Buchanan's Master Edition 750ml", cat: 'Licores & Whiskies', price: 295000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-jw-black-750', name: 'Whisky Johnnie Walker Black Label 12 Años 750ml', cat: 'Licores & Whiskies', price: 235000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-jw-gold', name: 'Whisky Johnnie Walker Gold Label Reserve 750ml', cat: 'Licores & Whiskies', price: 340000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-jw-blue', name: 'Whisky Johnnie Walker Blue Label Icono VIP 750ml', cat: 'Licores & Whiskies', price: 1250000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-chivas-12', name: 'Whisky Chivas Regal 12 Años 750ml', cat: 'Licores & Whiskies', price: 220000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-chivas-18', name: 'Whisky Chivas Regal Gold Signature 18 Años 750ml', cat: 'Licores & Whiskies', price: 410000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-whisky-jackdaniels', name: "Whiskey Jack Daniel's Old No. 7 Tennessee 700ml", cat: 'Licores & Whiskies', price: 215000, type: 'bottle_and_shots', unit: 'Botella 700ml' },
+      { id: 'inv-tequila-don-julio-blanco-700', name: 'Tequila Don Julio Blanco 100% Agave 700ml', cat: 'Tequilas & Mezcal', price: 320000, type: 'bottle_and_shots', unit: 'Botella 700ml' },
+      { id: 'inv-tequila-don-julio-rep-700', name: 'Tequila Don Julio Reposado 700ml', cat: 'Tequilas & Mezcal', price: 360000, type: 'bottle_and_shots', unit: 'Botella 700ml' },
+      { id: 'inv-tequila-don-julio-70-700', name: 'Tequila Don Julio 70 Cristalino Añejo 700ml', cat: 'Tequilas & Mezcal', price: 480000, type: 'bottle_and_shots', unit: 'Botella 700ml' },
+      { id: 'inv-tequila-don-julio-1942', name: 'Tequila Don Julio 1942 Edición Icónica VIP 750ml', cat: 'Tequilas & Mezcal', price: 1650000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-tequila-1800-cristalino-750', name: 'Tequila 1800 Cristalino Añejo Diamante 750ml', cat: 'Tequilas & Mezcal', price: 370000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-tequila-herradura-rep', name: 'Tequila Herradura Reposado Original 700ml', cat: 'Tequilas & Mezcal', price: 290000, type: 'bottle_and_shots', unit: 'Botella 700ml' },
+      { id: 'inv-tequila-jose-cuervo-750', name: 'Tequila Jose Cuervo Especial Reposado 750ml', cat: 'Tequilas & Mezcal', price: 180000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-vodka-absolut-700', name: 'Vodka Absolut Original Suecia 700ml', cat: 'Vodkas', price: 175000, type: 'bottle_and_shots', unit: 'Botella 700ml' },
+      { id: 'inv-vodka-grey-goose-750', name: 'Vodka Grey Goose Premium Francia 750ml', cat: 'Vodkas', price: 310000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-gin-hendricks-750', name: "Ginebra Hendrick's Escocia con Pepino y Rosa 750ml", cat: 'Ginebras', price: 330000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-gin-tanqueray-750', name: 'Ginebra Tanqueray London Dry 750ml', cat: 'Ginebras', price: 215000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
+      { id: 'inv-gin-bombay-750', name: 'Ginebra Bombay Sapphire Distilled 750ml', cat: 'Ginebras', price: 220000, type: 'bottle_and_shots', unit: 'Botella 750ml' },
 
-      { id: 'garrafa-caldas-3', name: 'Garrafa Ron Caldas 3 Años 1.75L', cat: 'Rones', price: 240000, type: 'bottle' },
-      { id: 'botella-caldas-3', name: 'Botella Ron Caldas 3 Años 750ml', cat: 'Rones', price: 125000, type: 'bottle' },
-      { id: 'media-caldas-3', name: 'Media Ron Caldas 3 Años 375ml', cat: 'Rones', price: 85000, type: 'bottle' },
-      { id: 'caneca-caldas-3', name: 'Caneca Ron Caldas 3 Años 375ml', cat: 'Rones', price: 62000, type: 'bottle' },
-      { id: 'botella-caldas-5', name: 'Botella Ron Caldas 5 Años 750ml', cat: 'Rones', price: 145000, type: 'bottle' },
-      { id: 'garrafa-caldas-8', name: 'Garrafa Ron Caldas 8 Años 1.75L', cat: 'Rones', price: 270000, type: 'bottle' },
-      { id: 'botella-caldas-8', name: 'Botella Ron Caldas 8 Años 750ml', cat: 'Rones', price: 175000, type: 'bottle' },
-      { id: 'media-caldas-8', name: 'Media Ron Caldas 8 Años 375ml', cat: 'Rones', price: 115000, type: 'bottle' },
-      { id: 'botella-caldas-leon', name: 'Botella Ron Caldas León Dormido 750ml', cat: 'Rones', price: 280000, type: 'bottle' },
+      // 4. MEDIAS BOTELLAS (500ml / 375ml)
+      { id: 'inv-media-antioqueno-azul', name: 'Media Aguardiente Antioqueño Azul 375ml', cat: 'Medias & Canecas', price: 62000, type: 'bottle_and_shots', unit: 'Media 375ml' },
+      { id: 'inv-media-antioqueno-rojo', name: 'Media Aguardiente Antioqueño Rojo 375ml', cat: 'Medias & Canecas', price: 62000, type: 'bottle_and_shots', unit: 'Media 375ml' },
+      { id: 'inv-media-amarillo-375', name: 'Media Aguardiente Amarillo de Manzanares 375ml', cat: 'Medias & Canecas', price: 68000, type: 'bottle_and_shots', unit: 'Media 375ml' },
+      { id: 'inv-media-caldas-3', name: 'Media Ron Viejo de Caldas 3 Años 375ml', cat: 'Medias & Canecas', price: 65000, type: 'bottle_and_shots', unit: 'Media 375ml' },
+      { id: 'inv-media-medellin-3', name: 'Media Ron Medellín Añejo 3 Años 375ml', cat: 'Medias & Canecas', price: 64000, type: 'bottle_and_shots', unit: 'Media 375ml' },
+      { id: 'inv-media-oldparr-375', name: 'Media Whisky Grand Old Parr 12 Años 375ml', cat: 'Medias & Canecas', price: 135000, type: 'bottle_and_shots', unit: 'Media 375ml' },
+      { id: 'inv-media-buchanans-375', name: "Media Whisky Buchanan's 12 Años 375ml", cat: 'Medias & Canecas', price: 145000, type: 'bottle_and_shots', unit: 'Media 375ml' },
 
-      { id: 'garrafa-medellin', name: 'Garrafa Ron Medellín 3 Años 1.75L', cat: 'Rones', price: 250000, type: 'bottle' },
-      { id: 'botella-medellin', name: 'Botella Ron Medellín 3 Años 750ml', cat: 'Rones', price: 115000, type: 'bottle' },
-      { id: 'media-medellin', name: 'Media Ron Medellín 3 Años 375ml', cat: 'Rones', price: 78000, type: 'bottle' },
-      { id: 'botella-zacapa-23', name: 'Botella Ron Zacapa Centenario 23 750ml', cat: 'Rones', price: 390000, type: 'bottle' },
+      // 5. 1/4 CANECAS / PETACAS (375ml / 250ml)
+      { id: 'inv-caneca-antioqueno-azul', name: '1/4 Caneca Aguardiente Antioqueño Azul 375ml', cat: 'Medias & Canecas', price: 52000, type: 'bottle_and_shots', unit: '1/4 Caneca 375ml' },
+      { id: 'inv-caneca-antioqueno-rojo', name: '1/4 Caneca Aguardiente Antioqueño Rojo 375ml', cat: 'Medias & Canecas', price: 52000, type: 'bottle_and_shots', unit: '1/4 Caneca 375ml' },
+      { id: 'inv-caneca-amarillo-375', name: '1/4 Caneca Aguardiente Amarillo de Manzanares 375ml', cat: 'Medias & Canecas', price: 58000, type: 'bottle_and_shots', unit: '1/4 Caneca 375ml' },
+      { id: 'inv-caneca-caldas-3', name: '1/4 Caneca Ron Viejo de Caldas 3 Años 375ml', cat: 'Medias & Canecas', price: 55000, type: 'bottle_and_shots', unit: '1/4 Caneca 375ml' },
+      { id: 'inv-caneca-medellin-3', name: '1/4 Caneca Ron Medellín Añejo 3 Años 375ml', cat: 'Medias & Canecas', price: 54000, type: 'bottle_and_shots', unit: '1/4 Caneca 375ml' },
 
-      // WHISKIES
-      { id: 'garrafa-old-parr-12', name: 'Garrafa Whisky Old Parr 12 Magnum 1.75L', cat: 'Whiskies', price: 590000, type: 'bottle' },
-      { id: 'botella-old-parr-12', name: 'Botella Whisky Old Parr 12 Años 750ml', cat: 'Whiskies', price: 220000, type: 'bottle' },
-      { id: 'media-old-parr-12', name: 'Media Whisky Old Parr 12 Años 375ml', cat: 'Whiskies', price: 135000, type: 'bottle' },
-      { id: 'botella-old-parr-18', name: 'Botella Whisky Old Parr 18 Años 750ml', cat: 'Whiskies', price: 380000, type: 'bottle' },
+      // 6. CERVEZAS NACIONALES & IMPORTADAS (UNIDADES)
+      { id: 'inv-beer-corona-355', name: 'Cerveza Corona Extra 355ml Botellín', cat: 'Cervezas', price: 16000, type: 'unit', unit: 'Botella 355ml' },
+      { id: 'inv-beer-stella-330', name: 'Cerveza Stella Artois 330ml Premium', cat: 'Cervezas', price: 17000, type: 'unit', unit: 'Botella 330ml' },
+      { id: 'inv-beer-heineken-330', name: 'Cerveza Heineken 330ml Holanda', cat: 'Cervezas', price: 16000, type: 'unit', unit: 'Botella 330ml' },
+      { id: 'inv-beer-budweiser-330', name: 'Cerveza Budweiser 330ml King of Beers', cat: 'Cervezas', price: 14000, type: 'unit', unit: 'Lata 330ml' },
+      { id: 'inv-beer-club-dorada', name: 'Cerveza Club Colombia Dorada 330ml', cat: 'Cervezas', price: 12000, type: 'unit', unit: 'Botella 330ml' },
+      { id: 'inv-beer-club-roja', name: 'Cerveza Club Colombia Roja 330ml', cat: 'Cervezas', price: 12000, type: 'unit', unit: 'Botella 330ml' },
+      { id: 'inv-beer-club-negra', name: 'Cerveza Club Colombia Negra 330ml', cat: 'Cervezas', price: 12000, type: 'unit', unit: 'Botella 330ml' },
+      { id: 'inv-beer-poker-330', name: 'Cerveza Poker 330ml Amigos', cat: 'Cervezas', price: 10000, type: 'unit', unit: 'Lata 330ml' },
+      { id: 'inv-beer-aguila-light', name: 'Cerveza Águila Light 330ml', cat: 'Cervezas', price: 10000, type: 'unit', unit: 'Botella 330ml' },
+      { id: 'inv-beer-michelob', name: 'Cerveza Michelob Ultra 330ml Low Carb', cat: 'Cervezas', price: 18000, type: 'unit', unit: 'Botella 330ml' },
+      { id: 'inv-smirnoff-ice-original', name: 'Smirnoff Ice Original 300ml', cat: 'Cervezas', price: 17000, type: 'unit', unit: 'Botella 300ml' },
+      { id: 'inv-smirnoff-ice-apple', name: 'Smirnoff Ice Green Apple 300ml', cat: 'Cervezas', price: 17000, type: 'unit', unit: 'Botella 300ml' },
 
-      { id: 'garrafa-buchanans-12', name: "Garrafa Whisky Buchanan's 12 Magnum 1.75L", cat: 'Whiskies', price: 640000, type: 'bottle' },
-      { id: 'botella-buchanans-12', name: "Botella Whisky Buchanan's 12 Años 750ml", cat: 'Whiskies', price: 240000, type: 'bottle' },
-      { id: 'media-buchanans-12', name: "Media Whisky Buchanan's 12 Años 375ml", cat: 'Whiskies', price: 150000, type: 'bottle' },
-      { id: 'botella-buchanans-master', name: "Botella Whisky Buchanan's Master 750ml", cat: 'Whiskies', price: 270000, type: 'bottle' },
-      { id: 'botella-buchanans-18', name: "Botella Whisky Buchanan's 18 Años 750ml", cat: 'Whiskies', price: 390000, type: 'bottle' },
+      // 7. MEZCLADORES, ENERGIZANTES & REFRESCOS (UNIDADES)
+      { id: 'inv-redbull-original', name: 'Red Bull Energy Drink 250ml Clásico', cat: 'Mezcladores & Bebidas', price: 18000, type: 'unit', unit: 'Lata 250ml' },
+      { id: 'inv-redbull-sugarfree', name: 'Red Bull Sugar Free 250ml Sin Azúcar', cat: 'Mezcladores & Bebidas', price: 18000, type: 'unit', unit: 'Lata 250ml' },
+      { id: 'inv-redbull-tropical', name: 'Red Bull Yellow Edition (Tropical) 250ml', cat: 'Mezcladores & Bebidas', price: 19000, type: 'unit', unit: 'Lata 250ml' },
+      { id: 'inv-redbull-watermelon', name: 'Red Bull Red Edition (Sandía) 250ml', cat: 'Mezcladores & Bebidas', price: 19000, type: 'unit', unit: 'Lata 250ml' },
+      { id: 'inv-monster-green', name: 'Monster Energy Green Original 473ml', cat: 'Mezcladores & Bebidas', price: 20000, type: 'unit', unit: 'Lata 473ml' },
+      { id: 'inv-gatorade-tropical', name: 'Gatorade Frutas Tropicales 500ml', cat: 'Mezcladores & Bebidas', price: 10000, type: 'unit', unit: 'Botella 500ml' },
+      { id: 'inv-gatorade-blue', name: 'Gatorade Cool Blue 500ml', cat: 'Mezcladores & Bebidas', price: 10000, type: 'unit', unit: 'Botella 500ml' },
+      { id: 'inv-soda-bretana-300', name: 'Bretaña Soda 300ml con Gas', cat: 'Mezcladores & Bebidas', price: 8000, type: 'unit', unit: 'Botella 300ml' },
+      { id: 'inv-ginger-ale-300', name: 'Ginger Ale Canada Dry 300ml', cat: 'Mezcladores & Bebidas', price: 9000, type: 'unit', unit: 'Lata 300ml' },
+      { id: 'inv-tonica-canada-dry', name: 'Tónica Canada Dry 300ml Botella', cat: 'Mezcladores & Bebidas', price: 9000, type: 'unit', unit: 'Lata 300ml' },
+      { id: 'inv-soda-hatsu-limon', name: 'Soda Hatsu Limón y Flor de Sauco 300ml', cat: 'Mezcladores & Bebidas', price: 11000, type: 'unit', unit: 'Lata 300ml' },
+      { id: 'inv-coca-cola-original', name: 'Coca-Cola Sabor Original 300ml Botella', cat: 'Mezcladores & Bebidas', price: 8000, type: 'unit', unit: 'Botella 300ml' },
+      { id: 'inv-coca-cola-zero', name: 'Coca-Cola Sin Azúcar 300ml', cat: 'Mezcladores & Bebidas', price: 8000, type: 'unit', unit: 'Botella 300ml' },
+      { id: 'inv-sprite-300', name: 'Sprite Lima-Limón 300ml', cat: 'Mezcladores & Bebidas', price: 8000, type: 'unit', unit: 'Botella 300ml' },
+      { id: 'inv-cuatro-toronja', name: 'Gaseosa Cuatro Toronja 300ml', cat: 'Mezcladores & Bebidas', price: 8000, type: 'unit', unit: 'Botella 300ml' },
+      { id: 'inv-jarra-naranja', name: 'Jarra de Zumo de Naranja Natural 1 Litro', cat: 'Mezcladores & Bebidas', price: 22000, type: 'unit', unit: 'Jarra 1L' },
+      { id: 'inv-agua-manantial-500', name: 'Agua Manantial Sin Gas 500ml', cat: 'Mezcladores & Bebidas', price: 7000, type: 'unit', unit: 'Botella 500ml' },
+      { id: 'inv-agua-gas-300', name: 'Agua Manantial Con Gas 300ml', cat: 'Mezcladores & Bebidas', price: 7500, type: 'unit', unit: 'Botella 300ml' },
 
-      { id: 'botella-jw-red', name: 'Botella Johnnie Walker Red Label 750ml', cat: 'Whiskies', price: 180000, type: 'bottle' },
-      { id: 'media-jw-red', name: 'Media Johnnie Walker Red Label 375ml', cat: 'Whiskies', price: 110000, type: 'bottle' },
-      { id: 'botella-jw-black', name: 'Botella Johnnie Walker Black Label 750ml', cat: 'Whiskies', price: 230000, type: 'bottle' },
-      { id: 'media-jw-black', name: 'Media Johnnie Walker Black Label 375ml', cat: 'Whiskies', price: 145000, type: 'bottle' },
-      { id: 'botella-jw-double-black', name: 'Botella Johnnie Walker Double Black 750ml', cat: 'Whiskies', price: 260000, type: 'bottle' },
-      { id: 'botella-jw-gold', name: 'Botella Johnnie Walker Gold Label 750ml', cat: 'Whiskies', price: 340000, type: 'bottle' },
-      { id: 'botella-jw-blue', name: 'Botella Johnnie Walker Blue Label 750ml', cat: 'Whiskies', price: 1150000, type: 'bottle' },
+      // 8. SNACKS & CONFITERÍA (UNIDADES)
+      { id: 'inv-snack-ferrero', name: 'Chocolates Ferrero Rocher (Caja x3)', cat: 'Snacks', price: 18000, type: 'unit', unit: 'Paquete x3' },
+      { id: 'inv-snack-mms', name: "Chocolates M&M's Peanut 45g", cat: 'Snacks', price: 12000, type: 'unit', unit: 'Bolsa 45g' },
+      { id: 'inv-snack-pringles-original', name: 'Papas Pringles Original 40g', cat: 'Snacks', price: 14000, type: 'unit', unit: 'Tubo 40g' },
+      { id: 'inv-snack-pringles-cream', name: 'Papas Pringles Sour Cream & Onion 40g', cat: 'Snacks', price: 14000, type: 'unit', unit: 'Tubo 40g' },
+      { id: 'inv-snack-mani-especial', name: 'Maní Especial La Especial con Sal y Arándanos 50g', cat: 'Snacks', price: 9000, type: 'unit', unit: 'Bolsa 50g' },
+      { id: 'inv-snack-trident', name: 'Chicles Trident Menta / Hierbabuena', cat: 'Snacks', price: 5000, type: 'unit', unit: 'Paquete' },
 
-      { id: 'botella-chivas-12', name: 'Botella Whisky Chivas Regal 12 750ml', cat: 'Whiskies', price: 210000, type: 'bottle' },
-      { id: 'media-chivas-12', name: 'Media Whisky Chivas Regal 12 375ml', cat: 'Whiskies', price: 130000, type: 'bottle' },
-      { id: 'botella-chivas-18', name: 'Botella Whisky Chivas Regal 18 750ml', cat: 'Whiskies', price: 380000, type: 'bottle' },
-      { id: 'botella-jack-daniels', name: "Botella Jack Daniel's Old No. 7 750ml", cat: 'Whiskies', price: 210000, type: 'bottle' },
-      { id: 'media-jack-daniels', name: "Media Jack Daniel's Old No. 7 375ml", cat: 'Whiskies', price: 130000, type: 'bottle' },
-      { id: 'botella-jack-honey', name: "Botella Jack Daniel's Honey 750ml", cat: 'Whiskies', price: 220000, type: 'bottle' },
-      { id: 'botella-macallan-12', name: 'Botella The Macallan 12 Double Cask 750ml', cat: 'Whiskies', price: 420000, type: 'bottle' },
-      { id: 'botella-monkey-shoulder', name: 'Botella Monkey Shoulder 750ml', cat: 'Whiskies', price: 230000, type: 'bottle' },
+      // 9. TRAGOS, SHOTS & COPAS INDIVIDUALES (Deducen ml del inventario)
+      { id: 'inv-shot-antioqueno', name: 'Trago / Shot Aguardiente Antioqueño (40ml)', cat: 'Shots & Tragos', price: 11000, type: 'shot', parentInvId: 'inv-aguardiente-antioqueno-azul' },
+      { id: 'inv-shot-amarillo', name: 'Trago / Shot Aguardiente Amarillo (40ml)', cat: 'Shots & Tragos', price: 12000, type: 'shot', parentInvId: 'inv-aguardiente-amarillo-750' },
+      { id: 'inv-shot-caldas-3', name: 'Trago / Shot Ron Caldas 3 Años (50ml)', cat: 'Shots & Tragos', price: 13000, type: 'shot', parentInvId: 'inv-ron-caldas-3' },
+      { id: 'inv-shot-caldas-8', name: 'Trago / Shot Ron Caldas 8 Años (50ml)', cat: 'Shots & Tragos', price: 16000, type: 'shot', parentInvId: 'inv-ron-caldas-8-750' },
+      { id: 'inv-shot-oldparr', name: 'Trago / Shot Whisky Old Parr 12 (50ml)', cat: 'Shots & Tragos', price: 22000, type: 'shot', parentInvId: 'inv-whisky-oldparr-750' },
+      { id: 'inv-shot-buchanans', name: "Trago / Shot Whisky Buchanan's 12 (50ml)", cat: 'Shots & Tragos', price: 24000, type: 'shot', parentInvId: 'inv-whisky-buchanans-12-750' },
+      { id: 'inv-shot-jw-black', name: 'Trago / Shot Johnnie Walker Black (50ml)', cat: 'Shots & Tragos', price: 22000, type: 'shot', parentInvId: 'inv-whisky-jw-black-750' },
+      { id: 'inv-shot-don-julio', name: 'Trago / Shot Tequila Don Julio Reposado (45ml)', cat: 'Shots & Tragos', price: 34000, type: 'shot', parentInvId: 'inv-tequila-don-julio-rep-700' },
+      { id: 'inv-shot-1800', name: 'Trago / Shot Tequila 1800 Cristalino (45ml)', cat: 'Shots & Tragos', price: 35000, type: 'shot', parentInvId: 'inv-tequila-1800-cristalino-750' },
+      { id: 'inv-shot-cuervo', name: 'Trago / Shot Tequila Jose Cuervo (45ml)', cat: 'Shots & Tragos', price: 16000, type: 'shot', parentInvId: 'inv-tequila-jose-cuervo-750' },
+      { id: 'inv-shot-jager', name: 'Trago / Shot Jägermeister Herbal (45ml)', cat: 'Shots & Tragos', price: 20000, type: 'shot', parentInvId: 'inv-litro-jagermeister' },
+      { id: 'inv-shot-absolut', name: 'Trago / Shot Vodka Absolut (50ml)', cat: 'Shots & Tragos', price: 18000, type: 'shot', parentInvId: 'inv-vodka-absolut-700' },
+      { id: 'inv-shot-hendricks', name: "Trago / Shot Ginebra Hendrick's (50ml)", cat: 'Shots & Tragos', price: 30000, type: 'shot', parentInvId: 'inv-gin-hendricks-750' },
+      { id: 'inv-copa-malbec', name: 'Copa de Vino Tinto Catena Zapata Malbec (150ml)', cat: 'Vinos & Champagne', price: 46000, type: 'glass', parentInvId: 'inv-vino-tinto-malbec-750' },
+      { id: 'inv-copa-sauvignon', name: 'Copa de Vino Blanco Santa Rita (150ml)', cat: 'Vinos & Champagne', price: 34000, type: 'glass', parentInvId: 'inv-vino-blanco-sauvignon-750' },
 
-      // TEQUILAS
-      { id: 'botella-don-julio-reposado', name: 'Botella Tequila Don Julio Reposado 750ml', cat: 'Tequilas', price: 320000, type: 'bottle' },
-      { id: 'media-don-julio-reposado', name: 'Media Tequila Don Julio Reposado 375ml', cat: 'Tequilas', price: 195000, type: 'bottle' },
-      { id: 'botella-don-julio-blanco', name: 'Botella Tequila Don Julio Blanco 750ml', cat: 'Tequilas', price: 290000, type: 'bottle' },
-      { id: 'botella-don-julio-70', name: 'Botella Tequila Don Julio 70 Cristalino 750ml', cat: 'Tequilas', price: 420000, type: 'bottle' },
-      { id: 'botella-don-julio-1942', name: 'Botella Tequila Don Julio 1942 VIP 750ml', cat: 'Tequilas', price: 1200000, type: 'bottle' },
-      { id: 'botella-1800-cristalino', name: 'Botella Tequila 1800 Cristalino 750ml', cat: 'Tequilas', price: 340000, type: 'bottle' },
-      { id: 'botella-patron-silver', name: 'Botella Tequila Patrón Silver 750ml', cat: 'Tequilas', price: 310000, type: 'bottle' },
-      { id: 'botella-patron-reposado', name: 'Botella Tequila Patrón Reposado 750ml', cat: 'Tequilas', price: 330000, type: 'bottle' },
-      { id: 'botella-jose-cuervo', name: 'Botella Tequila Jose Cuervo 750ml', cat: 'Tequilas', price: 140000, type: 'bottle' },
-      { id: 'media-jose-cuervo', name: 'Media Tequila Jose Cuervo 375ml', cat: 'Tequilas', price: 85000, type: 'bottle' },
-      { id: 'botella-mezcal-400', name: 'Botella Mezcal 400 Conejos 750ml', cat: 'Tequilas', price: 220000, type: 'bottle' },
-
-      // VODKAS & GINEBRAS
-      { id: 'litro-absolut-blue', name: 'Botella 1L Vodka Absolut Blue', cat: 'Vodkas', price: 210000, type: 'bottle' },
-      { id: 'botella-absolut-blue', name: 'Botella Vodka Absolut 750ml', cat: 'Vodkas', price: 180000, type: 'bottle' },
-      { id: 'media-absolut-blue', name: 'Media Vodka Absolut 375ml', cat: 'Vodkas', price: 110000, type: 'bottle' },
-      { id: 'litro-smirnoff-red', name: 'Botella 1L Vodka Smirnoff Red', cat: 'Vodkas', price: 150000, type: 'bottle' },
-      { id: 'botella-smirnoff-red', name: 'Botella Vodka Smirnoff 750ml', cat: 'Vodkas', price: 160000, type: 'bottle' },
-      { id: 'media-smirnoff-red', name: 'Media Vodka Smirnoff 375ml', cat: 'Vodkas', price: 95000, type: 'bottle' },
-      { id: 'botella-grey-goose', name: 'Botella Vodka Grey Goose 750ml', cat: 'Vodkas', price: 280000, type: 'bottle' },
-      { id: 'litro-tanqueray', name: 'Botella 1L Gin Tanqueray', cat: 'Ginebras', price: 270000, type: 'bottle' },
-      { id: 'botella-tanqueray', name: 'Botella Gin Tanqueray 750ml', cat: 'Ginebras', price: 210000, type: 'bottle' },
-      { id: 'botella-hendricks', name: "Botella Gin Hendrick's 750ml", cat: 'Ginebras', price: 260000, type: 'bottle' },
-      { id: 'botella-bombay', name: 'Botella Gin Bombay Sapphire 750ml', cat: 'Ginebras', price: 210000, type: 'bottle' },
-
-      // APERITIVOS & CHAMPAGNES & VINOS
-      { id: 'litro-jagermeister', name: 'Botella 1L Jägermeister Herbal', cat: 'Aperitivos', price: 260000, type: 'bottle' },
-      { id: 'botella-jagermeister', name: 'Botella Jägermeister Herbal 700ml', cat: 'Aperitivos', price: 190000, type: 'bottle' },
-      { id: 'litro-baileys', name: 'Botella 1L Crema Baileys', cat: 'Aperitivos', price: 190000, type: 'bottle' },
-      { id: 'botella-baileys', name: 'Botella Crema Baileys 750ml', cat: 'Aperitivos', price: 140000, type: 'bottle' },
-      { id: 'litro-aperol', name: 'Botella 1L Aperol Spritz', cat: 'Aperitivos', price: 170000, type: 'bottle' },
-      { id: 'botella-dom-perignon', name: 'Botella Dom Pérignon Brut 750ml', cat: 'Champagnes', price: 1650000, type: 'bottle' },
-      { id: 'botella-moet-brut', name: 'Botella Moët & Chandon Brut 750ml', cat: 'Champagnes', price: 540000, type: 'bottle' },
-      { id: 'botella-moet-rose', name: 'Botella Moët & Chandon Rosé 750ml', cat: 'Champagnes', price: 590000, type: 'bottle' },
-      { id: 'botella-catena-zapata', name: 'Botella Vino Catena Zapata Malbec', cat: 'Vinos', price: 180000, type: 'bottle' },
-      { id: 'botella-santa-rita', name: 'Botella Vino Santa Rita 120 Sauvignon', cat: 'Vinos', price: 85000, type: 'bottle' },
-
-      // CERVEZAS
-      { id: 'cerveza-corona', name: 'Cerveza Corona Extra 355ml', cat: 'Cervezas', price: 14000, type: 'unit' },
-      { id: 'cerveza-stella', name: 'Cerveza Stella Artois 330ml', cat: 'Cervezas', price: 15000, type: 'unit' },
-      { id: 'cerveza-heineken', name: 'Cerveza Heineken 330ml', cat: 'Cervezas', price: 14000, type: 'unit' },
-      { id: 'cerveza-club-dorada', name: 'Cerveza Club Colombia Dorada', cat: 'Cervezas', price: 12000, type: 'unit' },
-      { id: 'cerveza-club-roja', name: 'Cerveza Club Colombia Roja', cat: 'Cervezas', price: 12000, type: 'unit' },
-      { id: 'cerveza-poker', name: 'Cerveza Poker 330ml', cat: 'Cervezas', price: 10000, type: 'unit' },
-      { id: 'cerveza-aguila-light', name: 'Cerveza Águila Light 330ml', cat: 'Cervezas', price: 10000, type: 'unit' },
-      { id: 'cerveza-michelob', name: 'Cerveza Michelob Ultra 355ml', cat: 'Cervezas', price: 14000, type: 'unit' },
-      { id: 'cerveza-smirnoff-ice', name: 'Smirnoff Ice Botella 275ml', cat: 'Cervezas', price: 15000, type: 'unit' },
-
-      // CÓCTELES & SHOTS
-      { id: 'coctel-veneno-cobra', name: 'Cóctel Veneno de Cobra', cat: 'Cócteles', price: 38000, type: 'cocktail' },
+      // 10. CÓCTELES KAL DISCOBAR
+      { id: 'coctel-veneno-cobra', name: 'Cóctel Veneno de Cobra (Firma KAL)', cat: 'Cócteles', price: 38000, type: 'cocktail' },
+      { id: 'coctel-kal-golden-night', name: 'Cóctel KAL Golden Night (Oro 24K)', cat: 'Cócteles', price: 42000, type: 'cocktail' },
+      { id: 'coctel-neon-snake-bite', name: 'Cóctel Neon Snake Bite Fluo', cat: 'Cócteles', price: 36000, type: 'cocktail' },
+      { id: 'coctel-dragon-fire', name: 'Cóctel Dragon Fire Margarita', cat: 'Cócteles', price: 39000, type: 'cocktail' },
       { id: 'coctel-margarita', name: 'Cóctel Margarita Clásica', cat: 'Cócteles', price: 32000, type: 'cocktail' },
       { id: 'coctel-mojito', name: 'Cóctel Mojito Cubano', cat: 'Cócteles', price: 30000, type: 'cocktail' },
       { id: 'coctel-gin-tonic', name: 'Cóctel Gin & Tonic Tanqueray', cat: 'Cócteles', price: 35000, type: 'cocktail' },
-      { id: 'shot-jagerbomb', name: 'Shot Jägerbomb', cat: 'Cócteles', price: 25000, type: 'shot' },
-      { id: 'shot-b52', name: 'Shot B-52 Flameante', cat: 'Cócteles', price: 24000, type: 'shot' },
-
-      // MEZCLADORES & SNACKS
-      { id: 'redbull-original', name: 'Red Bull Energy Drink 250ml', cat: 'Mezcladores', price: 16000, type: 'unit' },
-      { id: 'redbull-sugarfree', name: 'Red Bull Sugarfree 250ml', cat: 'Mezcladores', price: 16000, type: 'unit' },
-      { id: 'redbull-sandia', name: 'Red Bull Sandía 250ml', cat: 'Mezcladores', price: 17000, type: 'unit' },
-      { id: 'monster-energy', name: 'Monster Energy Drink 473ml', cat: 'Mezcladores', price: 17000, type: 'unit' },
-      { id: 'gatorade-electrolitos', name: 'Gatorade Electrolitos 500ml', cat: 'Mezcladores', price: 9000, type: 'unit' },
-      { id: 'soda-bretana', name: 'Soda Bretaña 300ml', cat: 'Mezcladores', price: 7000, type: 'unit' },
-      { id: 'ginger-ale', name: 'Ginger Ale Canada Dry 300ml', cat: 'Mezcladores', price: 8000, type: 'unit' },
-      { id: 'coca-cola', name: 'Coca-Cola Original 300ml', cat: 'Mezcladores', price: 7000, type: 'unit' },
-      { id: 'agua-cristal', name: 'Agua Mineral Cristal 600ml', cat: 'Mezcladores', price: 6000, type: 'unit' },
-      { id: 'jarra-naranja', name: 'Jarra Zumo Naranja Natural 1L', cat: 'Mezcladores', price: 22000, type: 'unit' },
-      { id: 'snack-ferrero', name: "Chocolates Ferrero / M&M's", cat: 'Snacks', price: 12000, type: 'unit' },
-      { id: 'snack-pringles', name: 'Papas Pringles 124g', cat: 'Snacks', price: 16000, type: 'unit' },
-      { id: 'snack-pasabocas', name: 'Mix Pasabocas Salados / Maní', cat: 'Snacks', price: 10000, type: 'unit' },
-      { id: 'snack-vape', name: 'Vape Desechable 5000 Puffs', cat: 'Snacks', price: 55000, type: 'unit' }
+      { id: 'coctel-caipirinha', name: 'Cóctel Caipirinha Brasileña', cat: 'Cócteles', price: 28000, type: 'cocktail' },
+      { id: 'coctel-pina-colada', name: 'Cóctel Piña Colada Cremosa', cat: 'Cócteles', price: 32000, type: 'cocktail' },
+      { id: 'coctel-long-island', name: 'Cóctel Long Island Iced Tea VIP', cat: 'Cócteles', price: 38000, type: 'cocktail' },
+      { id: 'coctel-aperol-spritz', name: 'Cóctel Aperol Spritz con Espumante', cat: 'Cócteles', price: 35000, type: 'cocktail' },
+      { id: 'shot-jagerbomb', name: 'Shot Jägerbomb (Jäger + Red Bull)', cat: 'Cócteles', price: 25000, type: 'shot' },
+      { id: 'shot-b52', name: 'Shot B-52 Flameante', cat: 'Cócteles', price: 24000, type: 'shot' }
     ];
 
-    const CATEGORIES = [
-      'Todos', 'Aguardientes', 'Rones', 'Whiskies', 'Tequilas', 'Vodkas', 'Ginebras', 'Aperitivos', 'Champagnes', 'Vinos', 'Cervezas', 'Cócteles', 'Mezcladores', 'Snacks'
-    ];
+    function getFullCatalog() {
+      // Inicia con el catálogo base completo
+      let catalog = BASE_MASTER_CATALOG.map(i => ({ ...i }));
+      
+      try {
+        // 1. Lee inventario de la página web si está en LocalStorage
+        const rawInv = localStorage.getItem('kal_admin_inventory') || localStorage.getItem('kal_admin_inventory_items');
+        if (rawInv) {
+          const storedInventory = JSON.parse(rawInv);
+          if (Array.isArray(storedInventory) && storedInventory.length > 0) {
+            storedInventory.forEach(item => {
+              const salePrice = Number(item.salePriceBottle || item.salePriceUnit || item.salePrice || item.priceCOP || item.costPrice || 0);
+              const existingIdx = catalog.findIndex(c => c.id === item.id || (item.id && c.id === ('inv-' + item.id)));
+              
+              if (existingIdx >= 0) {
+                if (salePrice > 0) catalog[existingIdx].price = salePrice;
+                if (item.name) catalog[existingIdx].name = item.name;
+              } else if (item.name && salePrice > 0) {
+                catalog.push({
+                  id: item.id || ('inv-custom-' + Date.now()),
+                  name: item.name,
+                  cat: item.category || 'Otros',
+                  price: salePrice,
+                  type: item.type || 'unit',
+                  unit: item.unit || 'Unidad'
+                });
+              }
+            });
+          }
+        }
 
-    let activeCategory = 'Todos';
+        // 2. Lee personalizaciones o cambios de precios guardados localmente en este terminal offline
+        const rawCustom = localStorage.getItem(CUSTOM_CATALOG_KEY);
+        if (rawCustom) {
+          const customCatalog = JSON.parse(rawCustom);
+          if (Array.isArray(customCatalog) && customCatalog.length > 0) {
+            customCatalog.forEach(cItem => {
+              const idx = catalog.findIndex(c => c.id === cItem.id);
+              if (idx >= 0) {
+                catalog[idx] = { ...catalog[idx], ...cItem };
+              } else {
+                catalog.push(cItem);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Error al cargar inventario dinámico:', e);
+      }
+      return catalog;
+    }
+
+    let MASTER_CATALOG = getFullCatalog();
     let selectedItems = []; // Items in current invoice draft
 
     // Init UI
     window.addEventListener('DOMContentLoaded', () => {
-      renderCategoryPills();
+      MASTER_CATALOG = getFullCatalog();
       renderProductGrid();
       renderInvoicesList();
     });
-
-    function renderCategoryPills() {
-      const container = document.getElementById('categoryPills');
-      container.innerHTML = CATEGORIES.map(cat => `
-        <button type="button" class="cat-btn ${cat === activeCategory ? 'active' : ''}" onclick="selectCategory('${cat}')">${cat}</button>
-      `).join('');
-    }
-
-    function selectCategory(cat) {
-      activeCategory = cat;
-      renderCategoryPills();
-      renderProductGrid();
-    }
 
     function renderProductGrid() {
       const query = (document.getElementById('catalogSearch').value || '').toLowerCase().trim();
       const grid = document.getElementById('productGrid');
 
       const filtered = MASTER_CATALOG.filter(item => {
-        const matchesCat = activeCategory === 'Todos' || item.cat === activeCategory;
-        const matchesQuery = !query || item.name.toLowerCase().includes(query) || item.cat.toLowerCase().includes(query);
-        return matchesCat && matchesQuery;
+        return !query || item.name.toLowerCase().includes(query) || (item.cat && item.cat.toLowerCase().includes(query));
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 11px; padding: 12px;">No se encontraron productos</div>';
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); font-size: 11px; padding: 16px;">No se encontraron productos coincidentes</div>';
         return;
       }
 
@@ -836,7 +1055,7 @@
       if (existing) {
         existing.quantity += 1;
       } else {
-        selectedItems.push({ id, name, price, quantity: 1, type });
+        selectedItems.push({ id, invId: id, name, price, priceCOP: price, quantity: 1, type });
       }
       recalculateDraftTotal();
       renderSelectedItems();
@@ -875,12 +1094,15 @@
       container.style.display = 'flex';
       container.innerHTML = selectedItems.map(item => `
         <div class="item-chip">
-          <span style="font-weight: 700; color: #fff;">${item.name} ($${item.price.toLocaleString('es-CO')})</span>
+          <div class="item-chip-title">
+            <span>${item.name}</span>
+            <span class="item-chip-price">$${(item.price * item.quantity).toLocaleString('es-CO')} <span style="color: var(--text-dim); font-size: 9.5px; font-weight: normal;">($${item.price.toLocaleString('es-CO')} c/u)</span></span>
+          </div>
           <div class="item-controls">
-            <button type="button" class="qty-btn" onclick="updateItemQty('${item.id}', -1)">-</button>
-            <span style="font-family: var(--mono); font-weight: 800; color: var(--gold);">${item.quantity}</span>
-            <button type="button" class="qty-btn" onclick="updateItemQty('${item.id}', 1)">+</button>
-            <button type="button" class="del-btn" onclick="removeItem('${item.id}')">✕</button>
+            <button type="button" class="qty-btn" onclick="updateItemQty('${item.id}', -1)" title="Restar cantidad">－</button>
+            <span class="qty-number">${item.quantity}</span>
+            <button type="button" class="qty-btn" onclick="updateItemQty('${item.id}', 1)" title="Sumar cantidad">＋</button>
+            <button type="button" class="del-btn" onclick="removeItem('${item.id}')" title="Eliminar producto">✕</button>
           </div>
         </div>
       `).join('');
@@ -940,6 +1162,7 @@
         notes: notes || 'Factura física de contingencia',
         createdAt: new Date().toISOString(),
         synced: false,
+        status: 'ACTIVE',
         items: [...selectedItems]
       };
 
@@ -959,9 +1182,10 @@
 
     function renderInvoicesList() {
       const invoices = getInvoices();
-      const totalCop = invoices.reduce((acc, inv) => acc + (Number(inv.total) || 0), 0);
+      const activeInvoices = invoices.filter(inv => inv.status !== 'VOIDED');
+      const totalCop = activeInvoices.reduce((acc, inv) => acc + (Number(inv.total) || 0), 0);
       document.getElementById('totalCopDisplay').innerText = `$${totalCop.toLocaleString('es-CO')} COP`;
-      document.getElementById('countDisplay').innerText = invoices.length;
+      document.getElementById('countDisplay').innerText = activeInvoices.length;
 
       const list = document.getElementById('invoicesList');
       if (invoices.length === 0) {
@@ -978,12 +1202,13 @@
         const itemsSummary = inv.items && inv.items.length > 0 
           ? inv.items.map(i => `${i.quantity}x ${i.name.split(' ')[0]}`).join(', ')
           : 'Total digitado';
+        const isVoided = inv.status === 'VOIDED';
 
         return `
-          <div class="invoice-card">
+          <div class="invoice-card" style="${isVoided ? 'opacity: 0.55; border-color: rgba(239,68,68,0.3); text-decoration: line-through;' : ''}">
             <div class="inv-header">
-              <span class="inv-num">🧾 ${inv.invoiceNumber} • ${inv.table || 'Barra'}</span>
-              <span class="inv-total">$${Number(inv.total).toLocaleString('es-CO')}</span>
+              <span class="inv-num">🧾 ${inv.invoiceNumber} • ${inv.table || 'Barra'} ${isVoided ? '<span style="color:#ef4444; font-size:10px; font-weight:bold;">(ANULADA)</span>' : ''}</span>
+              <span class="inv-total" style="${isVoided ? 'color:#ef4444;' : ''}">$${Number(inv.total).toLocaleString('es-CO')}</span>
             </div>
             <div class="inv-sub">
               <span>👤 ${inv.seller || 'Caja'} • 💳 ${inv.paymentMethod}</span>
@@ -1004,9 +1229,13 @@
     }
 
     function handleSyncDashboard() {
+      // Recargar catálogo por si hubo cambios en la base
+      MASTER_CATALOG = getFullCatalog();
+      renderProductGrid();
+
       const invoices = getInvoices();
       if (invoices.length === 0) {
-        showAlert('No hay facturas en cola para sincronizar.', 'error');
+        showAlert('⚡ Catálogo actualizado. No hay facturas pendientes en cola.', 'success');
         return;
       }
       showAlert(`⚡ Sincronizadas ${invoices.length} facturas con el panel principal de KAL DISCOBAR.`, 'success');
@@ -1059,6 +1288,193 @@
       saveInvoices([]);
       closeResetModal();
       showAlert('La cola de contingencia ha sido reseteada por completo.', 'success');
+    }
+
+    // ==========================================
+    // MODAL DE EDICIÓN DE MENÚ & PRECIOS OFFLINE
+    // ==========================================
+    function openCatalogEditorModal() {
+      document.getElementById('catalogEditorModal').style.display = 'flex';
+      renderEditorProductsTable();
+    }
+
+    function closeCatalogEditorModal() {
+      document.getElementById('catalogEditorModal').style.display = 'none';
+      document.getElementById('addProductFormBox').style.display = 'none';
+      document.getElementById('importJsonBox').style.display = 'none';
+      document.getElementById('editorFeedbackMsg').innerText = '';
+    }
+
+    function toggleAddProductForm() {
+      const box = document.getElementById('addProductFormBox');
+      box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+      document.getElementById('importJsonBox').style.display = 'none';
+    }
+
+    function toggleImportJsonBox() {
+      const box = document.getElementById('importJsonBox');
+      box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+      document.getElementById('addProductFormBox').style.display = 'none';
+    }
+
+    function renderEditorProductsTable() {
+      const q = (document.getElementById('editorSearchInput').value || '').toLowerCase().trim();
+      const tbody = document.getElementById('editorTableBody');
+
+      const filtered = MASTER_CATALOG.filter(item => {
+        return !q || item.name.toLowerCase().includes(q) || (item.cat && item.cat.toLowerCase().includes(q));
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-dim);">No se encontraron productos</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+          <td style="padding: 8px 10px; font-weight: bold; color: #fff;">${item.name}</td>
+          <td style="padding: 8px 10px; color: var(--text-dim); font-size: 11px;">${item.cat || 'Licores'}</td>
+          <td style="padding: 8px 10px; text-align: right;">
+            <input 
+              type="number" 
+              step="1000" 
+              id="editor_price_${item.id}" 
+              value="${item.price}" 
+              style="width: 120px; font-family: var(--mono); font-weight: bold; color: var(--gold); text-align: right; padding: 4px 8px; font-size: 11.5px;"
+            >
+          </td>
+          <td style="padding: 8px 10px; text-align: center;">
+            <button 
+              type="button" 
+              onclick="handleQuickSaveSinglePrice('${item.id}')" 
+              style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; border-radius: 8px; padding: 4px 8px; font-size: 10px; font-weight: bold; cursor: pointer;"
+              title="Guardar este precio"
+            >
+              ✓
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function handleQuickSaveSinglePrice(itemId) {
+      const input = document.getElementById(`editor_price_${itemId}`);
+      if (!input) return;
+      const newPrice = parseFloat(input.value);
+      if (isNaN(newPrice) || newPrice < 0) return;
+
+      const item = MASTER_CATALOG.find(i => i.id === itemId);
+      if (item) {
+        item.price = newPrice;
+      }
+
+      // Guardar en custom catalog
+      saveCurrentCustomCatalog();
+      showEditorFeedback(`✓ Precio de "${item ? item.name : itemId}" actualizado.`);
+    }
+
+    function handleSaveAllEditorPrices() {
+      MASTER_CATALOG.forEach(item => {
+        const input = document.getElementById(`editor_price_${item.id}`);
+        if (input) {
+          const val = parseFloat(input.value);
+          if (!isNaN(val) && val >= 0) {
+            item.price = val;
+          }
+        }
+      });
+
+      saveCurrentCustomCatalog();
+      showEditorFeedback(`✓ ¡Todos los precios han sido guardados correctamente!`);
+      setTimeout(() => {
+        closeCatalogEditorModal();
+      }, 1200);
+    }
+
+    function saveCurrentCustomCatalog() {
+      try {
+        localStorage.setItem(CUSTOM_CATALOG_KEY, JSON.stringify(MASTER_CATALOG));
+        renderProductGrid();
+        recalculateDraftTotal();
+      } catch (e) {
+        console.error('Error guardando catálogo personalizado:', e);
+      }
+    }
+
+    function handleSaveNewCustomProduct() {
+      const name = document.getElementById('newProdName').value.trim();
+      const cat = document.getElementById('newProdCat').value.trim() || 'Licores';
+      const price = parseFloat(document.getElementById('newProdPrice').value);
+      const type = document.getElementById('newProdType').value;
+
+      if (!name || isNaN(price) || price <= 0) {
+        alert('Ingresa el nombre del producto y un precio válido.');
+        return;
+      }
+
+      const newId = 'inv-custom-' + Date.now();
+      const newItem = { id: newId, name, cat, price, type, unit: 'Unidad' };
+      
+      MASTER_CATALOG.unshift(newItem);
+      saveCurrentCustomCatalog();
+
+      document.getElementById('newProdName').value = '';
+      document.getElementById('newProdCat').value = '';
+      document.getElementById('newProdPrice').value = '';
+      toggleAddProductForm();
+      renderEditorProductsTable();
+      showEditorFeedback(`✓ Producto "${name}" agregado exitosamente.`);
+    }
+
+    function handleApplyImportedJson() {
+      const raw = document.getElementById('importJsonTextarea').value.trim();
+      if (!raw) return alert('Pega el JSON exportado en el campo de texto.');
+
+      try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          return alert('El texto ingresado no es un catálogo JSON válido.');
+        }
+
+        MASTER_CATALOG = parsed.map(item => ({
+          id: item.id,
+          name: item.name,
+          cat: item.cat || item.category || 'Licores',
+          price: Number(item.price || item.salePriceBottle || item.salePriceUnit || 0),
+          type: item.type || 'unit',
+          unit: item.unit || 'Unidad'
+        }));
+
+        saveCurrentCustomCatalog();
+        toggleImportJsonBox();
+        renderEditorProductsTable();
+        showEditorFeedback(`✓ ¡Catálogo de ${MASTER_CATALOG.length} productos importado con éxito!`);
+      } catch (err) {
+        alert('Error al procesar el JSON: ' + err.message);
+      }
+    }
+
+    function handleExportCurrentCatalogJson() {
+      const jsonStr = JSON.stringify(MASTER_CATALOG, null, 2);
+      navigator.clipboard.writeText(jsonStr)
+        .then(() => showEditorFeedback('📋 Catálogo copiado al portapapeles.'))
+        .catch(() => alert('Error al copiar catálogo.'));
+    }
+
+    function handleResetDefaultCatalog() {
+      if (confirm('¿Deseas restablecer todos los precios al catálogo original de la página?')) {
+        localStorage.removeItem(CUSTOM_CATALOG_KEY);
+        MASTER_CATALOG = BASE_MASTER_CATALOG.map(i => ({ ...i }));
+        renderProductGrid();
+        renderEditorProductsTable();
+        showEditorFeedback('🔄 Catálogo restablecido a precios originales.');
+      }
+    }
+
+    function showEditorFeedback(msg) {
+      const el = document.getElementById('editorFeedbackMsg');
+      el.innerText = msg;
+      setTimeout(() => { el.innerText = ''; }, 3500);
     }
   </script>
 </body>

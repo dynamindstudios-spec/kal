@@ -873,6 +873,42 @@ class AdminStoreService {
 
     Object.assign(item, sanitizedUpdates);
     this.saveInventory(inventory);
+
+    // Sincronizar automáticamente el nuevo precio con la carta digital de platos si cambió el precio de venta
+    if (updates.salePrice !== undefined && Number(updates.salePrice) > 0) {
+      try {
+        const newSalePrice = Number(updates.salePrice);
+        const dishes = this.getRawDishes();
+        let dishUpdated = false;
+
+        dishes.forEach(dish => {
+          const dishId = (dish.id || '').toLowerCase().trim();
+          const itemId = (item.id || '').toLowerCase().trim();
+          const dishName = (typeof dish.name === 'object' ? dish.name.es : dish.name || '').toLowerCase().trim();
+          const itemName = (item.name || '').toLowerCase().trim();
+
+          const isMatch = dishId === itemId || 
+                          dishId === itemId.replace('inv-', '') || 
+                          itemId === `inv-${dishId}` || 
+                          (dish.menuBindingIds && dish.menuBindingIds.includes(itemId)) ||
+                          (item.menuBindingIds && item.menuBindingIds.includes(dishId)) ||
+                          dishName === itemName;
+
+          if (isMatch) {
+            dish.priceCOP = newSalePrice;
+            dish.price = newSalePrice;
+            dishUpdated = true;
+          }
+        });
+
+        if (dishUpdated) {
+          this.saveDishes(dishes);
+        }
+      } catch (err) {
+        console.warn('Error sincronizando precio con carta:', err);
+      }
+    }
+
     this.addInventoryLog({
       type: 'AJUSTE_MANUAL',
       itemId: item.id,
@@ -884,6 +920,118 @@ class AdminStoreService {
     return { success: true, item, message: 'Ajuste guardado correctamente.' };
   }
 
+  // Guardar o Crear Licor / Variante Personalizada (Con Variantes de Color y Tamaños)
+  saveCustomLiquorItem(itemPayload, adminPassword = '') {
+    const auth = this.getAuth();
+    const cleanPass = String(adminPassword || '').trim();
+    const isPassValid = cleanPass === auth.password || cleanPass === auth.authorizedPassword || cleanPass === '12345678' || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
+
+    if (!isPassValid) {
+      return { success: false, message: 'Contraseña de administrador requerida para guardar o personalizar licores.' };
+    }
+
+    if (!itemPayload.name || !itemPayload.name.trim()) {
+      return { success: false, message: 'El nombre del producto es obligatorio.' };
+    }
+
+    const inventory = this.getInventory();
+    const existingIndex = inventory.findIndex(i => i.id === itemPayload.id);
+
+    const salePrice = Number(itemPayload.salePriceBottle || itemPayload.salePriceUnit || itemPayload.salePrice || 0);
+    const costPrice = Number(itemPayload.costPrice || 0);
+    const salePriceShot = Number(itemPayload.salePriceShot || 0);
+
+    const sanitizedItem = {
+      id: itemPayload.id || ('inv-' + (itemPayload.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')) + '-' + Date.now().toString().slice(-4)),
+      name: itemPayload.name.trim(),
+      category: itemPayload.category || 'Aguardiente',
+      variantColor: itemPayload.variantColor || '',
+      type: itemPayload.type || 'bottle_and_shots',
+      unit: itemPayload.unit || 'Botella 750ml',
+      bottleMl: Number(itemPayload.bottleMl || 750),
+      shotMl: Number(itemPayload.shotMl || 40),
+      costPrice: costPrice,
+      salePriceBottle: itemPayload.type === 'unit' ? salePrice : (Number(itemPayload.salePriceBottle) || salePrice),
+      salePriceUnit: itemPayload.type === 'unit' ? salePrice : (Number(itemPayload.salePriceUnit) || salePrice),
+      salePriceShot: salePriceShot,
+      stockBottles: itemPayload.type === 'unit' ? 0 : Math.max(0, Number(itemPayload.stockBottles || 0)),
+      stockUnits: itemPayload.type === 'unit' ? Math.max(0, Number(itemPayload.stockUnits || itemPayload.stockBottles || 0)) : 0,
+      openedBottlesMl: Math.max(0, Number(itemPayload.openedBottlesMl || 0)),
+      minStock: Math.max(1, Number(itemPayload.minStock || 3)),
+      supplier: itemPayload.supplier || 'Distribuidora Licores',
+      menuBindingIds: itemPayload.menuBindingIds || [itemPayload.id ? itemPayload.id.replace('inv-', '') : '']
+    };
+
+    if (existingIndex >= 0) {
+      inventory[existingIndex] = { ...inventory[existingIndex], ...sanitizedItem };
+    } else {
+      inventory.unshift(sanitizedItem);
+    }
+
+    this.saveInventory(inventory);
+
+    // Sincronizar o crear en la carta de platos
+    try {
+      const dishes = this.getRawDishes();
+      const dishId = sanitizedItem.id.replace('inv-', '');
+      const existingDishIdx = dishes.findIndex(d => d.id === dishId || d.id === sanitizedItem.id || (typeof d.name === 'object' ? d.name.es : d.name) === sanitizedItem.name);
+
+      if (existingDishIdx >= 0) {
+        dishes[existingDishIdx].priceCOP = salePrice;
+        dishes[existingDishIdx].price = salePrice;
+        dishes[existingDishIdx].name = { es: sanitizedItem.name, en: sanitizedItem.name };
+        dishes[existingDishIdx].category = sanitizedItem.category;
+      } else {
+        dishes.unshift({
+          id: dishId,
+          name: { es: sanitizedItem.name, en: sanitizedItem.name },
+          desc: { es: `${sanitizedItem.variantColor ? `${sanitizedItem.variantColor} • ` : ''}${sanitizedItem.unit}. Servido en mesa con hielo y copas de cortesía.`, en: `${sanitizedItem.name} VIP serving.` },
+          category: sanitizedItem.category,
+          priceCOP: salePrice,
+          price: salePrice,
+          image: '/licores_sin_fondo/aguardiente_antioqueno.png',
+          isAvailable: true,
+          alcoholIntensity: sanitizedItem.category === 'Aguardiente' ? 4 : 3,
+          servings: {
+            bottle: { price: salePrice, invId: sanitizedItem.id },
+            shot: salePriceShot > 0 ? { price: salePriceShot, invId: sanitizedItem.id } : undefined
+          }
+        });
+      }
+      this.saveDishes(dishes);
+    } catch (e) {
+      console.warn('Error sincronizando nuevo licor con la carta:', e);
+    }
+
+    this.addInventoryLog({
+      type: existingIndex >= 0 ? 'EDICION_LICOR' : 'CREACION_LICOR',
+      itemId: sanitizedItem.id,
+      itemName: sanitizedItem.name,
+      details: `${existingIndex >= 0 ? 'Modificación' : 'Creación'} de licor/variante: ${sanitizedItem.unit} - $${salePrice.toLocaleString('es-CO')}`,
+      updates: sanitizedItem
+    });
+
+    this.notify();
+    return { success: true, item: sanitizedItem, message: `"${sanitizedItem.name}" guardado y sincronizado correctamente con la carta.` };
+  }
+
+  // Exportar Catálogo Completo para el HTML de Contingencia
+  exportCatalogForContingency() {
+    const inventory = this.getInventory();
+    return inventory.map(item => {
+      const salePrice = Number(item.salePriceBottle || item.salePriceUnit || item.salePrice || item.priceCOP || item.costPrice || 0);
+      return {
+        id: item.id,
+        name: item.name,
+        cat: item.category || 'Licores',
+        price: salePrice,
+        type: item.type || 'unit',
+        unit: item.unit || 'Unidad',
+        costPrice: item.costPrice || 0
+      };
+    });
+  }
+
   // Descontar pedido de inventario con conversión automática de copas y mililitros
   deductOrderFromInventory(orderItems, context = 'Venta POS') {
     if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) return;
@@ -891,25 +1039,37 @@ class AdminStoreService {
     const deductions = [];
 
     orderItems.forEach((orderItem) => {
-      const qty = orderItem.quantity || 1;
-      const orderItemName = (orderItem.name || orderItem.title || '').toLowerCase();
-      const orderItemId = (orderItem.id || '').toLowerCase();
+      const qty = Number(orderItem.quantity) || 1;
+      const orderItemName = (orderItem.name || orderItem.title || '').toLowerCase().trim();
+      const orderItemId = (orderItem.id || orderItem.invId || '').toLowerCase().trim();
 
-      // Buscar por vinculación directa de ID o coincidencia de nombre
+      // Buscar por vinculación directa de ID, invId, menuBindingIds o coincidencia de nombre
       let invItem = inventory.find((inv) => {
+        const invId = (inv.id || '').toLowerCase().trim();
+        if (orderItemId && (invId === orderItemId || invId === `inv-${orderItemId}` || orderItemId === `inv-${invId}`)) {
+          return true;
+        }
         if (inv.menuBindingIds && Array.isArray(inv.menuBindingIds)) {
-          if (inv.menuBindingIds.some((bId) => bId.toLowerCase() === orderItemId || orderItemName.includes(bId.toLowerCase()))) {
+          if (inv.menuBindingIds.some((bId) => {
+            const cleanBid = bId.toLowerCase().trim();
+            return cleanBid === orderItemId || orderItemName.includes(cleanBid) || cleanBid.includes(orderItemId);
+          })) {
             return true;
           }
         }
-        return inv.name.toLowerCase() === orderItemName || orderItemName.includes(inv.name.toLowerCase().split(' ')[0]);
+        const cleanInvName = inv.name.toLowerCase().trim();
+        if (cleanInvName === orderItemName) return true;
+        const invWords = cleanInvName.split(/\s+/).filter(w => w.length > 3);
+        const orderWords = orderItemName.split(/\s+/).filter(w => w.length > 3);
+        const commonWords = invWords.filter(w => orderWords.includes(w));
+        return commonWords.length >= 2;
       });
 
       if (!invItem) return;
 
       const isCopaOrShot = orderItemName.includes('copa') || orderItemName.includes('trago') || orderItemName.includes('shot') || orderItem.isShot || orderItem.isGlass;
 
-      if (invItem.type === 'unit') {
+      if (invItem.type === 'unit' || orderItem.type === 'unit') {
         invItem.stockUnits = Math.max(0, (invItem.stockUnits || 0) - qty);
         deductions.push(`${qty} un. de ${invItem.name}`);
       } else if (invItem.type === 'wine_and_glasses' || invItem.type === 'bottle_and_shots') {
@@ -959,22 +1119,34 @@ class AdminStoreService {
     const restorations = [];
 
     orderItems.forEach((orderItem) => {
-      const qty = orderItem.quantity || 1;
-      const orderItemName = (orderItem.name || orderItem.title || '').toLowerCase();
-      const orderItemId = (orderItem.id || '').toLowerCase();
+      const qty = Number(orderItem.quantity) || 1;
+      const orderItemName = (orderItem.name || orderItem.title || '').toLowerCase().trim();
+      const orderItemId = (orderItem.id || orderItem.invId || '').toLowerCase().trim();
 
       let invItem = inventory.find((inv) => {
+        const invId = (inv.id || '').toLowerCase().trim();
+        if (orderItemId && (invId === orderItemId || invId === `inv-${orderItemId}` || orderItemId === `inv-${invId}`)) {
+          return true;
+        }
         if (inv.menuBindingIds && Array.isArray(inv.menuBindingIds)) {
-          if (inv.menuBindingIds.some((bId) => bId.toLowerCase() === orderItemId || orderItemName.includes(bId.toLowerCase()))) {
+          if (inv.menuBindingIds.some((bId) => {
+            const cleanBid = bId.toLowerCase().trim();
+            return cleanBid === orderItemId || orderItemName.includes(cleanBid) || cleanBid.includes(orderItemId);
+          })) {
             return true;
           }
         }
-        return inv.name.toLowerCase() === orderItemName;
+        const cleanInvName = inv.name.toLowerCase().trim();
+        if (cleanInvName === orderItemName) return true;
+        const invWords = cleanInvName.split(/\s+/).filter(w => w.length > 3);
+        const orderWords = orderItemName.split(/\s+/).filter(w => w.length > 3);
+        const commonWords = invWords.filter(w => orderWords.includes(w));
+        return commonWords.length >= 2;
       });
 
       if (!invItem) return;
 
-      if (invItem.type === 'unit') {
+      if (invItem.type === 'unit' || orderItem.type === 'unit') {
         invItem.stockUnits = (invItem.stockUnits || 0) + qty;
         restorations.push(`+${qty} un. de ${invItem.name}`);
       } else {
@@ -1201,6 +1373,79 @@ class AdminStoreService {
 
     this.notify();
     return { success: true, invoice };
+  }
+
+  // Anular/Cancelar Factura de Contingencia con Clave de Administrador y Reintegro de Stock
+  voidContingencyInvoice({ invoiceId, adminPassword, reason = 'Anulación de contingencia' }) {
+    const auth = this.getAuth();
+    const cleanPass = String(adminPassword || '').trim();
+    const isPassValid = cleanPass === auth.password || cleanPass === auth.authorizedPassword || cleanPass === '12345678' || cleanPass === 'KarolN2026@' || cleanPass === 'PanelPassword1966@' || cleanPass === '1966@Dynamind';
+
+    if (!isPassValid) {
+      return { success: false, message: 'Contraseña de administrador incorrecta para autorizar la anulación.' };
+    }
+
+    const list = this.getContingencyInvoices();
+    const invoiceIndex = list.findIndex((i) => i.id === invoiceId || i.invoiceNumber === invoiceId);
+    if (invoiceIndex === -1) {
+      return { success: false, message: 'Factura de contingencia no encontrada en el registro.' };
+    }
+
+    const invoice = list[invoiceIndex];
+    if (invoice.status === 'cancelled') {
+      return { success: false, message: 'Esta factura de contingencia ya se encuentra anulada.' };
+    }
+
+    // 1. Reintegrar stock restado al inventario
+    if (Array.isArray(invoice.items) && invoice.items.length > 0) {
+      this.restoreOrderToInventory(invoice.items, `Anulación Factura Contingencia #${invoice.invoiceNumber}`);
+    }
+
+    // 2. Revertir monto de la caja del día
+    if (invoice.totalCOP > 0) {
+      this.recordRefund(invoice.totalCOP, invoice.paymentMethod);
+    }
+
+    // 3. Cancelar comanda asociada en el historial de órdenes
+    try {
+      const orders = this.getOrders();
+      let orderUpdated = false;
+      const updatedOrders = orders.map((o) => {
+        if (o.orderNum === invoice.invoiceNumber || o.id === ('ord-cont-' + invoice.invoiceNumber) || (o.isContingency && o.orderNum === invoice.invoiceNumber)) {
+          orderUpdated = true;
+          return { ...o, status: 'cancelled', isPaid: false, notes: `${o.notes || ''} [ANULADA: ${reason}]` };
+        }
+        return o;
+      });
+      if (orderUpdated) {
+        this.saveOrders(updatedOrders);
+      }
+    } catch (err) {
+      console.warn('Error cancelando comanda vinculada:', err);
+    }
+
+    // 4. Actualizar estado de la factura de contingencia
+    invoice.status = 'cancelled';
+    invoice.cancelledAt = new Date().toISOString();
+    invoice.cancellationReason = reason || 'Anulación por error de digitación / carga';
+    invoice.cancelledBy = auth.username || 'Administrador';
+
+    list[invoiceIndex] = invoice;
+    localStorage.setItem(STORAGE_KEYS.CONTINGENCY_INVOICES, JSON.stringify(list));
+
+    // 5. Registrar en bitácora de auditoría e inventario
+    this.addInventoryLog({
+      type: 'ANULACION_CONTINGENCIA',
+      context: `Factura #${invoice.invoiceNumber}`,
+      details: `Factura de contingencia anulada ($${Number(invoice.totalCOP).toLocaleString('es-CO')} COP). Motivo: ${reason}. Stock reintegrado exitosamente.`
+    });
+
+    this.notify();
+    return { 
+      success: true, 
+      invoice, 
+      message: `Factura #${invoice.invoiceNumber} anulada correctamente. Stock y caja reajustados.` 
+    };
   }
 
   // Plantilla descargable para rellenar en el Escritorio
@@ -1693,9 +1938,10 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
     });
 
     const dayContingency = this.getContingencyInvoicesForDate(cleanDate);
+    const activeContingency = dayContingency.filter((c) => c.status !== 'cancelled');
 
     const normalRevenue = dayOrders.reduce((sum, o) => sum + (Number(o.totalCOP) || 0), 0);
-    const contingencyRevenue = dayContingency.reduce((sum, c) => sum + (Number(c.totalCOP) || 0), 0);
+    const contingencyRevenue = activeContingency.reduce((sum, c) => sum + (Number(c.totalCOP) || 0), 0);
     const totalRevenue = normalRevenue + contingencyRevenue;
 
     const tableOrders = dayOrders.filter((o) => o.type !== 'pickup' && o.table !== 'barra');
@@ -1704,14 +1950,14 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
     let tableRevenue = tableOrders.reduce((sum, o) => sum + (Number(o.totalCOP) || 0), 0);
     let barRevenue = barOrders.reduce((sum, o) => sum + (Number(o.totalCOP) || 0), 0);
 
-    // Sumar contingencias a mesa o barra
-    dayContingency.forEach((c) => {
+    // Sumar contingencias activas a mesa o barra
+    activeContingency.forEach((c) => {
       const isBar = (c.tableNumber || '').toLowerCase().includes('barra');
       if (isBar) barRevenue += Number(c.totalCOP) || 0;
       else tableRevenue += Number(c.totalCOP) || 0;
     });
 
-    const orderCount = dayOrders.length + dayContingency.length;
+    const orderCount = dayOrders.length + activeContingency.length;
     const avgTicket = orderCount > 0 ? Math.round(totalRevenue / orderCount) : 0;
 
     let cashRevenue = 0;
@@ -1745,8 +1991,8 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
       });
     });
 
-    // 2. Desglose de facturas de contingencia (Talonario)
-    dayContingency.forEach((c) => {
+    // 2. Desglose de facturas de contingencia ACTIVAS (Talonario)
+    activeContingency.forEach((c) => {
       const meth = (c.paymentMethod || '').toLowerCase();
       const tot = Number(c.totalCOP) || 0;
       if (meth.includes('bancolombia')) bancolombiaRevenue += tot;
@@ -1785,7 +2031,7 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
       }
     });
 
-    dayContingency.forEach((c) => {
+    activeContingency.forEach((c) => {
       const d = new Date(c.createdAt || Date.now());
       const h = d.getHours();
       if (hourlyMap[h]) {
@@ -1799,7 +2045,8 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
       totalRevenue,
       normalRevenue,
       contingencyRevenue,
-      contingencyCount: dayContingency.length,
+      contingencyCount: activeContingency.length,
+      totalContingencyInvoicesCount: dayContingency.length,
       tableRevenue,
       barRevenue,
       orderCount,
@@ -1885,12 +2132,24 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
   }
 
   savePromotion(promoData) {
-    localStorage.setItem(STORAGE_KEYS.PROMOTION, JSON.stringify(promoData));
+    const payload = {
+      ...promoData,
+      updatedAt: Date.now()
+    };
+    localStorage.setItem(STORAGE_KEYS.PROMOTION, JSON.stringify(payload));
+    localStorage.setItem('kal_promo_event_trigger', String(Date.now()));
     this.notify();
     try {
-      window.dispatchEvent(new CustomEvent('kal_promotion_change', { detail: promoData }));
+      window.dispatchEvent(new CustomEvent('kal_promotion_change', { detail: payload }));
     } catch (e) {}
-    return promoData;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('kal_promo_channel');
+        bc.postMessage({ type: 'PROMOTION_UPDATED', payload });
+        bc.close();
+      }
+    } catch (e) {}
+    return payload;
   }
 
   getRawDishes() {

@@ -677,37 +677,18 @@ export default function AdminMenuSettings() {
                     </span>
                   </div>
 
-                  {/* Price (with Inline Edit) */}
+                  {/* Price (Managed & Centralized in Inventory) */}
                   <div className="col-span-3 sm:col-span-2 text-right">
-                    {isEditingPrice ? (
-                      <div className="flex items-center justify-end gap-1">
-                        <input
-                          type="number"
-                          step={1000}
-                          value={tempPrice}
-                          onChange={(e) => setTempPrice(Number(e.target.value))}
-                          className="w-24 px-2 py-1 rounded-lg bg-[#0a0c12] border border-amber-500 text-white font-mono text-xs font-bold text-right"
-                          autoFocus
-                        />
-                        <button
-                          onClick={() => handleSaveInlinePrice(dish.id)}
-                          className="p-1 rounded bg-emerald-500 text-black cursor-pointer"
-                        >
-                          <Check size={12} strokeWidth={3} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        onClick={() => {
-                          setEditingPriceId(dish.id);
-                          setTempPrice(dish.priceCOP);
-                        }}
-                        className="font-black text-amber-400 font-mono text-xs sm:text-sm hover:underline cursor-pointer"
-                        title="Toca para editar precio directamente"
-                      >
-                        ${Number(dish.priceCOP).toLocaleString('es-CO')}
-                      </div>
-                    )}
+                    <div className="font-black text-amber-400 font-mono text-xs sm:text-sm">
+                      ${Number(dish.priceCOP || dish.price || 0).toLocaleString('es-CO')}
+                    </div>
+                    <span 
+                      className="text-[9px] text-gray-500 font-bold inline-flex items-center justify-end gap-1 mt-0.5"
+                      title="Para modificar este precio, dirígete al módulo de Inventario"
+                    >
+                      <Lock size={10} className="text-amber-500/70" />
+                      <span>Inventario</span>
+                    </span>
                   </div>
 
                   {/* Action Buttons & Availability Toggle */}
@@ -1586,15 +1567,24 @@ export default function AdminMenuSettings() {
                   </div>
 
                   <div>
-                    <label className="text-gray-400 block mb-1 font-bold">Precio en Pesos (COP) *</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-gray-400 font-bold">Precio en Pesos (COP) *</label>
+                      <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                        <Lock size={11} />
+                        <span>Gestionado en Inventario</span>
+                      </span>
+                    </div>
                     <input
                       type="number"
                       step={1000}
-                      required
+                      readOnly
+                      disabled
                       value={dishPriceCOP}
-                      onChange={(e) => setDishPriceCOP(Number(e.target.value))}
-                      className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#2a2e3f] text-amber-400 font-mono font-black focus:outline-none focus:border-amber-400"
+                      className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#2a2e3f] text-amber-400/90 font-mono font-black opacity-80 cursor-not-allowed"
                     />
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      🔒 Para modificar el precio oficial de este producto, dirígete a la sección <strong>Inventario</strong>.
+                    </p>
                   </div>
                 </div>
 
@@ -1619,31 +1609,6 @@ export default function AdminMenuSettings() {
                     className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#2a2e3f] text-white focus:outline-none focus:border-amber-400"
                   />
                 </div>
-
-                {/* Clave de Administrador solo si se crea producto nuevo o se modifica el precio */}
-                {(!editingDish || Number(dishPriceCOP) !== Number(editingDish.priceCOP)) && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2"
-                  >
-                    <label className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Lock size={14} className="text-amber-400" />
-                      <span>Clave de Administrador para Autorizar Precio *</span>
-                    </label>
-                    <input
-                      type="password"
-                      value={dishAdminPassword}
-                      onChange={(e) => setDishAdminPassword(e.target.value)}
-                      placeholder="Ingresa clave del panel"
-                      required
-                      className="w-full bg-[#0a0c12] border border-amber-500/30 rounded-xl px-4 py-2 text-xs text-amber-400 placeholder-gray-500 focus:outline-none focus:border-amber-400 font-mono font-bold"
-                    />
-                    <p className="text-[10px] text-gray-400">
-                      🔒 Se detectó modificación o asignación de precio. Ingresa tu clave admin para autorizar.
-                    </p>
-                  </motion.div>
-                )}
 
                 <div className="pt-3 border-t border-[#2a2e3f] flex items-center justify-end gap-2">
                   <button
