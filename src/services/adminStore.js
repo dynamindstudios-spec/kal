@@ -489,7 +489,7 @@ class AdminStoreService {
   // Modificar comanda de mesa existente (usado por mesero o admin)
   updateTableOrderItems(tableNum, updatedItems, waiterInfo = null) {
     const orders = this.getOrders();
-    const tableOrders = orders.filter((o) => o.table === tableNum && o.status !== 'billed');
+    const tableOrders = orders.filter((o) => String(o.table) === String(tableNum) && o.status !== 'billed');
     
     if (tableOrders.length === 0) {
       // Si no existe, crear una nueva orden de mesa
@@ -537,7 +537,7 @@ class AdminStoreService {
     const canceledOrders = [];
 
     const updated = orders.map((o) => {
-      if (o.table === tableNum && o.status !== 'billed') {
+      if (String(o.table) === String(tableNum) && o.status !== 'billed') {
         canceledOrders.push(o);
         return {
           ...o,
@@ -557,8 +557,8 @@ class AdminStoreService {
 
   getTableSession(tableNum) {
     const orders = this.getOrders();
-    const tableOrders = orders.filter((o) => o.table === tableNum && o.status !== 'billed' && o.status !== 'canceled');
-    const totalAccumulated = tableOrders.reduce((sum, o) => sum + o.totalCOP, 0);
+    const tableOrders = orders.filter((o) => String(o.table) === String(tableNum) && o.status !== 'billed' && o.status !== 'canceled');
+    const totalAccumulated = tableOrders.reduce((sum, o) => sum + (Number(o.totalCOP) || 0), 0);
 
     // Consolidar ítems de todas las órdenes activas de la mesa
     const allItems = [];
@@ -588,11 +588,14 @@ class AdminStoreService {
 
   // Información de Ocupación Exclusiva de Mesa (Mesero vs Web vs Reserva)
   getTableOccupationInfo(tableNum) {
+    if (!tableNum) {
+      return { isOccupied: false, source: null, isLocked: false, reason: 'Disponible' };
+    }
     const session = this.getTableSession(tableNum);
     const isLocked = this.isTableLocked(tableNum);
     const reservations = this.getReservations();
     const activeReservation = (reservations || []).find((r) => {
-      const tMatch = String(r.tableNum || r.table) === String(tableNum) || (Array.isArray(r.tables) && r.tables.includes(tableNum));
+      const tMatch = String(r.tableNum || r.table) === String(tableNum) || (Array.isArray(r.tables) && r.tables.some(t => String(t) === String(tableNum)));
       return tMatch && r.status !== 'cancelled' && r.status !== 'completed';
     });
 
@@ -644,7 +647,7 @@ class AdminStoreService {
     const billedItems = [];
 
     const updatedOrders = orders.map((ord) => {
-      if (ord.table === tableNum && ord.status !== 'billed' && ord.status !== 'canceled') {
+      if (String(ord.table) === String(tableNum) && ord.status !== 'billed' && ord.status !== 'canceled') {
         sessionTotal += ord.totalCOP;
         billedOrderIds.push(ord.id);
         if (ord.items && Array.isArray(ord.items)) {
@@ -689,7 +692,7 @@ class AdminStoreService {
   resetTable(tableNum) {
     const orders = this.getOrders();
     const updated = orders.map((o) => {
-      if (o.table === tableNum && o.status !== 'billed') {
+      if (String(o.table) === String(tableNum) && o.status !== 'billed') {
         return { ...o, status: 'billed', isPaid: true, paymentMethod: 'Cancelado / Liberado' };
       }
       return o;

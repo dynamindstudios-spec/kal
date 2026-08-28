@@ -40,8 +40,15 @@ export default function CartDrawer({
   // Order Fulfillment Type: 'table' (A la Mesa) | 'pickup' (En la Barra)
   const [orderType, setOrderType] = useState('table');
   
-  // Table Order State
-  const [selectedTable, setSelectedTable] = useState(1);
+  // Table Order State (default to first non-locked, non-occupied table)
+  const [selectedTable, setSelectedTable] = useState(() => {
+    for (let i = 1; i <= 15; i++) {
+      if (!adminStore.isTableLocked(i) && !adminStore.isTableOccupied(i)) {
+        return i;
+      }
+    }
+    return 1;
+  });
   const [tableCodeInput, setTableCodeInput] = useState('');
   const [tableCodeError, setTableCodeError] = useState(false);
   const [showTableModal, setShowTableModal] = useState(false);
@@ -55,6 +62,19 @@ export default function CartDrawer({
   const [selectedPickupInterval, setSelectedPickupInterval] = useState('15-20');
   const [formValidationError, setFormValidationError] = useState('');
   const [showWompiModal, setShowWompiModal] = useState(false);
+
+  // Close modals on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showTableModal) setShowTableModal(false);
+        else if (showWompiModal) setShowWompiModal(false);
+        else if (isOpen) onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showTableModal, showWompiModal, isOpen, onClose]);
 
   // Checkout & Animated Progress State
   const [isProcessing, setIsProcessing] = useState(false);
@@ -911,10 +931,21 @@ export default function CartDrawer({
                 whileTap={{ scale: 0.96 }}
                 whileHover={{ scale: 1.01 }}
                 onClick={handleCheckout}
-                className="w-full py-4 rounded-2xl bg-[var(--accent-color)] text-[var(--accent-on)] font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-[0_0_25px_var(--accent-glow)] hover:brightness-110 transition-all cursor-pointer"
+                disabled={orderType === 'table' && (isSelectedTableOccupiedByWaiter || isSelectedTableLocked)}
+                className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all ${
+                  orderType === 'table' && (isSelectedTableOccupiedByWaiter || isSelectedTableLocked)
+                    ? 'bg-gray-800 text-gray-400 cursor-not-allowed border border-orange-500/40 shadow-none opacity-80'
+                    : 'bg-[var(--accent-color)] text-[var(--accent-on)] shadow-[0_0_25px_var(--accent-glow)] hover:brightness-110 cursor-pointer'
+                }`}
               >
                 <Sparkles size={20} className="animate-pulse" />
-                <span>{t.checkout}</span>
+                <span>
+                  {orderType === 'table' && isSelectedTableOccupiedByWaiter
+                    ? 'Mesa Atendida por Mesero 🚫'
+                    : orderType === 'table' && isSelectedTableLocked
+                    ? 'Mesa Bloqueada 🔒'
+                    : t.checkout}
+                </span>
               </motion.button>
 
               <p className="text-[10px] text-center text-[var(--text-muted)] flex items-center justify-center gap-1">
@@ -928,11 +959,15 @@ export default function CartDrawer({
         {/* POPUP MODAL: ELEGIR MESA Y VALIDAR CLAVE */}
         <AnimatePresence>
           {showTableModal && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div 
+              className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+              onClick={() => setShowTableModal(false)}
+            >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 15 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 15 }}
+                onClick={(e) => e.stopPropagation()}
                 className="w-full max-w-md p-5 sm:p-6 rounded-3xl glass-panel border border-[var(--surface-border)] bg-[var(--bg-color)] shadow-2xl space-y-4"
               >
                 {/* Modal Header */}
@@ -960,7 +995,7 @@ export default function CartDrawer({
 
                 {/* Instructions */}
                 <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                  Toca el número de tu mesa física (1 al 15) e ingresa el código de 5 caracteres que aparece en el hablador o tarjeta de tu mesa:
+                  Toca una mesa disponible (1 al 15) e ingresa el código de seguridad o clave del hablador físico:
                 </p>
 
                 {/* 1. Selector de Mesa Interactivo con Plano de KAL */}
@@ -969,10 +1004,15 @@ export default function CartDrawer({
                     selectedTable={selectedTable}
                     onSelectTable={handleTableSelect}
                     isWaiter={false}
+                    disableOccupied={true}
+                    onOccupiedClick={(num, occupInfo) => {
+                      setTableCodeError(true);
+                      setFormValidationError(`🚫 Mesa #${num} ocupada (${occupInfo.reason}). No disponible para pedidos desde la web.`);
+                    }}
                   />
                 </div>
 
-                {/* 2. Security Code Input */}
+                {/* 2. Security Code Input / Alerta de Ocupación */}
                 <div className="space-y-2 pt-2 border-t border-[var(--surface-border)]">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-1.5">
@@ -981,7 +1021,12 @@ export default function CartDrawer({
                     </label>
                   </div>
 
-                  {isSelectedTableLocked ? (
+                  {isSelectedTableOccupiedByWaiter ? (
+                    <div className="p-3 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs font-bold flex items-center gap-2">
+                      <AlertTriangle size={16} className="shrink-0 text-orange-400" />
+                      <span>🚫 Esta mesa está siendo atendida presencialmente por el mesero ({selectedTableOccupInfo.waiterName || 'Staff'}). Selecciona otra mesa libre en el plano para pedir por la web.</span>
+                    </div>
+                  ) : isSelectedTableLocked ? (
                     <div className="p-3 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-bold flex items-center gap-2">
                       <Lock size={16} className="shrink-0 text-red-400" />
                       <span>🚫 Esta mesa está bloqueada para pedidos digitales. Consulta con un mesero.</span>
@@ -1045,11 +1090,16 @@ export default function CartDrawer({
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.95 }}
+                    disabled={isSelectedTableOccupiedByWaiter || isSelectedTableLocked}
                     onClick={handleConfirmTableModal}
-                    className="px-5 py-2.5 rounded-xl bg-[var(--accent-color)] text-[var(--accent-on)] text-xs font-black flex items-center gap-1.5 shadow-[0_0_15px_var(--accent-glow)] hover:brightness-110 transition-all cursor-pointer"
+                    className={`px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all ${
+                      isSelectedTableOccupiedByWaiter || isSelectedTableLocked
+                        ? 'bg-gray-800 text-gray-400 cursor-not-allowed opacity-60 border border-white/5'
+                        : 'bg-[var(--accent-color)] text-[var(--accent-on)] shadow-[0_0_15px_var(--accent-glow)] hover:brightness-110 cursor-pointer'
+                    }`}
                   >
                     <Check size={15} strokeWidth={3} />
-                    <span>Guardar Mesa #{selectedTable}</span>
+                    <span>{isSelectedTableOccupiedByWaiter ? 'Mesa Ocupada' : `Guardar Mesa #${selectedTable}`}</span>
                   </motion.button>
                 </div>
 
