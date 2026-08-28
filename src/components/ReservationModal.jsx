@@ -287,7 +287,14 @@ export default function ReservationModal({ isOpen, onClose, currentLang = 'es' }
 
   // Table selection state
   const [tableCount, setTableCount] = useState(1); // How many tables (1, 2, 3, 4)
-  const [selectedTables, setSelectedTables] = useState([1]); // Array of table numbers
+  const [selectedTables, setSelectedTables] = useState(() => {
+    for (let i = 1; i <= 15; i++) {
+      if (!adminStore.isTableLocked(i) && !adminStore.isTableOccupied(i)) {
+        return [i];
+      }
+    }
+    return [1];
+  });
 
   const [reservationDate, setReservationDate] = useState(todayStr);
   const [selectedSlots, setSelectedSlots] = useState(["19:00 - 20:00 (Cena)"]);
@@ -316,8 +323,14 @@ export default function ReservationModal({ isOpen, onClose, currentLang = 'es' }
     }
   };
 
-  // Toggle or select tables according to tableCount limit
+  // Toggle or select tables according to tableCount limit (blocking occupied tables)
   const handleTableClick = (tableNum) => {
+    const occupInfo = adminStore.getTableOccupationInfo(tableNum);
+    if (occupInfo.isOccupied) {
+      alert(`🚫 La Mesa #${tableNum} se encuentra actualmente ocupada (${occupInfo.reason}) y no puede ser agendada.`);
+      return;
+    }
+
     if (selectedTables.includes(tableNum)) {
       if (selectedTables.length === 1) return; // Keep at least 1 table
       setSelectedTables(selectedTables.filter((t) => t !== tableNum));
@@ -343,6 +356,12 @@ export default function ReservationModal({ isOpen, onClose, currentLang = 'es' }
     e.preventDefault();
     if (!fullName || !phone || !docId) {
       alert("Por favor completa los campos de Nombre, Cédula y Teléfono.");
+      return;
+    }
+
+    const occupiedSelected = selectedTables.filter(t => adminStore.isTableOccupied(t));
+    if (occupiedSelected.length > 0) {
+      alert(`🚫 Las siguientes mesas están ocupadas actualmente en el club y no pueden ser agendadas: ${occupiedSelected.map(t => '#' + t).join(', ')}. Por favor selecciona mesas libres.`);
       return;
     }
 
@@ -611,6 +630,7 @@ export default function ReservationModal({ isOpen, onClose, currentLang = 'es' }
                       onSelectTable={(tableNum) => handleTableClick(tableNum)}
                       isWaiter={false}
                       allowLockedSelection={false}
+                      disableOccupied={true}
                     />
                   </div>
                 </motion.div>

@@ -109,11 +109,30 @@ export default function CartDrawer({
     setTableCodeInput('');
   };
 
+  const selectedTableOccupInfo = adminStore.getTableOccupationInfo(selectedTable);
+  const isSelectedTableOccupiedByWaiter = Boolean(selectedTableOccupInfo && selectedTableOccupInfo.isOccupied && selectedTableOccupInfo.source === 'waiter');
+
   const handleConfirmTableModal = () => {
     if (isSelectedTableLocked) {
       setTableCodeError(true);
       setFormValidationError(`🚫 La Mesa #${selectedTable} está bloqueada para pedidos digitales.`);
       return;
+    }
+
+    if (selectedTableOccupInfo.isOccupied) {
+      if (selectedTableOccupInfo.source === 'waiter') {
+        setTableCodeError(true);
+        setFormValidationError(
+          `🚫 La Mesa #${selectedTable} está siendo atendida presencialmente por el mesero (${selectedTableOccupInfo.waiterName || 'Staff'}). Para pedir más productos o bebidas, solicítalo directamente a tu mesero.`
+        );
+        return;
+      } else if (selectedTableOccupInfo.source === 'reservation') {
+        setTableCodeError(true);
+        setFormValidationError(
+          `🚫 La Mesa #${selectedTable} tiene una reserva VIP asignada (${selectedTableOccupInfo.customerName}).`
+        );
+        return;
+      }
     }
 
     if (isTableCodeValid) {
@@ -225,6 +244,21 @@ export default function CartDrawer({
 
     // If order type is Table, require the security code to be valid
     if (orderType === 'table') {
+      const occupInfo = adminStore.getTableOccupationInfo(selectedTable);
+      if (occupInfo.isOccupied) {
+        if (occupInfo.source === 'waiter') {
+          setFormValidationError(
+            `🚫 La Mesa #${selectedTable} está siendo atendida presencialmente por el mesero (${occupInfo.waiterName || 'Staff'}). Para pedir más productos o bebidas, solicítalo directamente a tu mesero.`
+          );
+          return;
+        } else if (occupInfo.source === 'reservation') {
+          setFormValidationError(
+            `🚫 La Mesa #${selectedTable} tiene una reserva VIP asignada (${occupInfo.customerName}).`
+          );
+          return;
+        }
+      }
+
       if (!isTableCodeValid) {
         setTableCodeError(true);
         setShowTableModal(true);
@@ -575,40 +609,63 @@ export default function CartDrawer({
                               <span>Mesa y Clave de Seguridad *</span>
                             </label>
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
-                              isTableCodeValid
+                              isSelectedTableOccupiedByWaiter
+                                ? 'text-orange-400 bg-orange-500/15 border-orange-500/30'
+                                : isTableCodeValid
                                 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
                                 : 'text-amber-400 bg-amber-500/10 border-amber-500/20'
                             }`}>
-                              {isTableCodeValid ? 'Mesa Validada ✅' : 'Mesa Sin Validar ⚠️'}
+                              {isSelectedTableOccupiedByWaiter
+                                ? 'Mesa en Atención por Mesero 🤵'
+                                : isTableCodeValid
+                                ? 'Mesa Validada ✅'
+                                : 'Mesa Sin Validar ⚠️'}
                             </span>
                           </div>
 
-                          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
-                            {isTableCodeValid
-                              ? `Ubicación lista: tu orden será entregada en la Mesa #${selectedTable}.`
-                              : 'Presiona "Elegir Mesa" para seleccionar tu mesa e ingresar la clave de seguridad:'}
-                          </p>
+                          {isSelectedTableOccupiedByWaiter ? (
+                            <div className="p-3 rounded-2xl bg-orange-500/15 border border-orange-500/30 text-orange-300 text-xs font-bold flex items-center gap-2">
+                              <AlertTriangle size={16} className="text-orange-400 shrink-0" />
+                              <span>
+                                Esta mesa está siendo atendida presencialmente por el mesero ({selectedTableOccupInfo.waiterName || 'Staff'}). Para agregar productos, solicítalo directamente a tu mesero.
+                              </span>
+                            </div>
+                          ) : (
+                            <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+                              {isTableCodeValid
+                                ? `Ubicación lista: tu orden será entregada en la Mesa #${selectedTable}.`
+                                : 'Presiona "Elegir Mesa" para seleccionar tu mesa e ingresar la clave de seguridad:'}
+                            </p>
+                          )}
 
                           {/* Interactive Card with "Elegir Mesa" button */}
                           <div className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 shadow-sm ${
-                            isTableCodeValid
+                            isSelectedTableOccupiedByWaiter
+                              ? 'bg-orange-950/20 border-orange-500/40'
+                              : isTableCodeValid
                               ? 'bg-emerald-500/10 border-emerald-500/30'
                               : 'bg-[var(--pill-bg)] border-[var(--surface-border)] hover:border-[var(--accent-color)]'
                           }`}>
                             <div className="flex items-center gap-3 min-w-0">
                               <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-sm ${
-                                isTableCodeValid
+                                isSelectedTableOccupiedByWaiter
+                                  ? 'bg-orange-500 text-white font-black'
+                                  : isTableCodeValid
                                   ? 'bg-emerald-500 text-white font-black'
                                   : 'bg-[var(--accent-color)]/20 text-[var(--accent-color)]'
                               }`}>
-                                {isTableCodeValid ? <Check size={22} strokeWidth={3} /> : '🪑'}
+                                {isSelectedTableOccupiedByWaiter ? '🤵' : isTableCodeValid ? <Check size={22} strokeWidth={3} /> : '🪑'}
                               </div>
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs sm:text-sm font-black text-[var(--text-primary)] truncate">
                                     Mesa #{selectedTable}
                                   </span>
-                                  {isTableCodeValid ? (
+                                  {isSelectedTableOccupiedByWaiter ? (
+                                    <span className="text-[10px] font-bold text-orange-400 bg-orange-500/20 px-1.5 py-0.5 rounded">
+                                      Atendida por Mesero
+                                    </span>
+                                  ) : isTableCodeValid ? (
                                     <span className="text-[10px] font-mono font-black text-emerald-400 bg-emerald-500/20 px-1.5 py-0.2 rounded">
                                       {expectedCode}
                                     </span>
@@ -619,7 +676,9 @@ export default function CartDrawer({
                                   )}
                                 </div>
                                 <span className="text-[10px] text-[var(--text-secondary)] block truncate">
-                                  {isTableCodeValid
+                                  {isSelectedTableOccupiedByWaiter
+                                    ? 'Comanda abierta por mesero'
+                                    : isTableCodeValid
                                     ? 'Ubicación y clave validadas'
                                     : 'Abre la ventana para elegir'}
                                 </span>

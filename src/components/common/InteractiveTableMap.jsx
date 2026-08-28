@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Check, Map, Grid } from 'lucide-react';
+import { Lock, Check, Map, Grid, AlertTriangle } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 
 // Mathematical table centers aligned with new public/mesas.jpg layout
@@ -30,9 +30,12 @@ export default function InteractiveTableMap({
   onSelectTable,
   isWaiter = false,
   allowLockedSelection = false,
-  multiSelect = false
+  multiSelect = false,
+  disableOccupied = false, // When true, occupied tables cannot be selected (e.g. in Reservations or Web Ordering)
+  onOccupiedClick = null
 }) {
   const [viewMode, setViewMode] = useState('map'); // 'map' | 'grid'
+  const [occupiedToast, setOccupiedToast] = useState('');
 
   const isTableSelected = (num) => {
     if (multiSelect && Array.isArray(selectedTables)) {
@@ -41,10 +44,21 @@ export default function InteractiveTableMap({
     return selectedTable === num;
   };
 
-  const handleTableClick = (tableNum, isLocked) => {
+  const handleTableClick = (tableNum, isLocked, occupInfo) => {
     if (isLocked && !allowLockedSelection && !isWaiter) {
       return;
     }
+
+    if (disableOccupied && occupInfo.isOccupied) {
+      if (onOccupiedClick) {
+        onOccupiedClick(tableNum, occupInfo);
+      } else {
+        setOccupiedToast(`Mesa #${tableNum} ocupada (${occupInfo.reason}). No disponible.`);
+        setTimeout(() => setOccupiedToast(''), 3000);
+      }
+      return;
+    }
+
     onSelectTable(tableNum);
   };
 
@@ -85,11 +99,19 @@ export default function InteractiveTableMap({
         </div>
       </div>
 
-      {/* VIEW 1: MAPA / PLANO INTERACTIVO CON NUEVA IMAGEN mesas.jpg */}
+      {/* Toast Notification when clicking occupied table */}
+      {occupiedToast && (
+        <div className="p-2 rounded-xl bg-orange-500/20 border border-orange-500/40 text-orange-300 text-xs font-bold text-center flex items-center justify-center gap-1.5 animate-bounce">
+          <AlertTriangle size={13} />
+          <span>{occupiedToast}</span>
+        </div>
+      )}
+
+      {/* VIEW 1: MAPA / PLANO INTERACTIVO CON IMAGEN mesas.jpg */}
       {viewMode === 'map' ? (
         <div className="relative w-full rounded-2xl overflow-hidden border border-white/10 bg-[#07080c] shadow-2xl">
           {/* Background Floor Plan Image */}
-          <div className="relative w-full aspect-[16/9] sm:aspect-[16/9]">
+          <div className="relative w-full aspect-[16/9]">
             <img
               src="/mesas.jpg"
               alt="Plano de Mesas KAL Discobar"
@@ -101,8 +123,8 @@ export default function InteractiveTableMap({
             {TABLE_POSITIONS.map((tbl) => {
               const isSelected = isTableSelected(tbl.num);
               const isLocked = adminStore.isTableLocked(tbl.num);
-              const session = adminStore.getTableSession(tbl.num);
-              const hasOrders = session && session.isActive && session.items && session.items.length > 0;
+              const occupInfo = adminStore.getTableOccupationInfo(tbl.num);
+              const isOccupied = occupInfo.isOccupied;
 
               return (
                 <div
@@ -117,10 +139,11 @@ export default function InteractiveTableMap({
                 >
                   <button
                     type="button"
-                    onClick={() => handleTableClick(tbl.num, isLocked)}
+                    onClick={() => handleTableClick(tbl.num, isLocked, occupInfo)}
                     className={`relative flex items-center justify-center transition-all cursor-pointer group ${
-                      isLocked ? 'cursor-not-allowed opacity-80' : ''
+                      isLocked || (disableOccupied && isOccupied) ? 'cursor-not-allowed' : ''
                     }`}
+                    title={`Mesa #${tbl.num} - ${isLocked ? 'Bloqueada' : isOccupied ? occupInfo.reason : 'Disponible'}`}
                   >
                     {/* Compact Table Button Node with Crisp Glowing Border */}
                     <div
@@ -129,8 +152,8 @@ export default function InteractiveTableMap({
                           ? 'bg-amber-400 text-black border-2 border-white ring-2 ring-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.9)] scale-110 z-20'
                           : isLocked
                           ? 'bg-red-950/90 text-red-300 border border-red-500/70 shadow-[0_0_6px_rgba(239,68,68,0.4)]'
-                          : hasOrders
-                          ? 'bg-[#0f172a] text-cyan-300 border border-cyan-400/80 shadow-[0_0_6px_rgba(34,211,238,0.5)] hover:border-cyan-300'
+                          : isOccupied
+                          ? 'bg-orange-600 text-white border-2 border-orange-400 shadow-[0_0_8px_rgba(234,88,12,0.8)]'
                           : 'bg-[#141724]/90 text-white border border-white/30 hover:border-amber-400 hover:text-amber-300 hover:scale-105 shadow-black/80'
                       }`}
                     >
@@ -143,9 +166,9 @@ export default function InteractiveTableMap({
                       )}
                     </div>
 
-                    {/* Badge Indicator: Occupied comanda */}
-                    {hasOrders && !isSelected && !isLocked && (
-                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 ring-1 ring-black animate-ping" />
+                    {/* Badge Indicator: Occupied */}
+                    {isOccupied && !isSelected && !isLocked && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-orange-400 ring-1 ring-black animate-ping" />
                     )}
                   </button>
                 </div>
@@ -160,8 +183,8 @@ export default function InteractiveTableMap({
                 <span className="w-2 h-2 rounded-full bg-white/30 border border-white/50 inline-block" />
                 <span>Disponible</span>
               </span>
-              <span className="flex items-center gap-1 text-cyan-300">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
+              <span className="flex items-center gap-1 text-orange-400">
+                <span className="w-2 h-2 rounded-full bg-orange-500 inline-block" />
                 <span>Ocupada</span>
               </span>
               <span className="flex items-center gap-1 text-amber-300">
@@ -184,30 +207,30 @@ export default function InteractiveTableMap({
           {Array.from({ length: 15 }, (_, i) => i + 1).map((num) => {
             const isSelected = isTableSelected(num);
             const isLocked = adminStore.isTableLocked(num);
-            const session = adminStore.getTableSession(num);
-            const hasOrders = session && session.isActive && session.items && session.items.length > 0;
+            const occupInfo = adminStore.getTableOccupationInfo(num);
+            const isOccupied = occupInfo.isOccupied;
 
             return (
               <button
                 key={num}
                 type="button"
-                onClick={() => handleTableClick(num, isLocked)}
+                onClick={() => handleTableClick(num, isLocked, occupInfo)}
                 className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-amber-500 text-black border-amber-400 font-black shadow-md shadow-amber-500/20'
                     : isLocked
                     ? 'bg-red-950/40 text-red-400 border-red-500/30 opacity-70 cursor-not-allowed'
-                    : hasOrders
-                    ? 'bg-[#15233b] text-cyan-300 border-cyan-500/50'
+                    : isOccupied
+                    ? 'bg-orange-950/40 text-orange-300 border-orange-500/50'
                     : 'bg-[#131520] text-gray-300 border-white/10 hover:border-amber-400 hover:text-white'
-                }`}
+                } ${disableOccupied && isOccupied ? 'cursor-not-allowed opacity-75' : ''}`}
               >
                 <div className="flex items-center gap-1">
                   {isLocked ? <Lock size={10} /> : null}
                   <span className="font-mono text-xs font-black">M#{num}</span>
                 </div>
                 <span className="text-[8px] truncate max-w-full">
-                  {isLocked ? 'Bloqueada' : isSelected ? 'Elegida' : hasOrders ? 'Ocupada' : 'Libre'}
+                  {isLocked ? 'Bloqueada' : isSelected ? 'Elegida' : isOccupied ? 'Ocupada' : 'Libre'}
                 </span>
               </button>
             );

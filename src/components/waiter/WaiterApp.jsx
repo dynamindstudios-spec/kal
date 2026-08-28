@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   UtensilsCrossed, LogOut, Check, Search, Plus, Minus, 
-  Trash2, Send, ShoppingBag, RefreshCw
+  Trash2, Send, ShoppingBag, RefreshCw, AlertTriangle
 } from 'lucide-react';
 import { adminStore } from '../../services/adminStore';
 import InteractiveTableMap from '../common/InteractiveTableMap';
@@ -275,6 +275,22 @@ export default function WaiterApp({ waiterSession, onLogout, onReturnToMenu }) {
                 </button>
               )}
             </div>
+
+            {/* Aviso de Comanda Digital Activa */}
+            {(() => {
+              const occupInfo = adminStore.getTableOccupationInfo(selectedTable);
+              if (occupInfo.isOccupied && occupInfo.source === 'web') {
+                return (
+                  <div className="p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center gap-2">
+                    <AlertTriangle size={15} className="text-cyan-400 shrink-0" />
+                    <span>
+                      ℹ️ Mesa con pedido web activo ({occupInfo.customerName} - ${(occupInfo.totalCOP || 0).toLocaleString('es-CO')}). Las adiciones se consolidarán en la misma cuenta.
+                    </span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             <div className="space-y-2.5">
               <div className="relative">

@@ -456,6 +456,7 @@ class AdminStoreService {
       wompiTransactionId: orderData.wompiTransactionId || null,
       waiterId: orderData.waiterId || null,
       waiterName: orderData.waiterName || null,
+      source: orderData.source || (orderData.waiterName || orderData.waiterId ? 'waiter' : 'web'),
       createdAt: new Date().toISOString(),
       isPaid: Boolean(orderData.isPaid)
     };
@@ -500,6 +501,7 @@ class AdminStoreService {
         totalCOP: total,
         waiterId: waiterInfo?.id || null,
         waiterName: waiterInfo?.name || null,
+        source: 'waiter',
         status: 'pending'
       });
     }
@@ -514,6 +516,9 @@ class AdminStoreService {
           ...ord,
           items: updatedItems,
           totalCOP: newTotal,
+          waiterId: waiterInfo?.id || ord.waiterId || null,
+          waiterName: waiterInfo?.name || ord.waiterName || null,
+          source: waiterInfo ? 'waiter' : (ord.source || 'web'),
           lastModifiedAt: new Date().toISOString(),
           modifiedBy: waiterInfo?.name || 'Administrador'
         };
@@ -579,6 +584,56 @@ class AdminStoreService {
       waiterName: tableOrders[0]?.waiterName || null,
       openedAt: tableOrders[tableOrders.length - 1]?.createdAt || null
     };
+  }
+
+  // Información de Ocupación Exclusiva de Mesa (Mesero vs Web vs Reserva)
+  getTableOccupationInfo(tableNum) {
+    const session = this.getTableSession(tableNum);
+    const isLocked = this.isTableLocked(tableNum);
+    const reservations = this.getReservations();
+    const activeReservation = (reservations || []).find((r) => {
+      const tMatch = String(r.tableNum || r.table) === String(tableNum) || (Array.isArray(r.tables) && r.tables.includes(tableNum));
+      return tMatch && r.status !== 'cancelled' && r.status !== 'completed';
+    });
+
+    if (session && session.isActive) {
+      const isWaiterOrder = Boolean(session.waiterName || session.orders?.some((o) => o.waiterName || o.waiterId || o.source === 'waiter'));
+      return {
+        isOccupied: true,
+        source: isWaiterOrder ? 'waiter' : 'web',
+        waiterName: session.waiterName || (isWaiterOrder ? 'Mesero del Staff' : null),
+        customerName: session.customerName || 'Cliente en Mesa',
+        totalCOP: session.totalCOP || 0,
+        itemsCount: (session.items || []).length,
+        orderCount: session.orderCount,
+        isLocked,
+        reason: isWaiterOrder
+          ? `Mesa atendida por mesero (${session.waiterName || 'Staff'})`
+          : `Mesa ocupada por pedido web (${session.customerName || 'Digital'})`
+      };
+    }
+
+    if (activeReservation) {
+      return {
+        isOccupied: true,
+        source: 'reservation',
+        customerName: activeReservation.customerName || activeReservation.clientName || 'Reserva VIP',
+        reservationTime: activeReservation.time,
+        isLocked,
+        reason: `Mesa con Reserva VIP (${activeReservation.customerName || activeReservation.clientName || 'VIP'})`
+      };
+    }
+
+    return {
+      isOccupied: false,
+      source: null,
+      isLocked,
+      reason: 'Disponible'
+    };
+  }
+
+  isTableOccupied(tableNum) {
+    return this.getTableOccupationInfo(tableNum).isOccupied;
   }
 
   // Facturar y Cerrar Sesión de una Mesa -> DESCUENTA DEL INVENTARIO ÚNICAMENTE AQUÍ
