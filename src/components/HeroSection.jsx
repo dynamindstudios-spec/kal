@@ -124,9 +124,17 @@ export default function HeroSection({ currentLang, backgroundScene = 'drinks' })
             {RESTAURANT_DATA.description[currentLang] || RESTAURANT_DATA.description.es}
           </p>
 
-          <div className="inline-block mt-2 px-3.5 py-1 rounded-full bg-black/80 border border-white/20 text-[11px] text-amber-200 font-bold tracking-wide backdrop-blur-md">
-            📍 {RESTAURANT_DATA.contact.address} — {RESTAURANT_DATA.contact.city}
-          </div>
+          <a
+            href={RESTAURANT_DATA.contact.mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 mt-2 px-3.5 py-1 rounded-full bg-black/80 hover:bg-black border border-white/20 hover:border-amber-400 text-[11px] text-amber-200 hover:text-white font-bold tracking-wide backdrop-blur-md transition-all shadow-md group cursor-pointer"
+            title="Abrir ubicación en Google Maps"
+          >
+            <span className="group-hover:scale-110 transition-transform">📍</span>
+            <span>{RESTAURANT_DATA.contact.address} — {RESTAURANT_DATA.contact.city}</span>
+            <span className="text-[10px] text-amber-400 opacity-80 group-hover:opacity-100">↗</span>
+          </a>
         </motion.div>
 
       </div>

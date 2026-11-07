@@ -28,9 +28,11 @@ export const RESTAURANT_DATA = {
     en: "Quindío's most exclusive nightlife experience with digital liquor menu and live shows."
   },
   contact: {
-    address: "Zona Rosa / Sector Discotecas",
+    address: "Barrio Granada / Sector Discotecas",
     city: "Armenia, Quindío",
-    phone: "3135248660"
+    mapsUrl: "https://maps.app.goo.gl/uUVsMMk1dk3iqVKL8",
+    instagram: "@kal_discobar",
+    instagramUrl: "https://www.instagram.com/kal_discobar?obrf=MjVtZWE5eHdmdTdt"
   }
 };
 
@@ -95,8 +97,8 @@ export const UI_TEXT = {
     yourOrder: "Tu Canasta de Rumba",
     cartEmpty: "No has añadido licores ni productos aún",
     emptyCart: "Tu canasta de rumba está vacía",
-    checkoutBtn: "Confirmar Pedido por WhatsApp",
-    checkout: "Confirmar Pedido por WhatsApp",
+    checkoutBtn: "Confirmar Pedido Digital",
+    checkout: "Confirmar Pedido Digital",
     subtotal: "Subtotal",
     total: "Total Estimado",
     totalPrice: "Total a Pagar",
@@ -150,8 +152,8 @@ export const UI_TEXT = {
     yourOrder: "Your Party Cart",
     cartEmpty: "You haven't added drinks yet",
     emptyCart: "Your party cart is empty",
-    checkoutBtn: "Confirm Order via WhatsApp",
-    checkout: "Confirm Order via WhatsApp",
+    checkoutBtn: "Confirm Digital Order",
+    checkout: "Confirm Digital Order",
     subtotal: "Subtotal",
     total: "Estimated Total",
     totalPrice: "Total to Pay",

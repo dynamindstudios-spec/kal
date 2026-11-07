@@ -1143,58 +1143,12 @@ export default function AdminMenuSettings() {
 
           <form onSubmit={handleSaveSocialLinks} className="space-y-4 text-xs">
             
-            {/* WhatsApp */}
-            <div className="p-4 rounded-2xl bg-[#161924] border border-[#262a3c] space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white font-extrabold text-sm">
-                  <span className="text-xl">🟢</span>
-                  <span>WhatsApp Reservas VIP</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSocialForm({ ...socialForm, whatsappEnabled: socialForm.whatsappEnabled === false ? true : false })}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
-                    socialForm.whatsappEnabled !== false
-                      ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
-                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}
-                >
-                  {socialForm.whatsappEnabled !== false ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}
-                  <span>{socialForm.whatsappEnabled !== false ? 'Habilitado' : 'Deshabilitado'}</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-white/5">
-                <div className="space-y-1">
-                  <label className="text-gray-300 font-bold block">Número de WhatsApp (con código de país sin +)</label>
-                  <input
-                    type="text"
-                    value={socialForm.whatsappNumber || ''}
-                    onChange={(e) => setSocialForm({ ...socialForm, whatsappNumber: e.target.value })}
-                    placeholder="573135248660"
-                    className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#232738] text-white font-mono focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-gray-300 font-bold block">Mensaje Predeterminado</label>
-                  <input
-                    type="text"
-                    value={socialForm.whatsappMessage || ''}
-                    onChange={(e) => setSocialForm({ ...socialForm, whatsappMessage: e.target.value })}
-                    placeholder="¡Hola KAL DISCOBAR! Quiero reservar..."
-                    className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#232738] text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Instagram */}
+            {/* Instagram Oficial */}
             <div className="p-4 rounded-2xl bg-[#161924] border border-[#262a3c] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white font-extrabold text-sm">
                   <span className="text-xl">🌸</span>
-                  <span>Instagram Oficial</span>
+                  <span>Instagram Oficial (@kal_discobar)</span>
                 </div>
                 <button
                   type="button"
@@ -1216,106 +1170,40 @@ export default function AdminMenuSettings() {
                   type="url"
                   value={socialForm.instagramUrl || ''}
                   onChange={(e) => setSocialForm({ ...socialForm, instagramUrl: e.target.value })}
-                  placeholder="https://instagram.com/kaldiscobar"
+                  placeholder="https://www.instagram.com/kal_discobar?obrf=MjVtZWE5eHdmdTdt"
                   className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#232738] text-white font-mono focus:outline-none focus:border-amber-400"
                 />
               </div>
             </div>
 
-            {/* TikTok */}
+            {/* Google Maps Oficial */}
             <div className="p-4 rounded-2xl bg-[#161924] border border-[#262a3c] space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white font-extrabold text-sm">
-                  <span className="text-xl">🩵</span>
-                  <span>TikTok Oficial</span>
+                  <span className="text-xl">📍</span>
+                  <span>Ubicación Google Maps (Armenia, Quindío)</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSocialForm({ ...socialForm, tiktokEnabled: socialForm.tiktokEnabled === false ? true : false })}
+                  onClick={() => setSocialForm({ ...socialForm, mapsEnabled: socialForm.mapsEnabled === false ? true : false })}
                   className={`px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
-                    socialForm.tiktokEnabled !== false
+                    socialForm.mapsEnabled !== false
                       ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
                       : 'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}
                 >
-                  {socialForm.tiktokEnabled !== false ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}
-                  <span>{socialForm.tiktokEnabled !== false ? 'Habilitado' : 'Deshabilitado'}</span>
+                  {socialForm.mapsEnabled !== false ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}
+                  <span>{socialForm.mapsEnabled !== false ? 'Habilitado' : 'Deshabilitado'}</span>
                 </button>
               </div>
 
               <div className="space-y-1 pt-1 border-t border-white/5">
-                <label className="text-gray-300 font-bold block">Enlace de TikTok Oficial</label>
+                <label className="text-gray-300 font-bold block">Enlace de Google Maps</label>
                 <input
                   type="url"
-                  value={socialForm.tiktokUrl || ''}
-                  onChange={(e) => setSocialForm({ ...socialForm, tiktokUrl: e.target.value })}
-                  placeholder="https://tiktok.com/@kaldiscobar"
-                  className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#232738] text-white font-mono focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-
-            {/* Facebook */}
-            <div className="p-4 rounded-2xl bg-[#161924] border border-[#262a3c] space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white font-extrabold text-sm">
-                  <span className="text-xl">🔵</span>
-                  <span>Facebook Oficial</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSocialForm({ ...socialForm, facebookEnabled: socialForm.facebookEnabled === false ? true : false })}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
-                    socialForm.facebookEnabled !== false
-                      ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
-                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}
-                >
-                  {socialForm.facebookEnabled !== false ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}
-                  <span>{socialForm.facebookEnabled !== false ? 'Habilitado' : 'Deshabilitado'}</span>
-                </button>
-              </div>
-
-              <div className="space-y-1 pt-1 border-t border-white/5">
-                <label className="text-gray-300 font-bold block">Enlace de Facebook Oficial</label>
-                <input
-                  type="url"
-                  value={socialForm.facebookUrl || ''}
-                  onChange={(e) => setSocialForm({ ...socialForm, facebookUrl: e.target.value })}
-                  placeholder="https://facebook.com/kaldiscobar"
-                  className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#232738] text-white font-mono focus:outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-
-            {/* Phone Call */}
-            <div className="p-4 rounded-2xl bg-[#161924] border border-[#262a3c] space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white font-extrabold text-sm">
-                  <span className="text-xl">🟡</span>
-                  <span>Llamada Directa (Teléfono)</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSocialForm({ ...socialForm, phoneEnabled: socialForm.phoneEnabled === false ? true : false })}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
-                    socialForm.phoneEnabled !== false
-                      ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/20'
-                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}
-                >
-                  {socialForm.phoneEnabled !== false ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}
-                  <span>{socialForm.phoneEnabled !== false ? 'Habilitado' : 'Deshabilitado'}</span>
-                </button>
-              </div>
-
-              <div className="space-y-1 pt-1 border-t border-white/5">
-                <label className="text-gray-300 font-bold block">Teléfono de Atención (con +)</label>
-                <input
-                  type="text"
-                  value={socialForm.phoneNumber || ''}
-                  onChange={(e) => setSocialForm({ ...socialForm, phoneNumber: e.target.value })}
-                  placeholder="+573135248660"
+                  value={socialForm.mapsUrl || ''}
+                  onChange={(e) => setSocialForm({ ...socialForm, mapsUrl: e.target.value })}
+                  placeholder="https://maps.app.goo.gl/uUVsMMk1dk3iqVKL8"
                   className="w-full p-2.5 rounded-xl bg-[#0a0c12] border border-[#232738] text-white font-mono focus:outline-none focus:border-amber-400"
                 />
               </div>
@@ -1326,7 +1214,7 @@ export default function AdminMenuSettings() {
                 type="submit"
                 className="px-6 py-2.5 rounded-xl bg-amber-500 text-black font-black hover:bg-amber-400 transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
               >
-                Guardar Redes Sociales
+                Guardar Canales de Contacto
               </button>
             </div>
 

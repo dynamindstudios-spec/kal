@@ -218,30 +218,7 @@ export default function CartDrawer({
         origin: { y: 0.5 }
       });
 
-      // Format WhatsApp Order Message for KAL DISCOBAR (3135248660)
-      const itemsList = cartItems
-        .map(item => `• ${item.quantity}x ${item.dish.name[currentLang] || item.dish.name.es} ($${Number(item.dish.priceCOP * item.quantity).toLocaleString('es-CO')})`)
-        .join('%0A');
-      
-      let fulfillmentDetail = '';
-      if (orderType === 'table') {
-        fulfillmentDetail = `📍 Servicio a la Mesa #${selectedTable}%0A🔑 *Clave Validada:* ${expectedCode}%0A👤 *Titular:* ${fullName.trim() || 'Cliente en Mesa'}%0A📝 *Notas:* ${notes.trim() || 'Ninguna'}`;
-      } else {
-        const timeMap = {
-          '5-10': 'Inmediato (5-10 min)',
-          '15-20': 'En 15-20 min',
-          '30': 'En 30 min',
-          '45': 'En 45+ min'
-        };
-        const timeLabel = timeMap[selectedPickupInterval] || 'En 15-20 min';
-        const wompiCodeStr = wompiDetails ? `%0A💳 *Pago Wompi Demo:* ${wompiDetails.transactionId} (APROBADO)` : '';
-        fulfillmentDetail = `🍸 Retirar en la Barra%0A👤 *Cliente:* ${fullName.trim() || 'Cliente en Barra'}%0A📱 *WhatsApp:* ${phone.trim() || 'No especificado'}%0A⏱️ *Tiempo:* ${timeLabel}${wompiCodeStr}%0A📝 *Notas:* ${notes.trim() || 'Ninguna'}`;
-      }
-
-      const waText = `🍾 *NUEVO PEDIDO DIGITAL - KAL DISCOBAR*%0A%0A*Orden #:* ${orderNum}%0A*Modalidad:* ${fulfillmentDetail}%0A%0A*Detalle del Pedido:*%0A${itemsList}%0A%0A*Total:* $${Number(totalCOP).toLocaleString('es-CO')} COP`;
-      
       setTimeout(() => {
-        window.open(`https://wa.me/573135248660?text=${waText}`, '_blank');
         onClearCart();
         setCheckedOut(false);
         onClose();
@@ -446,8 +423,8 @@ export default function CartDrawer({
                 </p>
 
                 <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-[11px] text-gray-300 w-full max-w-xs text-center space-y-1">
-                  <span className="font-bold text-emerald-400 block">📲 Abriendo WhatsApp...</span>
-                  <span>Te redirigiremos automáticamente para enviar los detalles al WhatsApp de KAL DISCOBAR.</span>
+                  <span className="font-bold text-emerald-400 block">🍸 Pedido Confirmado en el Sistema</span>
+                  <span>Tu orden ha sido registrada exitosamente en la barra de KAL DISCOBAR.</span>
                 </div>
               </motion.div>
 
@@ -930,7 +907,7 @@ export default function CartDrawer({
               </motion.button>
 
               <p className="text-[10px] text-center text-[var(--text-muted)] flex items-center justify-center gap-1">
-                <span>🔒 Pedido directo y seguro vía WhatsApp a KAL DISCOBAR</span>
+                <span>🔒 Pedido directo y seguro en el sistema digital de KAL DISCOBAR</span>
               </p>
             </div>
           )}

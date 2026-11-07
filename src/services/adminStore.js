@@ -69,9 +69,15 @@ const INITIAL_HERO_VIDEOS = [
 ];
 
 const INITIAL_SOCIAL_LINKS = {
-  instagram: 'https://instagram.com',
-  tiktok: 'https://tiktok.com',
-  whatsapp: 'https://wa.me/573000000000'
+  instagram: 'https://www.instagram.com/kal_discobar?obrf=MjVtZWE5eHdmdTdt',
+  instagramUrl: 'https://www.instagram.com/kal_discobar?obrf=MjVtZWE5eHdmdTdt',
+  mapsUrl: 'https://maps.app.goo.gl/uUVsMMk1dk3iqVKL8',
+  instagramEnabled: true,
+  mapsEnabled: true,
+  whatsappEnabled: false,
+  tiktokEnabled: false,
+  facebookEnabled: false,
+  phoneEnabled: false
 };
 
 class AdminStoreService {
@@ -2464,7 +2470,22 @@ TAL-1003 | 240000 | Nequi | Mesa 7 | Administrador | Talonario manual
 
   getSocialLinks() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.SOCIAL_LINKS)) || INITIAL_SOCIAL_LINKS;
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOCIAL_LINKS));
+      if (!stored) return INITIAL_SOCIAL_LINKS;
+      return {
+        ...INITIAL_SOCIAL_LINKS,
+        ...stored,
+        instagramUrl: (stored.instagramUrl && stored.instagramUrl.includes('kal_discobar'))
+          ? stored.instagramUrl
+          : INITIAL_SOCIAL_LINKS.instagramUrl,
+        mapsUrl: stored.mapsUrl || INITIAL_SOCIAL_LINKS.mapsUrl,
+        instagramEnabled: stored.instagramEnabled !== false,
+        mapsEnabled: stored.mapsEnabled !== false,
+        whatsappEnabled: false,
+        tiktokEnabled: false,
+        facebookEnabled: false,
+        phoneEnabled: false
+      };
     } catch {
       return INITIAL_SOCIAL_LINKS;
     }

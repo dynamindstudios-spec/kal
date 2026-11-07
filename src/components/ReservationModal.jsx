@@ -407,13 +407,6 @@ export default function ReservationModal({ isOpen, onClose, currentLang = 'es' }
       setIsCooking(false);
       setIsSuccess(true);
       confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
-
-      // WhatsApp formatted message with Wompi verification
-      const waText = `🍾 *NUEVA RESERVA VIP VERIFICADA - KAL DISCOBAR*%0A%0A*Código de Reserva:* ${code}%0A*Titular:* ${fullName.trim()} (Doc: ${docId.trim()})%0A*WhatsApp:* ${phone.trim()}%0A*Fecha:* ${reservationDate}%0A*Horarios:* ${selectedSlots.join(', ')}%0A*Mesas:* ${selectedTables.map(t => `#${t}`).join(', ')}%0A*Evento:* ${eventType}%0A%0A💳 *Abono de Reserva:* $20.000 COP (PAGADO)%0A🔒 *Wompi Demo Ref:* ${wompiDetails.transactionId}`;
-
-      setTimeout(() => {
-        window.open(`https://wa.me/573135248660?text=${waText}`, '_blank');
-      }, 3000);
     }, 2600);
   };
 

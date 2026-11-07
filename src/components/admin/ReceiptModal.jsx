@@ -56,8 +56,8 @@ export default function ReceiptModal({
             <div className="text-center space-y-0.5 border-b pb-2 border-dashed border-gray-300">
               <h2 className="text-base font-black tracking-wider uppercase">{RESTAURANT_DATA.name}</h2>
               <p className="text-[10px] text-gray-600">NIT: 901.482.719-3 • Régimen Simplificado</p>
-              <p className="text-[10px] text-gray-600">Zona Rosa • Armenia, Quindío</p>
-              <p className="text-[10px] text-gray-600">Tel / WhatsApp: 313 524 8660</p>
+              <p className="text-[10px] text-gray-600">Barrio Granada • Armenia, Quindío</p>
+              <p className="text-[10px] text-gray-600">Instagram: @kal_discobar</p>
             </div>
 
             {/* Ticket Info */}

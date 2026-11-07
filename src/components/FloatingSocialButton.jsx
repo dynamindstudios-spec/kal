@@ -15,54 +15,22 @@ export default function FloatingSocialButton() {
 
   const allContactItems = [
     {
-      id: 'whatsapp',
-      name: 'WhatsApp VIP',
-      enabled: socialLinks.whatsappEnabled !== false,
-      icon: WhatsAppIcon,
-      action: () => {
-        const url = `https://wa.me/${socialLinks.whatsappNumber || '573135248660'}?text=${encodeURIComponent(socialLinks.whatsappMessage || '¡Hola KAL DISCOBAR! Quiero reservar una mesa / información VIP.')}`;
-        window.open(url, '_blank');
-      },
-      iconColor: 'text-[#25D366] hover:drop-shadow-[0_0_18px_rgba(37,211,102,1)] hover:scale-125',
-      tooltip: 'WhatsApp Reservas VIP'
-    },
-    {
       id: 'instagram',
       name: 'Instagram Oficial',
       enabled: socialLinks.instagramEnabled !== false,
       icon: InstagramIcon,
-      action: () => window.open(socialLinks.instagramUrl || 'https://instagram.com/kaldiscobar', '_blank'),
+      action: () => window.open(socialLinks.instagramUrl || 'https://www.instagram.com/kal_discobar?obrf=MjVtZWE5eHdmdTdt', '_blank'),
       iconColor: 'text-[#FF2E93] hover:drop-shadow-[0_0_18px_rgba(255,46,147,1)] hover:scale-125',
-      tooltip: '@kaldiscobar'
+      tooltip: '@kal_discobar'
     },
     {
-      id: 'tiktok',
-      name: 'TikTok',
-      enabled: socialLinks.tiktokEnabled !== false,
-      icon: TikTokIcon,
-      action: () => window.open(socialLinks.tiktokUrl || 'https://tiktok.com/@kaldiscobar', '_blank'),
-      iconColor: 'text-[#00F2FE] hover:drop-shadow-[0_0_18px_rgba(0,242,254,1)] hover:scale-125',
-      tooltip: 'TikTok Oficial'
-    },
-    {
-      id: 'facebook',
-      name: 'Facebook',
-      enabled: socialLinks.facebookEnabled !== false,
-      icon: FacebookIcon,
-      action: () => window.open(socialLinks.facebookUrl || 'https://facebook.com/kaldiscobar', '_blank'),
-      iconColor: 'text-[#1877F2] hover:drop-shadow-[0_0_18px_rgba(24,119,242,1)] hover:scale-125',
-      tooltip: 'Facebook Oficial'
-    },
-    {
-      id: 'phone',
-      name: 'Llamar al Bar',
-      enabled: socialLinks.phoneEnabled !== false,
-      icon: PhoneCallIcon,
-      action: () => {
-        window.location.href = `tel:${socialLinks.phoneNumber || '+573135248660'}`;
-      },
-      iconColor: 'text-[#FFD700] hover:drop-shadow-[0_0_18px_rgba(255,215,0,1)] hover:scale-125',
-      tooltip: 'Línea Directa'
+      id: 'maps',
+      name: 'Ubicación Google Maps',
+      enabled: socialLinks.mapsEnabled !== false,
+      icon: GoogleMapsIcon,
+      action: () => window.open(socialLinks.mapsUrl || 'https://maps.app.goo.gl/uUVsMMk1dk3iqVKL8', '_blank'),
+      iconColor: 'text-[#EA4335] hover:drop-shadow-[0_0_18px_rgba(234,67,53,1)] hover:scale-125',
+      tooltip: 'Armenia, Quindío (Google Maps)'
     }
   ];
 
@@ -162,15 +130,6 @@ export default function FloatingSocialButton() {
   );
 }
 
-function WhatsAppIcon({ className = "w-6 h-6", ...props }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
-      <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-      <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-    </svg>
-  );
-}
-
 function InstagramIcon({ className = "w-6 h-6", ...props }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
@@ -181,26 +140,11 @@ function InstagramIcon({ className = "w-6 h-6", ...props }) {
   );
 }
 
-function TikTokIcon({ className = "w-6 h-6", ...props }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
-      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.86.12V9.42a6.33 6.33 0 0 0-.86-.06 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.58a8.28 8.28 0 0 0 4.77 1.52v-3.41Z"/>
-    </svg>
-  );
-}
-
-function FacebookIcon({ className = "w-6 h-6", ...props }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-    </svg>
-  );
-}
-
-function PhoneCallIcon({ className = "w-6 h-6", ...props }) {
+function GoogleMapsIcon({ className = "w-6 h-6", ...props }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
     </svg>
   );
 }
